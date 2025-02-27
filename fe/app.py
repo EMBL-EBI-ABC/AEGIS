@@ -1,4 +1,5 @@
 import dash
+from dash import html
 import dash_bootstrap_components as dbc
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.SOLAR], use_pages=True)
@@ -20,9 +21,7 @@ app.layout = [
         color="dark",
         dark=True,
     ),
-    dbc.Container(
-        dash.page_container
-    )
+    html.Div(dash.page_container)
 ]
 
 if __name__ == "__main__":

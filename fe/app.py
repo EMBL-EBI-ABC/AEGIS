@@ -21,7 +21,9 @@ app.layout = [
         color="dark",
         dark=True,
     ),
-    dash.page_container
+    html.Div(
+        dash.page_container
+    )
 ]
 
 server = app.server

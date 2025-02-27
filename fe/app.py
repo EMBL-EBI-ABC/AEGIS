@@ -21,8 +21,10 @@ app.layout = [
         color="dark",
         dark=True,
     ),
-    html.Div(dash.page_container)
+    dash.page_container
 ]
+
+server = app.server
 
 if __name__ == "__main__":
     app.run_server(debug=True)

@@ -146,19 +146,19 @@ layout = html.Div(
                     ]
 
                 ),
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            sampling_map_card(),
-                            md=6,
-                            className="offset-md-3",
-                            style={
-                                "marginTop": "2em",
-                                "marginBottom": "2em",
-                            },
-                        ),
-                    ]
-                )
+                # dbc.Row(
+                #     [
+                #         dbc.Col(
+                #             sampling_map_card(),
+                #             md=6,
+                #             className="offset-md-3",
+                #             style={
+                #                 "marginTop": "2em",
+                #                 "marginBottom": "2em",
+                #             },
+                #         ),
+                #     ]
+                # )
             ]
         )
     ]

@@ -134,7 +134,7 @@ async def elastic_details(index_name, record_id, data_class):
 
 
 @app.get("/data_portal")
-async def mavedb_search(
+async def data_portal_search(
         params: Annotated[DataPortalSearchParams, Query()],
 ) -> ElasticResponse[DataPortalData, DataPortalAggregationResponse]:
     return await elastic_search(
@@ -146,7 +146,7 @@ async def mavedb_search(
 
 
 @app.get("/data_portal/{record_id}")
-async def mavedb_details(
+async def data_portal_details(
         record_id: Annotated[str, Path(description="Record ID")],
 ) -> ElasticDetailsResponse[DataPortalData]:
     return await elastic_details(

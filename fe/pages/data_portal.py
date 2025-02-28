@@ -65,4 +65,7 @@ def create_update_data_filters(input_value):
                         style={"cursor": "pointer"},
                     )
                 )
-    return dbc.Card(dbc.ListGroup(list_group_items))
+    return dbc.Card(
+        dbc.ListGroup(list_group_items),
+        style={"marginBottom": "15px"},
+    )

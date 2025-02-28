@@ -2,9 +2,12 @@ import dash
 from dash import html
 import dash_bootstrap_components as dbc
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.SOLAR], use_pages=True)
+app = dash.Dash(
+    __name__,
+    external_stylesheets=[dbc.themes.SOLAR],
+    use_pages=True)
 
-app.layout = [
+app.layout = html.Div([
     dbc.NavbarSimple(
         children=[
             dbc.NavItem(dbc.NavLink("Data Portal",
@@ -21,11 +24,8 @@ app.layout = [
         color="dark",
         dark=True,
     ),
-    html.Div(
-        dash.page_container
-    )
-]
-
+    dash.page_container
+])
 server = app.server
 
 if __name__ == "__main__":

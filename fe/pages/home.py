@@ -18,13 +18,13 @@ banner = html.Div(
         html.H1("AEGIS Data Portal",
                 className="display-3",
                 style={
-                    "color": "rgb(42, 62, 71)",
+                    "color": "#303030",
                     "textAlign": "center"
                 }),
         html.P(
             "Ancient Environmental Genomics Initiative for Sustainability",
             style={
-                "color": "rgb(42, 62, 71)",
+                "color": "#303030",
                 "fontSize": "2em",
                 "textAlign": "center"
             }
@@ -35,8 +35,6 @@ banner = html.Div(
         'backgroundPosition': 'center',
         'backgroundRepeat': 'no-repeat',
         'background-size': 'cover',
-        'backgroundColor': 'rgb(255, 255, 255, 0.3)',
-        'backgroundBlendMode': 'lighten',
         'height': '15em',
     }
 )

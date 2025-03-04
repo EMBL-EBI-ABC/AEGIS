@@ -19,7 +19,7 @@ layout = dbc.Container(
                         dbc.Input(id="input", placeholder="Type something...",
                                   type="text"),
                         html.Div(id="data_table"),
-                        dbc.Pagination(max_value=1, first_last=True,
+                        dbc.Pagination(id="pagination", max_value=1, first_last=True,
                                        previous_next=True,
                                        fully_expanded=False,
                                        className="justify-content-end"),
@@ -37,9 +37,12 @@ layout = dbc.Container(
 
 @callback(
     Output("data_table", "children"),
-    Input("data_table", "children"),
+    Output("data_filters", "children"),
+    Input("data_filters", "children"),
+    Input("input", "value"),
+    Input("pagination", "active_page"),
 )
-def create_update_data_table(input_value):
+def create_update_data_table(filters, search, pagination):
     response = requests.get(
         "https://aegis-be-1091670130981.europe-west2.run.app/data_portal").json()
     df = pd.DataFrame.from_records(response["results"],
@@ -47,18 +50,10 @@ def create_update_data_table(input_value):
                                             "currentStatus"])
     df.rename(columns={"scientificName": "Scientific Name", "commonName": "Common Name",
                        "currentStatus": "Current Status"}, inplace=True)
-    return dbc.Table.from_dataframe(df=df, striped=True, bordered=True, hover=True,
-                                    id="data_table")
+    table = dbc.Table.from_dataframe(df=df, striped=True, bordered=True, hover=True,
+                                     id="data_table")
 
-
-@callback(
-    Output("data_filters", "children"),
-    Input("data_filters", "children"),
-)
-def create_update_data_filters(input_value):
     list_group_items = []
-    response = requests.get(
-        "https://aegis-be-1091670130981.europe-west2.run.app/data_portal").json()
     statuses = {"bioSamplesStatus": "Submitted to BioSamples",
                 "rawDataStatus": "Raw Data submitted to ENA",
                 "assembliesStatus": "Assemblies submitted to ENA"}
@@ -78,10 +73,11 @@ def create_update_data_filters(input_value):
                         style={"cursor": "pointer"},
                     )
                 )
-    return dbc.Card(
+    filters = dbc.Card(
         dbc.CardBody([
             html.H4("Data Status", className="card-title"),
             dbc.ListGroup(list_group_items)
         ]),
-        style={"marginBottom": "15px"},
-    )
+        style={"marginBottom": "15px"})
+
+    return table, filters

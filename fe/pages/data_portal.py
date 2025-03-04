@@ -13,7 +13,20 @@ layout = dbc.Container(
     dbc.Row(
         [
             dbc.Col(md=3, id="data_filters"),
-            dbc.Col(md=9, id="data_table")
+            dbc.Col(
+                dbc.Stack(
+                    [
+                        dbc.Input(id="input", placeholder="Type something...",
+                                  type="text"),
+                        html.Div(id="data_table"),
+                        dbc.Pagination(max_value=1, first_last=True,
+                                       previous_next=True,
+                                       fully_expanded=False,
+                                       className="justify-content-end"),
+                    ],
+                    gap=1
+                ),
+                md=9),
         ],
         style={
             "margin-top": "15px",
@@ -66,6 +79,9 @@ def create_update_data_filters(input_value):
                     )
                 )
     return dbc.Card(
-        dbc.ListGroup(list_group_items),
+        dbc.CardBody([
+            html.H4("Data Status", className="card-title"),
+            dbc.ListGroup(list_group_items)
+        ]),
         style={"marginBottom": "15px"},
     )

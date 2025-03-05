@@ -54,14 +54,17 @@ def return_tax_id_button(scientific_name: str, tax_id: str) -> dbc.Button:
         href=f"/data-portal/{tax_id}")
 
 
-def return_badge_status(status_value: str) -> dbc.Badge:
-    if status_value == "Submitted to BioSamples":
+def return_badge_status(budge_text: str, color: str = None) -> dbc.Badge:
+    if color is not None:
+        return dbc.Badge(budge_text, pill=True, color=color)
+
+    if budge_text == "Submitted to BioSamples":
         color = "secondary"
-    elif status_value == "Raw Data - Submitted":
+    elif budge_text == "Raw Data - Submitted":
         color = "primary"
     else:
         color = "success"
-    return dbc.Badge(status_value, pill=True, color=color)
+    return dbc.Badge(budge_text, pill=True, color=color)
 
 
 @callback(

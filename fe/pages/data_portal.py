@@ -3,6 +3,7 @@ from dash import callback, Output, Input, html
 import dash_bootstrap_components as dbc
 import pandas as pd
 import requests
+import time
 
 dash.register_page(
     __name__,
@@ -14,17 +15,19 @@ layout = dbc.Container(
         [
             dbc.Col(md=3, id="data_filters"),
             dbc.Col(
-                dbc.Stack(
-                    [
-                        dbc.Input(id="input", placeholder="Type something...",
-                                  type="text", debounce=True),
-                        html.Div(id="data_table"),
-                        dbc.Pagination(id="pagination", max_value=1, first_last=True,
-                                       previous_next=True,
-                                       fully_expanded=False,
-                                       className="justify-content-end"),
-                    ],
-                    gap=1
+                dbc.Spinner(
+                    dbc.Stack(
+                        [
+                            dbc.Input(id="input", placeholder="Ex. wheat...",
+                                      type="text", debounce=True),
+                            html.Div(id="data_table"),
+                            dbc.Pagination(id="pagination", max_value=1,
+                                           first_last=True,
+                                           previous_next=True,
+                                           fully_expanded=False),
+                        ],
+                        gap=1
+                    )
                 ),
                 md=9),
         ],
@@ -41,6 +44,12 @@ layout = dbc.Container(
     Input("data_filters", "children"),
     Input("input", "value"),
     Input("pagination", "active_page"),
+    running=[
+        (Output("input", "class_name"), "invisible",
+         "visible"),
+        (Output("pagination", "class_name"), "invisible",
+         "justify-content-end")
+    ]
 )
 def create_update_data_table(filter_value, input_value, pagination):
     statuses = {"bioSamplesStatus": "Submitted to BioSamples",

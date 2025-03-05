@@ -13,7 +13,16 @@ dash.register_page(
 layout = dbc.Container(
     dbc.Row(
         [
-            dbc.Col(md=3, id="data_filters"),
+            dbc.Col(
+                dbc.Card(
+                    dbc.CardBody(
+                        [
+                            html.H4("Data Status", className="card-title"),
+                            dbc.Checklist(id="checklist-input")
+                        ]
+                    )
+                ),
+                md=3),
             dbc.Col(
                 dbc.Spinner(
                     dbc.Stack(
@@ -40,8 +49,8 @@ layout = dbc.Container(
 
 @callback(
     Output("data_table", "children"),
-    Output("data_filters", "children"),
-    Input("data_filters", "children"),
+    Output("checklist-input", "options"),
+    Input("checklist-input", "value"),
     Input("input", "value"),
     Input("pagination", "active_page"),
     running=[
@@ -51,11 +60,16 @@ layout = dbc.Container(
          "justify-content-end")
     ]
 )
-def create_update_data_table(filter_value, input_value, pagination):
+def create_update_data_table(filter_values, input_value, pagination):
     statuses = {"bioSamplesStatus": "Submitted to BioSamples",
                 "rawDataStatus": "Raw Data submitted to ENA",
                 "assembliesStatus": "Assemblies submitted to ENA"}
     params = {}
+    try:
+        for value in filter_values:
+            params[value] = "Done"
+    except TypeError:
+        pass
     if input_value is not None:
         params["q"] = input_value
     response = requests.get(
@@ -69,28 +83,13 @@ def create_update_data_table(filter_value, input_value, pagination):
     table = dbc.Table.from_dataframe(df=df, striped=True, bordered=True, hover=True,
                                      id="data_table")
 
-    list_group_items = []
+    options = []
     for status_key, status_name in statuses.items():
         for bucket in response["aggregations"][status_key]["buckets"]:
             if bucket["key"] == "Done":
-                list_group_items.append(
-                    dbc.ListGroupItem(
-                        html.Div(
-                            [
-                                html.Div(status_name),
-                                html.Div(bucket["doc_count"])
-                            ],
-                            className="d-flex w-100 justify-content-between"
-                        ),
-                        action=True,
-                        style={"cursor": "pointer"},
-                    )
+                options.append(
+                    {"label": f"{status_name} - {bucket['doc_count']}",
+                     "value": status_key}
                 )
-    filters = dbc.Card(
-        dbc.CardBody([
-            html.H4("Data Status", className="card-title"),
-            dbc.ListGroup(list_group_items)
-        ]),
-        style={"marginBottom": "15px"})
 
-    return table, filters
+    return table, options

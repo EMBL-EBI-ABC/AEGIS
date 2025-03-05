@@ -22,7 +22,9 @@ layout = dbc.Container(
                         ]
                     )
                 ),
-                md=3),
+                md=3,
+                style={"marginBottom": "5px"},
+            ),
             dbc.Col(
                 dbc.Spinner(
                     dbc.Stack(
@@ -41,10 +43,20 @@ layout = dbc.Container(
                 md=9),
         ],
         style={
-            "margin-top": "15px",
+            "marginTop": "15px",
         }
     )
 )
+
+
+def return_badge_status(status_value: str) -> dbc.Badge:
+    if status_value == "Submitted to BioSamples":
+        color = "secondary"
+    elif status_value == "Raw Data - Submitted":
+        color = "primary"
+    else:
+        color = "success"
+    return dbc.Badge(status_value, pill=True, color=color)
 
 
 @callback(
@@ -75,13 +87,19 @@ def create_update_data_table(filter_values, input_value, pagination):
     response = requests.get(
         "https://aegis-be-1091670130981.europe-west2.run.app/data_portal",
         params=params).json()
-    df = pd.DataFrame.from_records(response["results"],
-                                   columns=["scientificName", "commonName",
-                                            "currentStatus"])
-    df.rename(columns={"scientificName": "Scientific Name", "commonName": "Common Name",
-                       "currentStatus": "Current Status"}, inplace=True)
-    table = dbc.Table.from_dataframe(df=df, striped=True, bordered=True, hover=True,
-                                     id="data_table")
+
+    table_header = [
+        html.Thead(html.Tr([html.Th(value) for value in
+                            ["Scientific Name", "Common Name", "Current Status"]]))]
+    table_body = [
+        html.Tbody(
+            [html.Tr([html.Td(row["scientificName"]), html.Td(row["commonName"]),
+                      html.Td(return_badge_status(row["currentStatus"]))])
+             for
+             row in response["results"]])
+    ]
+    table = dbc.Table(table_header + table_body, striped=True, bordered=True,
+                      hover=True)
 
     options = []
     for status_key, status_name in statuses.items():

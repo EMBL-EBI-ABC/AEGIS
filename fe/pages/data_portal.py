@@ -20,6 +20,7 @@ layout = dbc.Container(
                         ]
                     )
                 ),
+                id="filters-card",
                 md=3,
                 style={"marginBottom": "5px"},
             ),
@@ -77,7 +78,9 @@ def return_badge_status(budge_text: str, color: str = None) -> dbc.Badge:
         (Output("input", "class_name"), "invisible",
          "visible"),
         (Output("pagination", "class_name"), "invisible",
-         "justify-content-end")
+         "justify-content-end"),
+        (Output("filters-card", "class_name"), "invisible",
+         "card-title")
     ]
 )
 def create_update_data_table(filter_values, input_value, pagination):
@@ -105,8 +108,8 @@ def create_update_data_table(filter_values, input_value, pagination):
                 [html.Td(return_tax_id_button(row["scientificName"], row["taxId"])),
                  html.Td(row["commonName"]),
                  html.Td(return_badge_status(row["currentStatus"]))])
-             for
-             row in response["results"]])
+                for
+                row in response["results"]])
     ]
     table = dbc.Table(table_header + table_body, striped=True, bordered=True,
                       hover=True)

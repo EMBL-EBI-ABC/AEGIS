@@ -17,7 +17,7 @@ layout = dbc.Container(
                 dbc.Stack(
                     [
                         dbc.Input(id="input", placeholder="Type something...",
-                                  type="text"),
+                                  type="text", debounce=True),
                         html.Div(id="data_table"),
                         dbc.Pagination(id="pagination", max_value=1, first_last=True,
                                        previous_next=True,
@@ -42,9 +42,16 @@ layout = dbc.Container(
     Input("input", "value"),
     Input("pagination", "active_page"),
 )
-def create_update_data_table(filters, search, pagination):
+def create_update_data_table(filter_value, input_value, pagination):
+    statuses = {"bioSamplesStatus": "Submitted to BioSamples",
+                "rawDataStatus": "Raw Data submitted to ENA",
+                "assembliesStatus": "Assemblies submitted to ENA"}
+    params = {}
+    if input_value is not None:
+        params["q"] = input_value
     response = requests.get(
-        "https://aegis-be-1091670130981.europe-west2.run.app/data_portal").json()
+        "https://aegis-be-1091670130981.europe-west2.run.app/data_portal",
+        params=params).json()
     df = pd.DataFrame.from_records(response["results"],
                                    columns=["scientificName", "commonName",
                                             "currentStatus"])
@@ -54,9 +61,6 @@ def create_update_data_table(filters, search, pagination):
                                      id="data_table")
 
     list_group_items = []
-    statuses = {"bioSamplesStatus": "Submitted to BioSamples",
-                "rawDataStatus": "Raw Data submitted to ENA",
-                "assembliesStatus": "Assemblies submitted to ENA"}
     for status_key, status_name in statuses.items():
         for bucket in response["aggregations"][status_key]["buckets"]:
             if bucket["key"] == "Done":

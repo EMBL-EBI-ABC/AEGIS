@@ -1,9 +1,7 @@
 import dash
 from dash import callback, Output, Input, html
 import dash_bootstrap_components as dbc
-import pandas as pd
 import requests
-import time
 
 dash.register_page(
     __name__,
@@ -47,6 +45,13 @@ layout = dbc.Container(
         }
     )
 )
+
+
+def return_tax_id_button(scientific_name: str, tax_id: str) -> dbc.Button:
+    return dbc.Button(
+        scientific_name,
+        outline=True,
+        href=f"/data-portal/{tax_id}")
 
 
 def return_badge_status(status_value: str) -> dbc.Badge:
@@ -93,8 +98,10 @@ def create_update_data_table(filter_values, input_value, pagination):
                             ["Scientific Name", "Common Name", "Current Status"]]))]
     table_body = [
         html.Tbody(
-            [html.Tr([html.Td(row["scientificName"]), html.Td(row["commonName"]),
-                      html.Td(return_badge_status(row["currentStatus"]))])
+            [html.Tr(
+                [html.Td(return_tax_id_button(row["scientificName"], row["taxId"])),
+                 html.Td(row["commonName"]),
+                 html.Td(return_badge_status(row["currentStatus"]))])
              for
              row in response["results"]])
     ]

@@ -33,7 +33,22 @@ def layout(tax_id=None, **kwargs):
                             dbc.CardHeader(
                                 dbc.Tabs(id="tabs_header", active_tab="metadata_tab")
                             ),
-                            dbc.CardBody(html.P(id="tabs_body", className="card-text")),
+                            dbc.CardBody([
+                                html.Div([
+                                    html.B("Statuses legend: "),
+                                    dbc.Badge("Submitted to Biosamples", pill=True,
+                                              color="secondary"),
+                                    html.B(" -> "),
+                                    dbc.Badge("Raw Data - Submitted", pill=True,
+                                              color="primary"),
+                                    html.B(" -> "),
+                                    dbc.Badge("Assemblies - Submitted", pill=True,
+                                              color="success")
+                                ],
+                                    style={"marginBottom": "15px"},
+                                ),
+                                html.P(id="tabs_body", className="card-text")
+                            ]),
                         ],
                         id="tabs_card",
                     ),

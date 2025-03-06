@@ -28,15 +28,33 @@ layout = dbc.Container(
                 dbc.Spinner(
                     dbc.Stack(
                         [
-                            dbc.Input(id="input", placeholder="Ex. wheat...",
+                            dbc.Input(id="input", placeholder="Free text search, "
+                                                              "ex. wheat...",
                                       type="text", debounce=True),
+                            html.Div([
+                                html.B("Statuses legend: "),
+                                dbc.Badge("Submitted to Biosamples", pill=True,
+                                          color="secondary"),
+                                html.B(" -> "),
+                                dbc.Badge("Raw Data - Submitted", pill=True,
+                                          color="primary"),
+                                html.B(" -> "),
+                                dbc.Badge("Assemblies - Submitted", pill=True,
+                                          color="success"),
+                                html.B(" -> "),
+                                dbc.Badge("Annotation Completed", pill=True,
+                                          color="info"),
+                                html.B(" -> "),
+                                dbc.Badge("Annotation - Submitted", pill=True,
+                                          color="danger"),
+                            ]),
                             html.Div(id="data_table"),
                             dbc.Pagination(id="pagination", max_value=1,
                                            first_last=True,
                                            previous_next=True,
                                            fully_expanded=False),
                         ],
-                        gap=1
+                        gap=3
                     )
                 ),
                 md=9),

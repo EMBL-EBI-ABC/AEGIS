@@ -14,22 +14,24 @@ BACKGROUND_URL = ("https://www.embl.org/news/wp-content/uploads/2024/06/"
                   "2024-NNF-grant-ancient-plant-DNA-1000x600-1.jpg")
 
 banner = html.Div(
-    [
-        html.H1("AEGIS Data Portal",
-                className="display-3",
-                style={
-                    "color": "#303030",
-                    "textAlign": "center"
-                }),
-        html.P(
-            "Ancient Environmental Genomics Initiative for Sustainability",
-            style={
-                "color": "#303030",
-                "fontSize": "2em",
-                "textAlign": "center"
-            }
-        ),
-    ],
+    dbc.Container(
+        dbc.Row(
+            dbc.Col(
+                dbc.Card(
+                    dbc.CardBody(
+                        [
+                            html.H1("AEGIS Data Portal", className="display-3",
+                                    style={"textAlign": "center"}),
+                            html.H2("Ancient Environmental Genomics Initiative for "
+                                    "Sustainability", style={"textAlign": "center"}),
+                        ]
+                    ),
+                    color="light",
+                ),
+                style={"marginTop": "15px"},
+            )
+        )
+    ),
     style={
         'backgroundImage': f'url({BACKGROUND_URL})',
         'backgroundPosition': 'center',
@@ -143,20 +145,7 @@ layout = html.Div(
                         ),
                     ]
 
-                ),
-                # dbc.Row(
-                #     [
-                #         dbc.Col(
-                #             sampling_map_card(),
-                #             md=6,
-                #             className="offset-md-3",
-                #             style={
-                #                 "marginTop": "2em",
-                #                 "marginBottom": "2em",
-                #             },
-                #         ),
-                #     ]
-                # )
+                )
             ]
         )
     ]

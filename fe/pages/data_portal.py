@@ -16,7 +16,7 @@ layout = dbc.Container(
                     dbc.CardBody(
                         [
                             html.H4("Data Status", className="card-title"),
-                            dbc.Checklist(id="checklist-input")
+                            dbc.Checklist(id="checklist_input")
                         ]
                     )
                 ),
@@ -70,8 +70,8 @@ def return_badge_status(budge_text: str, color: str = None) -> dbc.Badge:
 
 @callback(
     Output("data_table", "children"),
-    Output("checklist-input", "options"),
-    Input("checklist-input", "value"),
+    Output("checklist_input", "options"),
+    Input("checklist_input", "value"),
     Input("input", "value"),
     Input("pagination", "active_page"),
     running=[

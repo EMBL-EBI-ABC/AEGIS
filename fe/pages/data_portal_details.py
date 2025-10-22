@@ -3,7 +3,7 @@ from typing import Callable
 import dash
 import requests
 import json
-from dash import html, Output, Input, callback, dcc
+from dash import html, Output, Input, callback, dcc, dash_table
 import dash_bootstrap_components as dbc
 
 from .data_portal import return_badge_status

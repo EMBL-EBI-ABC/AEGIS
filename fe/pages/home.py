@@ -14,31 +14,12 @@ BACKGROUND_URL = ("https://www.embl.org/news/wp-content/uploads/2024/06/"
                   "2024-NNF-grant-ancient-plant-DNA-1000x600-1.jpg")
 
 banner = html.Div(
-    dbc.Container(
-        dbc.Row(
-            dbc.Col(
-                dbc.Card(
-                    dbc.CardBody(
-                        [
-                            html.H1("AEGIS Data Portal", className="display-3",
-                                    style={"textAlign": "center"}),
-                            html.H2("Ancient Environmental Genomics Initiative for "
-                                    "Sustainability", style={"textAlign": "center"}),
-                        ]
-                    ),
-                    color="light",
-                ),
-                style={"marginTop": "15px"},
-            )
-        )
+    html.Img(
+        src="/assets/banner.png",
+        alt="AEGIS Data Portal banner",
+        className="banner-image-full"
     ),
-    style={
-        'backgroundImage': f'url({BACKGROUND_URL})',
-        'backgroundPosition': 'center',
-        'backgroundRepeat': 'no-repeat',
-        'background-size': 'cover',
-        'height': '15em',
-    }
+    className="banner-container-full"
 )
 
 
@@ -121,9 +102,27 @@ def sampling_map_card():
     )
 
 
+def banner_block() -> html.Div:
+    return html.Div(
+        [
+            html.Img(
+                src="/assets/banner.png",
+                style={
+                    "width": "100%",
+                    "height": "auto",
+                    "maxHeight": "450px",
+                    "objectFit": "cover",
+                },
+            )
+        ],
+        style={"position": "relative", "width": "100%", "overflow": "hidden"},
+        className="mb-4",
+    )
+
+
 layout = html.Div(
     [
-        banner,
+        banner_block(),
         dbc.Container(
             [
                 dbc.Row(

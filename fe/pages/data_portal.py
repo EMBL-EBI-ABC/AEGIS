@@ -70,7 +70,7 @@ layout = dbc.Container(
 
 
 def return_tax_id_button(scientific_name: str, tax_id: str) -> dbc.Button:
-    return dbc.Button(scientific_name, outline=True, href=f"/data-portal/{tax_id}")
+    return dbc.Button(scientific_name, outline=True, color="primary", href=f"/data-portal/{tax_id}")
 
 
 def return_badge_status(budge_text: str, color: str = None) -> dbc.Badge:

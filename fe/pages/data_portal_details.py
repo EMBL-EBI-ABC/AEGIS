@@ -1,10 +1,13 @@
+import math
 from typing import Callable
 
 import dash
 import requests
 import json
-from dash import html, Output, Input, callback, dcc, dash_table
+from dash import html, Output, Input, callback, dcc
 import dash_bootstrap_components as dbc
+
+PAGE_SIZE = 10
 
 from .data_portal import return_badge_status
 
@@ -47,7 +50,15 @@ def layout(tax_id=None, **kwargs):
                                 ],
                                     style={"marginBottom": "15px"},
                                 ),
-                                html.P(id="tabs_body", className="card-text")
+                                html.Div(id="tabs_body", className="card-text"),
+                                dbc.Pagination(
+                                    id="metadata-pagination",
+                                    max_value=1,
+                                    first_last=True,
+                                    previous_next=True,
+                                    fully_expanded=False,
+                                    className="justify-content-end mt-3"
+                                ),
                             ]),
                         ],
                         id="tabs_card",
@@ -65,6 +76,7 @@ def return_biosamples_accession_button(accession: str) -> dbc.Button:
     return dbc.Button(
         accession,
         outline=True,
+        color="primary",
         href=f"https://www.ebi.ac.uk/biosamples/samples/{accession}")
 
 
@@ -72,6 +84,7 @@ def return_ena_accession_button(accession: str) -> dbc.Button:
     return dbc.Button(
         accession,
         outline=True,
+        color="primary",
         href=f"https://www.ebi.ac.uk/ena/browser/view/{accession}")
 
 
@@ -83,7 +96,9 @@ def return_ftp_download_link(url: str) -> html.Div:
             dbc.Button(
                 link_name,
                 outline=True,
-                href=f"https://{link}")
+                color="primary",
+                href=f"https://{link}",
+                style={"marginRight": "5px", "marginBottom": "5px"})
         )
     return html.Div(links)
 
@@ -165,21 +180,35 @@ def create_data_portal_record(tax_id):
 
 @callback(
     Output("tabs_body", "children"),
+    Output("metadata-pagination", "max_value"),
+    Output("metadata-pagination", "style"),
     Input("tabs_header", "active_tab"),
-    Input("intermediate-value", "data")
+    Input("intermediate-value", "data"),
+    Input("metadata-pagination", "active_page"),
 )
-def create_tabs(active_tab, agg_data):
+def create_tabs(active_tab, agg_data, active_page):
     agg_data = json.loads(agg_data)
     if active_tab == "metadata_tab":
+        samples = agg_data["samples"]
+        total = len(samples)
+        max_pages = max(1, math.ceil(total / PAGE_SIZE))
+
+        page = active_page or 1
+        start = (page - 1) * PAGE_SIZE
+        end = start + PAGE_SIZE
+        paginated_samples = samples[start:end]
+
         field_function_mapping: dict[str, Callable] = {
             "accession": return_biosamples_accession_button,
             "trackingSystem": return_badge_status
         }
-        return return_table(["Accession", "Scientific Name", "Common Name",
-                             "Sex", "Organism Part", "Current Status"],
-                            ["accession", "scientificName", "commonName", "sex",
-                             "organismPart", "trackingSystem"], agg_data["samples"],
-                            field_function_mapping)
+        table = return_table(["Accession", "Scientific Name", "Common Name",
+                              "Sex", "Organism Part", "Current Status"],
+                             ["accession", "scientificName", "commonName", "sex",
+                              "organismPart", "trackingSystem"], paginated_samples,
+                             field_function_mapping)
+        pagination_style = {"display": "flex"} if total > PAGE_SIZE else {"display": "none"}
+        return table, max_pages, pagination_style
     elif active_tab == "raw_data_tab":
         field_function_mapping: dict[str, Callable] = {
             "run_accession": return_ena_accession_button,
@@ -188,20 +217,22 @@ def create_tabs(active_tab, agg_data):
             "study_accession": return_ena_accession_button,
             "fastq_ftp": return_ftp_download_link
         }
-        return return_table(["Study Accession", "Sample Accession",
-                             "Experiment Accession", "Run Accession", "FASTQ FTP"],
-                            ["study_accession", "sample_accession",
-                             "experiment_accession", "run_accession", "fastq_ftp"],
-                            agg_data["rawData"], field_function_mapping)
+        table = return_table(["Study Accession", "Sample Accession",
+                              "Experiment Accession", "Run Accession", "FASTQ FTP"],
+                             ["study_accession", "sample_accession",
+                              "experiment_accession", "run_accession", "fastq_ftp"],
+                             agg_data["rawData"], field_function_mapping)
+        return table, 1, {"display": "none"}
     else:
         field_function_mapping: dict[str, Callable] = {
             "accession": return_ena_accession_button,
             "study_accession": return_ena_accession_button,
             "sample_accession": return_ena_accession_button
         }
-        return return_table(["Accession", "Assembly Name", "Description",
-                             "Study Accession", "Sample Accession", "Version"],
-                            ["accession", "assembly_name",
-                             "description", "study_accession", "sample_accession",
-                             "version"],
-                            agg_data["assemblies"], field_function_mapping)
+        table = return_table(["Accession", "Assembly Name", "Description",
+                              "Study Accession", "Sample Accession", "Version"],
+                             ["accession", "assembly_name",
+                              "description", "study_accession", "sample_accession",
+                              "version"],
+                             agg_data["assemblies"], field_function_mapping)
+        return table, 1, {"display": "none"}

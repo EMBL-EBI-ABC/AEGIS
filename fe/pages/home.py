@@ -15,7 +15,7 @@ BACKGROUND_URL = ("https://www.embl.org/news/wp-content/uploads/2024/06/"
 
 banner = html.Div(
     html.Img(
-        src="/assets/banner.png",
+        src="/assets/banner.jpg",
         alt="AEGIS Data Portal banner",
         className="banner-image-full"
     ),
@@ -106,14 +106,25 @@ def banner_block() -> html.Div:
     return html.Div(
         [
             html.Img(
-                src="/assets/banner.png",
+                src="/assets/banner.jpg",
                 style={
                     "width": "100%",
                     "height": "auto",
                     "maxHeight": "450px",
                     "objectFit": "cover",
                 },
-            )
+            ),
+            html.Img(
+                src="/assets/aegis_logo-byline_RGB_black_01.png",
+                style={
+                    "position": "absolute",
+                    "top": "50%",
+                    "left": "50%",
+                    "transform": "translate(-50%, -50%)",
+                    "maxWidth": "650px",
+                    "width": "80%",
+                },
+            ),
         ],
         style={"position": "relative", "width": "100%", "overflow": "hidden"},
         className="mb-4",

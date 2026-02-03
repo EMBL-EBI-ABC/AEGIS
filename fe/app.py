@@ -4,7 +4,7 @@ import dash_bootstrap_components as dbc
 
 app = dash.Dash(
     __name__,
-    external_stylesheets=[dbc.themes.SOLAR],
+    external_stylesheets=[dbc.themes.CERULEAN],
     use_pages=True)
 
 app.layout = html.Div([
@@ -19,10 +19,17 @@ app.layout = html.Div([
                                     href=f"{dash.page_registry['pages.about']['path']}"
                                     )),
         ],
-        brand="AEGIS",
+        brand=[
+            "AEGIS",
+            html.Img(
+                src="/assets/aegis_logomark_RGB_black_01.png",
+                height="30px",
+                style={"marginLeft": "10px"},
+            ),
+        ],
         brand_href=f"{dash.page_registry['pages.home']['path']}",
-        color="dark",
-        dark=True,
+        color="light",
+        dark=False,
     ),
     dash.page_container
 ])

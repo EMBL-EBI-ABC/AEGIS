@@ -16,8 +16,9 @@ def iframe_layout():
             "height": "100vh",
             "width": "100%",
             "border": "none",
-            "overflow": "auto"
-        }
+            "border": "none",
+            "overflow": "auto",
+        },
     )
 
 
@@ -29,7 +30,5 @@ layout = dbc.Container(
         ),
     ),
     fluid=True,
-    style={
-        "backgroundColor": "white"
-    },
+    style={"backgroundColor": "white"},
 )

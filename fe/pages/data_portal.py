@@ -19,7 +19,7 @@ layout = dbc.Container(
                     dbc.CardBody(
                         [
                             html.H4("Data Status", className="card-title"),
-                            dbc.Checklist(id="checklist_input")
+                            dbc.Checklist(id="checklist_input"),
                         ]
                     )
                 ),
@@ -35,42 +35,64 @@ layout = dbc.Container(
                                 id="input",
                                 placeholder="Free text search, ex. wheat...",
                                 type="text",
-                                debounce=True
+                                debounce=True,
                             ),
-                            html.Div([
-                                html.B("Statuses legend: "),
-                                dbc.Badge("Submitted to Biosamples", pill=True, color="secondary"),
-                                html.B(" -> "),
-                                dbc.Badge("Raw Data - Submitted", pill=True, color="primary"),
-                                html.B(" -> "),
-                                dbc.Badge("Assemblies - Submitted", pill=True, color="success"),
-                                html.B(" -> "),
-                                dbc.Badge("Annotation Completed", pill=True, color="info"),
-                                html.B(" -> "),
-                                dbc.Badge("Annotation - Submitted", pill=True, color="danger"),
-                            ]),
+                            html.Div(
+                                [
+                                    html.B("Statuses legend: "),
+                                    dbc.Badge(
+                                        "Submitted to Biosamples",
+                                        pill=True,
+                                        color="secondary",
+                                    ),
+                                    html.B(" -> "),
+                                    dbc.Badge(
+                                        "Raw Data - Submitted",
+                                        pill=True,
+                                        color="primary",
+                                    ),
+                                    html.B(" -> "),
+                                    dbc.Badge(
+                                        "Assemblies - Submitted",
+                                        pill=True,
+                                        color="success",
+                                    ),
+                                    html.B(" -> "),
+                                    dbc.Badge(
+                                        "Annotation Completed", pill=True, color="info"
+                                    ),
+                                    html.B(" -> "),
+                                    dbc.Badge(
+                                        "Annotation - Submitted",
+                                        pill=True,
+                                        color="danger",
+                                    ),
+                                ]
+                            ),
                             html.Div(id="data_table"),
                             dbc.Pagination(
                                 id="pagination",
-                                max_value=1,        # will be updated by callback
+                                max_value=1,  # will be updated by callback
                                 first_last=True,
                                 previous_next=True,
-                                fully_expanded=False
+                                fully_expanded=False,
                             ),
                         ],
-                        gap=3
+                        gap=3,
                     )
                 ),
-                md=9
+                md=9,
             ),
         ],
-        style={"marginTop": "15px"}
+        style={"marginTop": "15px"},
     )
 )
 
 
 def return_tax_id_button(scientific_name: str, tax_id: str) -> dbc.Button:
-    return dbc.Button(scientific_name, outline=True, color="primary", href=f"/data-portal/{tax_id}")
+    return dbc.Button(
+        scientific_name, outline=True, color="primary", href=f"/data-portal/{tax_id}"
+    )
 
 
 def return_badge_status(budge_text: str, color: str = None) -> dbc.Badge:
@@ -130,27 +152,47 @@ def create_update_data_table(filter_values, input_value, active_page):
 
     # Table
     table_header = [
-        html.Thead(html.Tr([html.Th(v) for v in ["Scientific Name", "Common Name", "Current Status"]]))
+        html.Thead(
+            html.Tr(
+                [
+                    html.Th(v)
+                    for v in ["Scientific Name", "Common Name", "Current Status"]
+                ]
+            )
+        )
     ]
     table_body = [
-        html.Tbody([
-            html.Tr([
-                html.Td(return_tax_id_button(row["scientificName"], row["taxId"])),
-                html.Td(row.get("commonName") or "-"),
-                html.Td(return_badge_status(row["currentStatus"])),
-            ])
-            for row in response.get("results", [])
-        ])
+        html.Tbody(
+            [
+                html.Tr(
+                    [
+                        html.Td(
+                            return_tax_id_button(row["scientificName"], row["taxId"])
+                        ),
+                        html.Td(row.get("commonName") or "-"),
+                        html.Td(return_badge_status(row["currentStatus"])),
+                    ]
+                )
+                for row in response.get("results", [])
+            ]
+        )
     ]
-    table = dbc.Table(table_header + table_body, striped=True, bordered=True, hover=True)
+    table = dbc.Table(
+        table_header + table_body, striped=True, bordered=True, hover=True
+    )
 
     # Checklist options from aggregations
     options = []
     for status_key, status_name in statuses.items():
-        for bucket in response.get("aggregations", {}).get(status_key, {}).get("buckets", []):
+        for bucket in (
+            response.get("aggregations", {}).get(status_key, {}).get("buckets", [])
+        ):
             if bucket.get("key") == "Done":
                 options.append(
-                    {"label": f"{status_name} - {bucket.get('doc_count', 0)}", "value": status_key}
+                    {
+                        "label": f"{status_name} - {bucket.get('doc_count', 0)}",
+                        "value": status_key,
+                    }
                 )
 
     # Compute total pages from backend total

@@ -67,11 +67,11 @@ class FieldDefinition:
 
 class DataSource:
     def __init__(
-            self,
-            name: str,
-            fields: list[FieldDefinition],
-            default_sort_field: str,
-            default_sort_order: Literal["desc", "asc"],
+        self,
+        name: str,
+        fields: list[FieldDefinition],
+        default_sort_field: str,
+        default_sort_order: Literal["desc", "asc"],
     ):
         self.name = name
         self.fields = fields
@@ -124,17 +124,18 @@ data_portal = DataSource(
         FieldDefinition(name="scientificName", type=str),
         FieldDefinition(name="commonName", type=str),
         FieldDefinition(name="phylogeny", type=dict[str, str]),
-        FieldDefinition(name="samples", type=list[dict[str, str|None]]),
+        FieldDefinition(name="samples", type=list[dict[str, str | None]]),
         FieldDefinition(name="currentStatus", type=str),
         FieldDefinition(name="currentStatusOrder", type=int),
         FieldDefinition(name="bioSamplesStatus", type=str, filterable=True),
         FieldDefinition(name="rawDataStatus", type=str, filterable=True),
         FieldDefinition(name="assembliesStatus", type=str, filterable=True),
-        FieldDefinition(name="rawData", type=list[dict[str, str|None]]),
-        FieldDefinition(name="assemblies", type=list[dict[str, str|None]]),
+        FieldDefinition(name="rawData", type=list[dict[str, str | None]]),
+        FieldDefinition(name="assemblies", type=list[dict[str, str | None]]),
     ],
     default_sort_field="currentStatusOrder",
     default_sort_order="desc",
 )
-(DataPortalData, DataPortalAggregationResponse,
- DataPortalSearchParams) = data_portal.generate_classes()
+(DataPortalData, DataPortalAggregationResponse, DataPortalSearchParams) = (
+    data_portal.generate_classes()
+)

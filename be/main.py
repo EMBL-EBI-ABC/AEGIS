@@ -14,7 +14,7 @@ from models import (
     ElasticDetailsResponse,
     DataPortalData,
     DataPortalSearchParams,
-    DataPortalAggregationResponse
+    DataPortalAggregationResponse,
 )
 
 
@@ -135,7 +135,7 @@ async def elastic_details(index_name, record_id, data_class):
 
 @app.get("/data_portal")
 async def data_portal_search(
-        params: Annotated[DataPortalSearchParams, Query()],
+    params: Annotated[DataPortalSearchParams, Query()],
 ) -> ElasticResponse[DataPortalData, DataPortalAggregationResponse]:
     return await elastic_search(
         index_name="data_portal",
@@ -147,7 +147,7 @@ async def data_portal_search(
 
 @app.get("/data_portal/{record_id}")
 async def data_portal_details(
-        record_id: Annotated[str, Path(description="Record ID")],
+    record_id: Annotated[str, Path(description="Record ID")],
 ) -> ElasticDetailsResponse[DataPortalData]:
     return await elastic_details(
         index_name="data_portal",

@@ -11,10 +11,7 @@ PAGE_SIZE = 10
 
 from .data_portal import return_badge_status
 
-dash.register_page(
-    __name__,
-    path_template="/data-portal/<tax_id>"
-)
+dash.register_page(__name__, path_template="/data-portal/<tax_id>")
 
 
 def layout(tax_id=None, **kwargs):
@@ -22,9 +19,7 @@ def layout(tax_id=None, **kwargs):
         [
             dbc.Row(
                 dbc.Col(
-                    dbc.Spinner(
-                        dbc.Card(dbc.CardBody(id="card", key=tax_id))
-                    ),
+                    dbc.Spinner(dbc.Card(dbc.CardBody(id="card", key=tax_id))),
                     md={"width": 10, "offset": 1},
                     style={"marginTop": "15px"},
                 )
@@ -36,30 +31,42 @@ def layout(tax_id=None, **kwargs):
                             dbc.CardHeader(
                                 dbc.Tabs(id="tabs_header", active_tab="metadata_tab")
                             ),
-                            dbc.CardBody([
-                                html.Div([
-                                    html.B("Statuses legend: "),
-                                    dbc.Badge("Submitted to Biosamples", pill=True,
-                                              color="secondary"),
-                                    html.B(" -> "),
-                                    dbc.Badge("Raw Data - Submitted", pill=True,
-                                              color="primary"),
-                                    html.B(" -> "),
-                                    dbc.Badge("Assemblies - Submitted", pill=True,
-                                              color="success")
-                                ],
-                                    style={"marginBottom": "15px"},
-                                ),
-                                html.Div(id="tabs_body", className="card-text"),
-                                dbc.Pagination(
-                                    id="metadata-pagination",
-                                    max_value=1,
-                                    first_last=True,
-                                    previous_next=True,
-                                    fully_expanded=False,
-                                    className="justify-content-end mt-3"
-                                ),
-                            ]),
+                            dbc.CardBody(
+                                [
+                                    html.Div(
+                                        [
+                                            html.B("Statuses legend: "),
+                                            dbc.Badge(
+                                                "Submitted to Biosamples",
+                                                pill=True,
+                                                color="secondary",
+                                            ),
+                                            html.B(" -> "),
+                                            dbc.Badge(
+                                                "Raw Data - Submitted",
+                                                pill=True,
+                                                color="primary",
+                                            ),
+                                            html.B(" -> "),
+                                            dbc.Badge(
+                                                "Assemblies - Submitted",
+                                                pill=True,
+                                                color="success",
+                                            ),
+                                        ],
+                                        style={"marginBottom": "15px"},
+                                    ),
+                                    html.Div(id="tabs_body", className="card-text"),
+                                    dbc.Pagination(
+                                        id="metadata-pagination",
+                                        max_value=1,
+                                        first_last=True,
+                                        previous_next=True,
+                                        fully_expanded=False,
+                                        className="justify-content-end mt-3",
+                                    ),
+                                ]
+                            ),
                         ],
                         id="tabs_card",
                     ),
@@ -67,7 +74,7 @@ def layout(tax_id=None, **kwargs):
                     style={"marginTop": "5px", "marginBottom": "15px"},
                 )
             ),
-            dcc.Store(id='intermediate-value')
+            dcc.Store(id="intermediate-value"),
         ]
     )
 
@@ -77,7 +84,8 @@ def return_biosamples_accession_button(accession: str) -> dbc.Button:
         accession,
         outline=True,
         color="primary",
-        href=f"https://www.ebi.ac.uk/biosamples/samples/{accession}")
+        href=f"https://www.ebi.ac.uk/biosamples/samples/{accession}",
+    )
 
 
 def return_ena_accession_button(accession: str) -> dbc.Button:
@@ -85,40 +93,57 @@ def return_ena_accession_button(accession: str) -> dbc.Button:
         accession,
         outline=True,
         color="primary",
-        href=f"https://www.ebi.ac.uk/ena/browser/view/{accession}")
+        href=f"https://www.ebi.ac.uk/ena/browser/view/{accession}",
+    )
 
 
 def return_ftp_download_link(url: str) -> html.Div:
     links = []
     for link in url.split(";"):
-        link_name = link.split('/')[-1]
+        link_name = link.split("/")[-1]
         links.append(
             dbc.Button(
                 link_name,
                 outline=True,
                 color="primary",
                 href=f"https://{link}",
-                style={"marginRight": "5px", "marginBottom": "5px"})
+                style={"marginRight": "5px", "marginBottom": "5px"},
+            )
         )
     return html.Div(links)
 
 
-def return_table(column_names: list[str], field_names: list[str],
-                 data: list[dict[str, str]],
-                 field_function_mapping: dict[str, Callable]) -> dbc.Table:
+def return_table(
+    column_names: list[str],
+    field_names: list[str],
+    data: list[dict[str, str]],
+    field_function_mapping: dict[str, Callable],
+) -> dbc.Table:
     table_header = [html.Thead(html.Tr([html.Th(value) for value in column_names]))]
     table_body = [
         html.Tbody(
-            [html.Tr(
-                [html.Td(
-                    field_function_mapping[field_name](row[field_name]) if
-                    field_name in field_function_mapping
-                    else row[field_name]) for field_name in field_names])
-                for
-                row in data])
+            [
+                html.Tr(
+                    [
+                        html.Td(
+                            field_function_mapping[field_name](row[field_name])
+                            if field_name in field_function_mapping
+                            else row[field_name]
+                        )
+                        for field_name in field_names
+                    ]
+                )
+                for row in data
+            ]
+        )
     ]
-    return dbc.Table(table_header + table_body, striped=True, bordered=True,
-                     hover=True, responsive=True)
+    return dbc.Table(
+        table_header + table_body,
+        striped=True,
+        bordered=True,
+        hover=True,
+        responsive=True,
+    )
 
 
 @callback(
@@ -127,9 +152,8 @@ def return_table(column_names: list[str], field_names: list[str],
     Output("intermediate-value", "data"),
     Input("card", "key"),
     running=[
-        (Output("tabs_card", "class_name"), "invisible",
-         "visible"),
-    ]
+        (Output("tabs_card", "class_name"), "invisible", "visible"),
+    ],
 )
 def create_data_portal_record(tax_id):
     response = requests.get(
@@ -137,32 +161,38 @@ def create_data_portal_record(tax_id):
     ).json()
     response = response["results"][0]
     children = [
-        html.H3(response["scientificName"], className="card-title", id="header")]
-    desc_list = html.Div([
-        html.P(f"Tax ID: {response['taxId']}"),
-        html.P(f"Scientific Name: {response['scientificName']}"),
-        html.P(f"Common Name: {response['commonName']}"),
-        html.P(["Current Status: ", return_badge_status(response["currentStatus"])]),
-        html.P([
-            "Kingdom: ",
-            return_badge_status(response["phylogeny"]["kingdom"], "primary"),
-            " -> ",
-            "Phylum: ",
-            return_badge_status(response["phylogeny"]["phylum"], "secondary"),
-            " -> "
-            "Class: ",
-            return_badge_status(response["phylogeny"]["class"], "success"),
-            " -> ",
-            "Order: ",
-            return_badge_status(response["phylogeny"]["order"], "warning"),
-            " -> ",
-            "Family: ",
-            return_badge_status(response["phylogeny"]["family"], "danger"),
-            " -> ",
-            "Genus: ",
-            return_badge_status(response["phylogeny"]["genus"], "info"),
-        ])
-    ])
+        html.H3(response["scientificName"], className="card-title", id="header")
+    ]
+    desc_list = html.Div(
+        [
+            html.P(f"Tax ID: {response['taxId']}"),
+            html.P(f"Scientific Name: {response['scientificName']}"),
+            html.P(f"Common Name: {response['commonName']}"),
+            html.P(
+                ["Current Status: ", return_badge_status(response["currentStatus"])]
+            ),
+            html.P(
+                [
+                    "Kingdom: ",
+                    return_badge_status(response["phylogeny"]["kingdom"], "primary"),
+                    " -> ",
+                    "Phylum: ",
+                    return_badge_status(response["phylogeny"]["phylum"], "secondary"),
+                    " -> " "Class: ",
+                    return_badge_status(response["phylogeny"]["class"], "success"),
+                    " -> ",
+                    "Order: ",
+                    return_badge_status(response["phylogeny"]["order"], "warning"),
+                    " -> ",
+                    "Family: ",
+                    return_badge_status(response["phylogeny"]["family"], "danger"),
+                    " -> ",
+                    "Genus: ",
+                    return_badge_status(response["phylogeny"]["genus"], "info"),
+                ]
+            ),
+        ]
+    )
     children.append(desc_list)
 
     tabs = [dbc.Tab(label="Metadata", tab_id="metadata_tab")]
@@ -200,14 +230,31 @@ def create_tabs(active_tab, agg_data, active_page):
 
         field_function_mapping: dict[str, Callable] = {
             "accession": return_biosamples_accession_button,
-            "trackingSystem": return_badge_status
+            "trackingSystem": return_badge_status,
         }
-        table = return_table(["Accession", "Scientific Name", "Common Name",
-                              "Sex", "Organism Part", "Current Status"],
-                             ["accession", "scientificName", "commonName", "sex",
-                              "organismPart", "trackingSystem"], paginated_samples,
-                             field_function_mapping)
-        pagination_style = {"display": "flex"} if total > PAGE_SIZE else {"display": "none"}
+        table = return_table(
+            [
+                "Accession",
+                "Scientific Name",
+                "Common Name",
+                "Sex",
+                "Organism Part",
+                "Current Status",
+            ],
+            [
+                "accession",
+                "scientificName",
+                "commonName",
+                "sex",
+                "organismPart",
+                "trackingSystem",
+            ],
+            paginated_samples,
+            field_function_mapping,
+        )
+        pagination_style = (
+            {"display": "flex"} if total > PAGE_SIZE else {"display": "none"}
+        )
         return table, max_pages, pagination_style
     elif active_tab == "raw_data_tab":
         field_function_mapping: dict[str, Callable] = {
@@ -215,24 +262,51 @@ def create_tabs(active_tab, agg_data, active_page):
             "sample_accession": return_ena_accession_button,
             "experiment_accession": return_ena_accession_button,
             "study_accession": return_ena_accession_button,
-            "fastq_ftp": return_ftp_download_link
+            "fastq_ftp": return_ftp_download_link,
         }
-        table = return_table(["Study Accession", "Sample Accession",
-                              "Experiment Accession", "Run Accession", "FASTQ FTP"],
-                             ["study_accession", "sample_accession",
-                              "experiment_accession", "run_accession", "fastq_ftp"],
-                             agg_data["rawData"], field_function_mapping)
+        table = return_table(
+            [
+                "Study Accession",
+                "Sample Accession",
+                "Experiment Accession",
+                "Run Accession",
+                "FASTQ FTP",
+            ],
+            [
+                "study_accession",
+                "sample_accession",
+                "experiment_accession",
+                "run_accession",
+                "fastq_ftp",
+            ],
+            agg_data["rawData"],
+            field_function_mapping,
+        )
         return table, 1, {"display": "none"}
     else:
         field_function_mapping: dict[str, Callable] = {
             "accession": return_ena_accession_button,
             "study_accession": return_ena_accession_button,
-            "sample_accession": return_ena_accession_button
+            "sample_accession": return_ena_accession_button,
         }
-        table = return_table(["Accession", "Assembly Name", "Description",
-                              "Study Accession", "Sample Accession", "Version"],
-                             ["accession", "assembly_name",
-                              "description", "study_accession", "sample_accession",
-                              "version"],
-                             agg_data["assemblies"], field_function_mapping)
+        table = return_table(
+            [
+                "Accession",
+                "Assembly Name",
+                "Description",
+                "Study Accession",
+                "Sample Accession",
+                "Version",
+            ],
+            [
+                "accession",
+                "assembly_name",
+                "description",
+                "study_accession",
+                "sample_accession",
+                "version",
+            ],
+            agg_data["assemblies"],
+            field_function_mapping,
+        )
         return table, 1, {"display": "none"}

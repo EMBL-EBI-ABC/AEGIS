@@ -10,12 +10,11 @@ dash.register_page(
 
 def iframe_layout():
     return html.Iframe(
-        src="https://aegis-be-1091670130981.europe-west2.run.app/redoc",
+        src="https://aegis-be-1091670130981.europe-west2.run.app/docs",
         style={
             "display": "block",
             "height": "100vh",
             "width": "100%",
-            "border": "none",
             "border": "none",
             "overflow": "auto",
         },

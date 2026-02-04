@@ -1,24 +1,8 @@
 import dash
 import dash_bootstrap_components as dbc
-from dash import html, dcc
-import plotly.express as px
-import pandas as pd
+from dash import html
 
 dash.register_page(__name__, title="Home", path="/")
-
-BACKGROUND_URL = (
-    "https://www.embl.org/news/wp-content/uploads/2024/06/"
-    "2024-NNF-grant-ancient-plant-DNA-1000x600-1.jpg"
-)
-
-banner = html.Div(
-    html.Img(
-        src="/assets/banner.jpg",
-        alt="AEGIS Data Portal banner",
-        className="banner-image-full",
-    ),
-    className="banner-container-full",
-)
 
 
 def data_portal_card():
@@ -31,7 +15,7 @@ def data_portal_card():
                 ]
             ),
             dbc.CardFooter(
-                dbc.Button("Data Portal", color="primary", href="/data-portal")
+                dbc.Button("Data Portal", color="dark", href="/data-portal")
             ),
         ]
     )
@@ -47,7 +31,7 @@ def api_card():
                 ]
             ),
             dbc.CardFooter(
-                dbc.Button("API Documentation", color="primary", href="/api")
+                dbc.Button("API Documentation", color="dark", href="/api")
             ),
         ]
     )
@@ -62,40 +46,19 @@ def about_card():
                     html.P("This is some card text", className="card-text"),
                 ]
             ),
-            dbc.CardFooter(dbc.Button("About", color="primary", href="/about")),
+            dbc.CardFooter(dbc.Button("About", color="dark", href="/about")),
         ]
-    )
-
-
-def sampling_map_card():
-    df = pd.read_csv(
-        "https://raw.githubusercontent.com/plotly/datasets/master/2011_february_us_airport_traffic.csv"
-    )
-    fig = px.scatter_map(
-        df, lat="lat", lon="long", size="cnt", zoom=2, template="plotly_dark"
-    )
-    fig.update_traces(cluster=dict(enabled=True))
-    fig.update_layout(margin=dict(l=0, r=0, b=0, t=0), paper_bgcolor="Black")
-    return dbc.Card(
-        dbc.CardBody(
-            [
-                html.H4("Sampling Map", className="card-title"),
-                dcc.Graph(figure=fig),
-            ]
-        )
     )
 
 
 def banner_block() -> html.Div:
     return html.Div(
         [
-            html.Img(
-                src="/assets/banner.jpg",
+            html.Div(
                 style={
                     "width": "100%",
-                    "height": "auto",
-                    "maxHeight": "450px",
-                    "objectFit": "cover",
+                    "height": "450px",
+                    "background": "linear-gradient(to right, #808080, #ffffff, #808080)",
                 },
             ),
             html.Img(

@@ -79,20 +79,16 @@ def layout(tax_id=None, **kwargs):
     )
 
 
-def return_biosamples_accession_button(accession: str) -> dbc.Button:
-    return dbc.Button(
+def return_biosamples_accession_link(accession: str) -> html.A:
+    return html.A(
         accession,
-        outline=True,
-        color="primary",
         href=f"https://www.ebi.ac.uk/biosamples/samples/{accession}",
     )
 
 
-def return_ena_accession_button(accession: str) -> dbc.Button:
-    return dbc.Button(
+def return_ena_accession_link(accession: str) -> html.A:
+    return html.A(
         accession,
-        outline=True,
-        color="primary",
         href=f"https://www.ebi.ac.uk/ena/browser/view/{accession}",
     )
 
@@ -101,15 +97,8 @@ def return_ftp_download_link(url: str) -> html.Div:
     links = []
     for link in url.split(";"):
         link_name = link.split("/")[-1]
-        links.append(
-            dbc.Button(
-                link_name,
-                outline=True,
-                color="primary",
-                href=f"https://{link}",
-                style={"marginRight": "5px", "marginBottom": "5px"},
-            )
-        )
+        links.append(html.A(link_name, href=f"https://{link}"))
+        links.append(html.Span(" "))
     return html.Div(links)
 
 
@@ -229,7 +218,7 @@ def create_tabs(active_tab, agg_data, active_page):
         paginated_samples = samples[start:end]
 
         field_function_mapping: dict[str, Callable] = {
-            "accession": return_biosamples_accession_button,
+            "accession": return_biosamples_accession_link,
             "trackingSystem": return_badge_status,
         }
         table = return_table(
@@ -258,10 +247,10 @@ def create_tabs(active_tab, agg_data, active_page):
         return table, max_pages, pagination_style
     elif active_tab == "raw_data_tab":
         field_function_mapping: dict[str, Callable] = {
-            "run_accession": return_ena_accession_button,
-            "sample_accession": return_ena_accession_button,
-            "experiment_accession": return_ena_accession_button,
-            "study_accession": return_ena_accession_button,
+            "run_accession": return_ena_accession_link,
+            "sample_accession": return_ena_accession_link,
+            "experiment_accession": return_ena_accession_link,
+            "study_accession": return_ena_accession_link,
             "fastq_ftp": return_ftp_download_link,
         }
         table = return_table(
@@ -285,9 +274,9 @@ def create_tabs(active_tab, agg_data, active_page):
         return table, 1, {"display": "none"}
     else:
         field_function_mapping: dict[str, Callable] = {
-            "accession": return_ena_accession_button,
-            "study_accession": return_ena_accession_button,
-            "sample_accession": return_ena_accession_button,
+            "accession": return_ena_accession_link,
+            "study_accession": return_ena_accession_link,
+            "sample_accession": return_ena_accession_link,
         }
         table = return_table(
             [

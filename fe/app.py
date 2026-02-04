@@ -4,7 +4,7 @@ import dash_bootstrap_components as dbc
 
 app = dash.Dash(
     __name__,
-    external_stylesheets=[dbc.themes.CERULEAN],
+    external_stylesheets=[dbc.themes.LITERA],
     use_pages=True)
 
 app.layout = html.Div([

@@ -66,6 +66,7 @@ layout = dbc.Container(
                                         "Annotation - Submitted",
                                         pill=True,
                                         color="danger",
+                                        style={"marginTop": "5px"}
                                     ),
                                 ]
                             ),
@@ -89,10 +90,8 @@ layout = dbc.Container(
 )
 
 
-def return_tax_id_button(scientific_name: str, tax_id: str) -> dbc.Button:
-    return dbc.Button(
-        scientific_name, outline=True, color="primary", href=f"/data-portal/{tax_id}"
-    )
+def return_tax_id_link(scientific_name: str, tax_id: str) -> html.A:
+    return html.A(scientific_name, href=f"/data-portal/{tax_id}")
 
 
 def return_badge_status(budge_text: str, color: str = None) -> dbc.Badge:
@@ -167,7 +166,7 @@ def create_update_data_table(filter_values, input_value, active_page):
                 html.Tr(
                     [
                         html.Td(
-                            return_tax_id_button(row["scientificName"], row["taxId"])
+                            return_tax_id_link(row["scientificName"], row["taxId"])
                         ),
                         html.Td(row.get("commonName") or "-"),
                         html.Td(return_badge_status(row["currentStatus"])),

@@ -11,7 +11,7 @@ def data_portal_card():
             dbc.CardBody(
                 [
                     html.H4("Data Portal", className="card-title"),
-                    html.P("This is some card text", className="card-text"),
+                    html.P("Your entry point to search and explore all AEGIS projects data.", className="card-text"),
                 ]
             ),
             dbc.CardFooter(
@@ -27,7 +27,7 @@ def api_card():
             dbc.CardBody(
                 [
                     html.H4("API Documentation", className="card-title"),
-                    html.P("This is some card text", className="card-text"),
+                    html.P("Access the same search functionality programmatically through our public API.", className="card-text"),
                 ]
             ),
             dbc.CardFooter(
@@ -43,7 +43,7 @@ def about_card():
             dbc.CardBody(
                 [
                     html.H4("About", className="card-title"),
-                    html.P("This is some card text", className="card-text"),
+                    html.P("Learn more about the AEGIS project and its mission.", className="card-text"),
                 ]
             ),
             dbc.CardFooter(dbc.Button("About", color="dark", href="/about")),

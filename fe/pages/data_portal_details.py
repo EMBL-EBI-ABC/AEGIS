@@ -119,9 +119,25 @@ def layout(tax_id=None, **kwargs):
                                     ),
                                     # Tab Content
                                     html.Div(id="tabs_body", className="card-text"),
-                                    # Pagination
+                                    # Pagination components (one per tab for independent state)
                                     dbc.Pagination(
                                         id="metadata-pagination",
+                                        max_value=1,
+                                        first_last=True,
+                                        previous_next=True,
+                                        fully_expanded=False,
+                                        className="justify-content-end mt-3",
+                                    ),
+                                    dbc.Pagination(
+                                        id="raw-data-pagination",
+                                        max_value=1,
+                                        first_last=True,
+                                        previous_next=True,
+                                        fully_expanded=False,
+                                        className="justify-content-end mt-3",
+                                    ),
+                                    dbc.Pagination(
+                                        id="assemblies-pagination",
                                         max_value=1,
                                         first_last=True,
                                         previous_next=True,
@@ -445,20 +461,29 @@ def create_data_portal_record(tax_id):
     Output("tabs_body", "children"),
     Output("metadata-pagination", "max_value"),
     Output("metadata-pagination", "style"),
+    Output("raw-data-pagination", "max_value"),
+    Output("raw-data-pagination", "style"),
+    Output("assemblies-pagination", "max_value"),
+    Output("assemblies-pagination", "style"),
     Input("tabs_header", "active_tab"),
     Input("intermediate-value", "data"),
     Input("metadata-pagination", "active_page"),
+    Input("raw-data-pagination", "active_page"),
+    Input("assemblies-pagination", "active_page"),
 )
-def create_tabs(active_tab, agg_data, active_page):
+def create_tabs(active_tab, agg_data, metadata_page, raw_data_page, assemblies_page):
     """Render tab content based on active tab."""
     agg_data = json.loads(agg_data)
+
+    # Hide pagination for non-active tabs
+    hidden_pagination = {"display": "none"}
 
     if active_tab == "metadata_tab":
         samples = agg_data.get("samples", [])
         total = len(samples)
         max_pages = max(1, math.ceil(total / PAGE_SIZE))
 
-        page = active_page or 1
+        page = metadata_page or 1
         start = (page - 1) * PAGE_SIZE
         end = start + PAGE_SIZE
         paginated_samples = samples[start:end]
@@ -483,7 +508,11 @@ def create_tabs(active_tab, agg_data, active_page):
                     className="text-center py-4",
                 ),
                 1,
-                {"display": "none"},
+                hidden_pagination,
+                1,
+                hidden_pagination,
+                1,
+                hidden_pagination,
             )
 
         field_function_mapping: dict[str, Callable] = {
@@ -497,12 +526,19 @@ def create_tabs(active_tab, agg_data, active_page):
             field_function_mapping,
         )
         pagination_style = {"display": "flex"} if total > PAGE_SIZE else {"display": "none"}
-        return table, max_pages, pagination_style
+        return table, max_pages, pagination_style, 1, hidden_pagination, 1, hidden_pagination
 
     elif active_tab == "raw_data_tab":
         raw_data = agg_data.get("rawData", [])
+        total = len(raw_data)
+        max_pages = max(1, math.ceil(total / PAGE_SIZE))
 
-        if not raw_data:
+        page = raw_data_page or 1
+        start = (page - 1) * PAGE_SIZE
+        end = start + PAGE_SIZE
+        paginated_raw_data = raw_data[start:end]
+
+        if not paginated_raw_data:
             return (
                 html.Div(
                     [
@@ -522,7 +558,11 @@ def create_tabs(active_tab, agg_data, active_page):
                     className="text-center py-4",
                 ),
                 1,
-                {"display": "none"},
+                hidden_pagination,
+                1,
+                hidden_pagination,
+                1,
+                hidden_pagination,
             )
 
         field_function_mapping: dict[str, Callable] = {
@@ -535,15 +575,23 @@ def create_tabs(active_tab, agg_data, active_page):
         table = return_table(
             ["Study", "Sample", "Experiment", "Run", "FASTQ Files"],
             ["study_accession", "sample_accession", "experiment_accession", "run_accession", "fastq_ftp"],
-            raw_data,
+            paginated_raw_data,
             field_function_mapping,
         )
-        return table, 1, {"display": "none"}
+        pagination_style = {"display": "flex"} if total > PAGE_SIZE else {"display": "none"}
+        return table, 1, hidden_pagination, max_pages, pagination_style, 1, hidden_pagination
 
     else:  # assemblies_tab
         assemblies = agg_data.get("assemblies", [])
+        total = len(assemblies)
+        max_pages = max(1, math.ceil(total / PAGE_SIZE))
 
-        if not assemblies:
+        page = assemblies_page or 1
+        start = (page - 1) * PAGE_SIZE
+        end = start + PAGE_SIZE
+        paginated_assemblies = assemblies[start:end]
+
+        if not paginated_assemblies:
             return (
                 html.Div(
                     [
@@ -563,7 +611,11 @@ def create_tabs(active_tab, agg_data, active_page):
                     className="text-center py-4",
                 ),
                 1,
-                {"display": "none"},
+                hidden_pagination,
+                1,
+                hidden_pagination,
+                1,
+                hidden_pagination,
             )
 
         field_function_mapping: dict[str, Callable] = {
@@ -574,7 +626,8 @@ def create_tabs(active_tab, agg_data, active_page):
         table = return_table(
             ["Accession", "Assembly Name", "Description", "Study", "Sample", "Version"],
             ["accession", "assembly_name", "description", "study_accession", "sample_accession", "version"],
-            assemblies,
+            paginated_assemblies,
             field_function_mapping,
         )
-        return table, 1, {"display": "none"}
+        pagination_style = {"display": "flex"} if total > PAGE_SIZE else {"display": "none"}
+        return table, 1, hidden_pagination, 1, hidden_pagination, max_pages, pagination_style

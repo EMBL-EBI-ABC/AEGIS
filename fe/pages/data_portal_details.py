@@ -17,46 +17,109 @@ dash.register_page(__name__, path_template="/data-portal/<tax_id>")
 def layout(tax_id=None, **kwargs):
     return dbc.Container(
         [
+            # Back navigation
             dbc.Row(
                 dbc.Col(
-                    dbc.Spinner(dbc.Card(dbc.CardBody(id="card", key=tax_id))),
+                    html.A(
+                        [
+                            html.Span("←", style={"marginRight": "0.5rem"}),
+                            "Back to Data Portal",
+                        ],
+                        href="/data-portal",
+                        style={
+                            "color": "var(--aegis-text-muted)",
+                            "textDecoration": "none",
+                            "fontSize": "0.9rem",
+                            "display": "inline-flex",
+                            "alignItems": "center",
+                            "transition": "color 0.2s ease",
+                        },
+                        className="back-link",
+                    ),
+                    className="pt-4 pb-3",
+                ),
+            ),
+            # Species Summary Card
+            dbc.Row(
+                dbc.Col(
+                    dbc.Spinner(
+                        dbc.Card(
+                            dbc.CardBody(id="card", key=tax_id),
+                            style={
+                                "background": "var(--aegis-bg-card)",
+                                "border": "1px solid var(--aegis-border-subtle)",
+                            },
+                        ),
+                        color="warning",
+                    ),
                     md={"width": 10, "offset": 1},
-                    style={"marginTop": "15px"},
                 )
             ),
+            # Tabs Card
             dbc.Row(
                 dbc.Col(
                     dbc.Card(
                         [
                             dbc.CardHeader(
-                                dbc.Tabs(id="tabs_header", active_tab="metadata_tab")
+                                dbc.Tabs(id="tabs_header", active_tab="metadata_tab"),
+                                style={
+                                    "background": "var(--aegis-bg-elevated)",
+                                    "borderBottom": "1px solid var(--aegis-border-subtle)",
+                                    "padding": "0",
+                                },
                             ),
                             dbc.CardBody(
                                 [
+                                    # Status Legend
                                     html.Div(
                                         [
-                                            html.B("Statuses legend: "),
+                                            html.Span(
+                                                "Status:",
+                                                className="text-muted me-2",
+                                                style={"fontSize": "0.85rem"},
+                                            ),
                                             dbc.Badge(
                                                 "Submitted to Biosamples",
                                                 pill=True,
                                                 color="secondary",
+                                                className="me-1",
                                             ),
-                                            html.B(" -> "),
+                                            html.Span(
+                                                "→",
+                                                className="mx-1",
+                                                style={"color": "var(--aegis-text-muted)"},
+                                            ),
                                             dbc.Badge(
                                                 "Raw Data - Submitted",
                                                 pill=True,
                                                 color="primary",
+                                                className="me-1",
                                             ),
-                                            html.B(" -> "),
+                                            html.Span(
+                                                "→",
+                                                className="mx-1",
+                                                style={"color": "var(--aegis-text-muted)"},
+                                            ),
                                             dbc.Badge(
                                                 "Assemblies - Submitted",
                                                 pill=True,
                                                 color="success",
                                             ),
                                         ],
-                                        style={"marginBottom": "15px"},
+                                        style={
+                                            "marginBottom": "1.5rem",
+                                            "padding": "0.75rem 1rem",
+                                            "background": "var(--aegis-bg-elevated)",
+                                            "borderRadius": "var(--radius-md)",
+                                            "display": "flex",
+                                            "flexWrap": "wrap",
+                                            "alignItems": "center",
+                                            "gap": "0.25rem",
+                                        },
                                     ),
+                                    # Tab Content
                                     html.Div(id="tabs_body", className="card-text"),
+                                    # Pagination
                                     dbc.Pagination(
                                         id="metadata-pagination",
                                         max_value=1,
@@ -65,13 +128,18 @@ def layout(tax_id=None, **kwargs):
                                         fully_expanded=False,
                                         className="justify-content-end mt-3",
                                     ),
-                                ]
+                                ],
+                                style={"padding": "1.5rem"},
                             ),
                         ],
                         id="tabs_card",
+                        style={
+                            "background": "var(--aegis-bg-card)",
+                            "border": "1px solid var(--aegis-border-subtle)",
+                        },
                     ),
                     md={"width": 10, "offset": 1},
-                    style={"marginTop": "5px", "marginBottom": "15px"},
+                    style={"marginTop": "1rem", "marginBottom": "2rem"},
                 )
             ),
             dcc.Store(id="intermediate-value"),
@@ -80,25 +148,52 @@ def layout(tax_id=None, **kwargs):
 
 
 def return_biosamples_accession_link(accession: str) -> html.A:
+    """Create a link to BioSamples."""
     return html.A(
         accession,
         href=f"https://www.ebi.ac.uk/biosamples/samples/{accession}",
+        target="_blank",
+        style={
+            "color": "var(--aegis-accent-primary)",
+            "fontFamily": "var(--font-mono)",
+            "fontSize": "0.85rem",
+        },
     )
 
 
 def return_ena_accession_link(accession: str) -> html.A:
+    """Create a link to ENA."""
     return html.A(
         accession,
         href=f"https://www.ebi.ac.uk/ena/browser/view/{accession}",
+        target="_blank",
+        style={
+            "color": "var(--aegis-accent-primary)",
+            "fontFamily": "var(--font-mono)",
+            "fontSize": "0.85rem",
+        },
     )
 
 
 def return_ftp_download_link(url: str) -> html.Div:
+    """Create FTP download links."""
     links = []
-    for link in url.split(";"):
+    for i, link in enumerate(url.split(";")):
         link_name = link.split("/")[-1]
-        links.append(html.A(link_name, href=f"https://{link}"))
-        links.append(html.Span(" "))
+        if i > 0:
+            links.append(html.Br())
+        links.append(
+            html.A(
+                link_name,
+                href=f"https://{link}",
+                target="_blank",
+                style={
+                    "color": "var(--aegis-accent-primary)",
+                    "fontFamily": "var(--font-mono)",
+                    "fontSize": "0.8rem",
+                },
+            )
+        )
     return html.Div(links)
 
 
@@ -107,7 +202,8 @@ def return_table(
     field_names: list[str],
     data: list[dict[str, str]],
     field_function_mapping: dict[str, Callable],
-) -> dbc.Table:
+) -> html.Div:
+    """Create a styled data table."""
     table_header = [html.Thead(html.Tr([html.Th(value) for value in column_names]))]
     table_body = [
         html.Tbody(
@@ -117,7 +213,8 @@ def return_table(
                         html.Td(
                             field_function_mapping[field_name](row[field_name])
                             if field_name in field_function_mapping
-                            else row[field_name]
+                            else row.get(field_name, "—"),
+                            style={"color": "var(--aegis-text-secondary)"},
                         )
                         for field_name in field_names
                     ]
@@ -126,12 +223,41 @@ def return_table(
             ]
         )
     ]
-    return dbc.Table(
+    table = dbc.Table(
         table_header + table_body,
         striped=True,
-        bordered=True,
+        bordered=False,
         hover=True,
         responsive=True,
+    )
+    return html.Div(
+        table,
+        style={
+            "background": "var(--aegis-bg-elevated)",
+            "borderRadius": "var(--radius-md)",
+            "border": "1px solid var(--aegis-border-subtle)",
+            "overflow": "hidden",
+        },
+    )
+
+
+def taxonomy_badge(label: str, value: str, color: str) -> html.Span:
+    """Create a taxonomy level badge."""
+    return html.Span(
+        [
+            html.Span(
+                label,
+                style={
+                    "fontSize": "0.7rem",
+                    "color": "var(--aegis-text-muted)",
+                    "textTransform": "uppercase",
+                    "letterSpacing": "0.05em",
+                    "marginRight": "0.25rem",
+                },
+            ),
+            dbc.Badge(value, pill=True, color=color),
+        ],
+        style={"display": "inline-flex", "alignItems": "center"},
     )
 
 
@@ -145,54 +271,172 @@ def return_table(
     ],
 )
 def create_data_portal_record(tax_id):
+    """Fetch and display species record details."""
     response = requests.get(
         f"https://aegis-be-1091670130981.europe-west2.run.app/data_portal/{tax_id}"
     ).json()
     response = response["results"][0]
-    children = [
-        html.H3(response["scientificName"], className="card-title", id="header")
-    ]
-    desc_list = html.Div(
-        [
-            html.P(f"Tax ID: {response['taxId']}"),
-            html.P(f"Scientific Name: {response['scientificName']}"),
-            html.P(f"Common Name: {response['commonName']}"),
-            html.P(
-                ["Current Status: ", return_badge_status(response["currentStatus"])]
-            ),
-            html.P(
-                [
-                    "Kingdom: ",
-                    return_badge_status(response["phylogeny"]["kingdom"], "primary"),
-                    " -> ",
-                    "Phylum: ",
-                    return_badge_status(response["phylogeny"]["phylum"], "secondary"),
-                    " -> " "Class: ",
-                    return_badge_status(response["phylogeny"]["class"], "success"),
-                    " -> ",
-                    "Order: ",
-                    return_badge_status(response["phylogeny"]["order"], "warning"),
-                    " -> ",
-                    "Family: ",
-                    return_badge_status(response["phylogeny"]["family"], "danger"),
-                    " -> ",
-                    "Genus: ",
-                    return_badge_status(response["phylogeny"]["genus"], "info"),
-                ]
-            ),
-        ]
-    )
-    children.append(desc_list)
 
-    tabs = [dbc.Tab(label="Metadata", tab_id="metadata_tab")]
-    if len(response["rawData"]) > 0:
-        tabs.append(dbc.Tab(label="Raw Data", tab_id="raw_data_tab"))
-    if len(response["assemblies"]) > 0:
-        tabs.append(dbc.Tab(label="Assemblies", tab_id="assemblies_tab"))
+    # Build header
+    children = [
+        html.H2(
+            response["scientificName"],
+            style={
+                "fontFamily": "var(--font-display)",
+                "fontStyle": "italic",
+                "color": "var(--aegis-text-primary)",
+                "marginBottom": "0.25rem",
+            },
+        ),
+        html.P(
+            response.get("commonName") or "",
+            style={
+                "fontSize": "1.1rem",
+                "color": "var(--aegis-text-muted)",
+                "marginBottom": "1.5rem",
+            },
+        ),
+    ]
+
+    # Info grid
+    info_items = [
+        ("Tax ID", response["taxId"]),
+        ("Status", return_badge_status(response["currentStatus"])),
+    ]
+
+    info_grid = html.Div(
+        [
+            html.Div(
+                [
+                    html.Span(
+                        label,
+                        style={
+                            "fontSize": "0.75rem",
+                            "color": "var(--aegis-text-muted)",
+                            "textTransform": "uppercase",
+                            "letterSpacing": "0.05em",
+                            "display": "block",
+                            "marginBottom": "0.25rem",
+                        },
+                    ),
+                    html.Span(
+                        value,
+                        style={
+                            "color": "var(--aegis-text-primary)",
+                            "fontFamily": "var(--font-mono)"
+                            if label == "Tax ID"
+                            else "inherit",
+                        },
+                    ),
+                ],
+                style={
+                    "padding": "1rem",
+                    "background": "var(--aegis-bg-elevated)",
+                    "borderRadius": "var(--radius-md)",
+                },
+            )
+            for label, value in info_items
+        ],
+        style={
+            "display": "grid",
+            "gridTemplateColumns": "repeat(auto-fit, minmax(150px, 1fr))",
+            "gap": "1rem",
+            "marginBottom": "1.5rem",
+        },
+    )
+    children.append(info_grid)
+
+    # Taxonomy path
+    phylogeny = response.get("phylogeny", {})
+    taxonomy_levels = [
+        ("Kingdom", phylogeny.get("kingdom"), "primary"),
+        ("Phylum", phylogeny.get("phylum"), "secondary"),
+        ("Class", phylogeny.get("class"), "success"),
+        ("Order", phylogeny.get("order"), "warning"),
+        ("Family", phylogeny.get("family"), "danger"),
+        ("Genus", phylogeny.get("genus"), "info"),
+    ]
+
+    taxonomy_path = html.Div(
+        [
+            html.Div(
+                "Taxonomy",
+                style={
+                    "fontSize": "0.75rem",
+                    "color": "var(--aegis-text-muted)",
+                    "textTransform": "uppercase",
+                    "letterSpacing": "0.05em",
+                    "marginBottom": "0.75rem",
+                },
+            ),
+            html.Div(
+                [
+                    item
+                    for i, (label, value, color) in enumerate(taxonomy_levels)
+                    if value
+                    for item in (
+                        [
+                            html.Span(
+                                "→",
+                                style={
+                                    "color": "var(--aegis-text-muted)",
+                                    "margin": "0 0.5rem",
+                                },
+                            )
+                        ]
+                        if i > 0
+                        else []
+                    )
+                    + [taxonomy_badge(label, value, color)]
+                ],
+                style={
+                    "display": "flex",
+                    "flexWrap": "wrap",
+                    "alignItems": "center",
+                    "gap": "0.25rem",
+                },
+            ),
+        ],
+        style={
+            "padding": "1rem",
+            "background": "var(--aegis-bg-elevated)",
+            "borderRadius": "var(--radius-md)",
+        },
+    )
+    children.append(taxonomy_path)
+
+    # Build tabs
+    tabs = [
+        dbc.Tab(
+            label="Metadata",
+            tab_id="metadata_tab",
+            label_style={"color": "var(--aegis-text-secondary)"},
+            active_label_style={"color": "var(--aegis-accent-primary)"},
+        )
+    ]
+    if len(response.get("rawData", [])) > 0:
+        tabs.append(
+            dbc.Tab(
+                label="Raw Data",
+                tab_id="raw_data_tab",
+                label_style={"color": "var(--aegis-text-secondary)"},
+                active_label_style={"color": "var(--aegis-accent-primary)"},
+            )
+        )
+    if len(response.get("assemblies", [])) > 0:
+        tabs.append(
+            dbc.Tab(
+                label="Assemblies",
+                tab_id="assemblies_tab",
+                label_style={"color": "var(--aegis-text-secondary)"},
+                active_label_style={"color": "var(--aegis-accent-primary)"},
+            )
+        )
+
     agg_data = {
-        "samples": response["samples"],
-        "rawData": response["rawData"],
-        "assemblies": response["assemblies"],
+        "samples": response.get("samples", []),
+        "rawData": response.get("rawData", []),
+        "assemblies": response.get("assemblies", []),
     }
     return children, tabs, json.dumps(agg_data)
 
@@ -206,9 +450,11 @@ def create_data_portal_record(tax_id):
     Input("metadata-pagination", "active_page"),
 )
 def create_tabs(active_tab, agg_data, active_page):
+    """Render tab content based on active tab."""
     agg_data = json.loads(agg_data)
+
     if active_tab == "metadata_tab":
-        samples = agg_data["samples"]
+        samples = agg_data.get("samples", [])
         total = len(samples)
         max_pages = max(1, math.ceil(total / PAGE_SIZE))
 
@@ -217,35 +463,68 @@ def create_tabs(active_tab, agg_data, active_page):
         end = start + PAGE_SIZE
         paginated_samples = samples[start:end]
 
+        if not paginated_samples:
+            return (
+                html.Div(
+                    [
+                        html.Div(
+                            "📋",
+                            style={
+                                "fontSize": "2rem",
+                                "marginBottom": "0.5rem",
+                                "opacity": "0.5",
+                            },
+                        ),
+                        html.P(
+                            "No metadata samples available",
+                            style={"color": "var(--aegis-text-muted)"},
+                        ),
+                    ],
+                    className="text-center py-4",
+                ),
+                1,
+                {"display": "none"},
+            )
+
         field_function_mapping: dict[str, Callable] = {
             "accession": return_biosamples_accession_link,
             "trackingSystem": return_badge_status,
         }
         table = return_table(
-            [
-                "Accession",
-                "Scientific Name",
-                "Common Name",
-                "Sex",
-                "Organism Part",
-                "Current Status",
-            ],
-            [
-                "accession",
-                "scientificName",
-                "commonName",
-                "sex",
-                "organismPart",
-                "trackingSystem",
-            ],
+            ["Accession", "Scientific Name", "Common Name", "Sex", "Organism Part", "Status"],
+            ["accession", "scientificName", "commonName", "sex", "organismPart", "trackingSystem"],
             paginated_samples,
             field_function_mapping,
         )
-        pagination_style = (
-            {"display": "flex"} if total > PAGE_SIZE else {"display": "none"}
-        )
+        pagination_style = {"display": "flex"} if total > PAGE_SIZE else {"display": "none"}
         return table, max_pages, pagination_style
+
     elif active_tab == "raw_data_tab":
+        raw_data = agg_data.get("rawData", [])
+
+        if not raw_data:
+            return (
+                html.Div(
+                    [
+                        html.Div(
+                            "🧬",
+                            style={
+                                "fontSize": "2rem",
+                                "marginBottom": "0.5rem",
+                                "opacity": "0.5",
+                            },
+                        ),
+                        html.P(
+                            "No raw data available",
+                            style={"color": "var(--aegis-text-muted)"},
+                        ),
+                    ],
+                    className="text-center py-4",
+                ),
+                1,
+                {"display": "none"},
+            )
+
         field_function_mapping: dict[str, Callable] = {
             "run_accession": return_ena_accession_link,
             "sample_accession": return_ena_accession_link,
@@ -254,48 +533,48 @@ def create_tabs(active_tab, agg_data, active_page):
             "fastq_ftp": return_ftp_download_link,
         }
         table = return_table(
-            [
-                "Study Accession",
-                "Sample Accession",
-                "Experiment Accession",
-                "Run Accession",
-                "FASTQ FTP",
-            ],
-            [
-                "study_accession",
-                "sample_accession",
-                "experiment_accession",
-                "run_accession",
-                "fastq_ftp",
-            ],
-            agg_data["rawData"],
+            ["Study", "Sample", "Experiment", "Run", "FASTQ Files"],
+            ["study_accession", "sample_accession", "experiment_accession", "run_accession", "fastq_ftp"],
+            raw_data,
             field_function_mapping,
         )
         return table, 1, {"display": "none"}
-    else:
+
+    else:  # assemblies_tab
+        assemblies = agg_data.get("assemblies", [])
+
+        if not assemblies:
+            return (
+                html.Div(
+                    [
+                        html.Div(
+                            "🔧",
+                            style={
+                                "fontSize": "2rem",
+                                "marginBottom": "0.5rem",
+                                "opacity": "0.5",
+                            },
+                        ),
+                        html.P(
+                            "No assemblies available",
+                            style={"color": "var(--aegis-text-muted)"},
+                        ),
+                    ],
+                    className="text-center py-4",
+                ),
+                1,
+                {"display": "none"},
+            )
+
         field_function_mapping: dict[str, Callable] = {
             "accession": return_ena_accession_link,
             "study_accession": return_ena_accession_link,
             "sample_accession": return_ena_accession_link,
         }
         table = return_table(
-            [
-                "Accession",
-                "Assembly Name",
-                "Description",
-                "Study Accession",
-                "Sample Accession",
-                "Version",
-            ],
-            [
-                "accession",
-                "assembly_name",
-                "description",
-                "study_accession",
-                "sample_accession",
-                "version",
-            ],
-            agg_data["assemblies"],
+            ["Accession", "Assembly Name", "Description", "Study", "Sample", "Version"],
+            ["accession", "assembly_name", "description", "study_accession", "sample_accession", "version"],
+            assemblies,
             field_function_mapping,
         )
         return table, 1, {"display": "none"}

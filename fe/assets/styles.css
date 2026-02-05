@@ -1,0 +1,981 @@
+/* ==========================================================================
+   AEGIS Data Portal — Scientific Editorial Design System
+   Ancient Environmental Genomics Initiative for Sustainability
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Google Fonts Import
+   -------------------------------------------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Source+Sans+3:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* --------------------------------------------------------------------------
+   CSS Custom Properties (Design Tokens)
+   -------------------------------------------------------------------------- */
+:root {
+    /* Color Palette — Earthy Ancient/Archaeological */
+    --aegis-bg-deep: #0D0C0A;
+    --aegis-bg-primary: #151413;
+    --aegis-bg-elevated: #1D1B19;
+    --aegis-bg-card: #242220;
+    --aegis-bg-hover: #2D2A27;
+
+    /* Accent Colors — Amber/Gold (Ancient Discovery) */
+    --aegis-accent-primary: #D4A855;
+    --aegis-accent-secondary: #C49A47;
+    --aegis-accent-muted: #8B7340;
+    --aegis-accent-glow: rgba(212, 168, 85, 0.15);
+
+    /* Earth Tones for Status/Categories */
+    --aegis-earth-sage: #7A9E7E;
+    --aegis-earth-terracotta: #C67B5C;
+    --aegis-earth-slate: #6B7C8A;
+    --aegis-earth-ochre: #C4A35A;
+    --aegis-earth-moss: #5D7A5E;
+
+    /* Text Colors */
+    --aegis-text-primary: #F5F2ED;
+    --aegis-text-secondary: #B8B3A9;
+    --aegis-text-muted: #7D7869;
+    --aegis-text-accent: var(--aegis-accent-primary);
+
+    /* Borders & Lines */
+    --aegis-border-subtle: rgba(255, 255, 255, 0.06);
+    --aegis-border-medium: rgba(255, 255, 255, 0.1);
+    --aegis-border-accent: rgba(212, 168, 85, 0.3);
+
+    /* Typography */
+    --font-display: 'Cormorant Garamond', Georgia, serif;
+    --font-body: 'Source Sans 3', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+    /* Spacing Scale */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    --space-2xl: 3rem;
+    --space-3xl: 4rem;
+
+    /* Transitions */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+    --shadow-glow: 0 0 40px var(--aegis-accent-glow);
+
+    /* Border Radius */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+}
+
+/* --------------------------------------------------------------------------
+   Base Reset & Global Styles
+   -------------------------------------------------------------------------- */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    font-family: var(--font-body);
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.6;
+    color: var(--aegis-text-primary);
+    background: var(--aegis-bg-deep);
+    margin: 0;
+    min-height: 100vh;
+}
+
+/* Subtle noise texture overlay */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+
+/* --------------------------------------------------------------------------
+   Typography
+   -------------------------------------------------------------------------- */
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    line-height: 1.2;
+    color: var(--aegis-text-primary);
+    margin-top: 0;
+    letter-spacing: -0.01em;
+}
+
+h1 { font-size: 3rem; font-weight: 600; }
+h2 { font-size: 2.25rem; }
+h3 { font-size: 1.75rem; }
+h4 { font-size: 1.375rem; }
+h5 { font-size: 1.125rem; }
+h6 { font-size: 1rem; }
+
+p {
+    margin-top: 0;
+    margin-bottom: var(--space-md);
+    color: var(--aegis-text-secondary);
+}
+
+a {
+    color: var(--aegis-accent-primary);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+a:hover {
+    color: var(--aegis-text-primary);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* --------------------------------------------------------------------------
+   Navigation Bar
+   -------------------------------------------------------------------------- */
+.navbar {
+    background: var(--aegis-bg-primary) !important;
+    border-bottom: 1px solid var(--aegis-border-subtle);
+    padding: var(--space-md) var(--space-xl);
+    backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.navbar-brand {
+    font-family: var(--font-display) !important;
+    font-size: 1.5rem !important;
+    font-weight: 600 !important;
+    color: var(--aegis-text-primary) !important;
+    letter-spacing: 0.15em;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.navbar-brand img {
+    filter: invert(1) brightness(0.9) sepia(0.2);
+    opacity: 0.9;
+    transition: opacity var(--transition-fast);
+}
+
+.navbar-brand:hover img {
+    opacity: 1;
+}
+
+.nav-link {
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--aegis-text-secondary) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: var(--space-sm) var(--space-md) !important;
+    position: relative;
+    transition: color var(--transition-fast);
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: var(--space-md);
+    right: var(--space-md);
+    height: 2px;
+    background: var(--aegis-accent-primary);
+    transform: scaleX(0);
+    transition: transform var(--transition-base);
+}
+
+.nav-link:hover {
+    color: var(--aegis-text-primary) !important;
+    text-decoration: none !important;
+}
+
+.nav-link:hover::after {
+    transform: scaleX(1);
+}
+
+.navbar-toggler {
+    border-color: var(--aegis-border-medium) !important;
+}
+
+.navbar-toggler-icon {
+    filter: invert(1);
+}
+
+/* --------------------------------------------------------------------------
+   Container Overrides
+   -------------------------------------------------------------------------- */
+.container, .container-fluid {
+    padding-left: var(--space-xl);
+    padding-right: var(--space-xl);
+}
+
+@media (min-width: 1400px) {
+    .container {
+        max-width: 1320px;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Cards — Elevated Editorial Style
+   -------------------------------------------------------------------------- */
+.card {
+    background: var(--aegis-bg-card);
+    border: 1px solid var(--aegis-border-subtle);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--aegis-border-accent);
+}
+
+.card-header {
+    background: transparent;
+    border-bottom: 1px solid var(--aegis-border-subtle);
+    padding: var(--space-lg);
+    font-family: var(--font-display);
+}
+
+.card-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--aegis-text-primary);
+}
+
+.card-body {
+    padding: var(--space-lg);
+}
+
+.card-title {
+    font-family: var(--font-display);
+    font-size: 1.375rem;
+    font-weight: 500;
+    color: var(--aegis-text-primary);
+    margin-bottom: var(--space-sm);
+}
+
+.card-text {
+    color: var(--aegis-text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.7;
+}
+
+.card-footer {
+    background: var(--aegis-bg-elevated);
+    border-top: 1px solid var(--aegis-border-subtle);
+    padding: var(--space-md) var(--space-lg);
+}
+
+.card-img, .card-img-top {
+    border-radius: 0;
+    opacity: 0.9;
+    transition: opacity var(--transition-base);
+}
+
+.card:hover .card-img,
+.card:hover .card-img-top {
+    opacity: 1;
+}
+
+/* --------------------------------------------------------------------------
+   Buttons — Refined with Subtle Glow
+   -------------------------------------------------------------------------- */
+.btn {
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: var(--space-sm) var(--space-lg);
+    border-radius: var(--radius-md);
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-dark, .btn-primary {
+    background: var(--aegis-accent-primary);
+    color: var(--aegis-bg-deep);
+}
+
+.btn-dark:hover, .btn-primary:hover {
+    background: var(--aegis-accent-secondary);
+    color: var(--aegis-bg-deep);
+    box-shadow: var(--shadow-glow);
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: var(--aegis-bg-elevated);
+    color: var(--aegis-text-primary);
+    border: 1px solid var(--aegis-border-medium);
+}
+
+.btn-secondary:hover {
+    background: var(--aegis-bg-hover);
+    border-color: var(--aegis-accent-muted);
+    color: var(--aegis-text-primary);
+}
+
+.btn-outline-primary {
+    background: transparent;
+    color: var(--aegis-accent-primary);
+    border: 1px solid var(--aegis-accent-primary);
+}
+
+.btn-outline-primary:hover {
+    background: var(--aegis-accent-primary);
+    color: var(--aegis-bg-deep);
+}
+
+/* --------------------------------------------------------------------------
+   Badges — Status Indicators with Scientific Colors
+   -------------------------------------------------------------------------- */
+.badge {
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.35em 0.75em;
+    border-radius: 100px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+}
+
+.badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.7;
+}
+
+/* Custom Badge Colors for Pipeline Stages */
+.badge.bg-secondary {
+    background: rgba(107, 124, 138, 0.2) !important;
+    color: var(--aegis-earth-slate);
+    border: 1px solid rgba(107, 124, 138, 0.3);
+}
+
+.badge.bg-primary {
+    background: rgba(212, 168, 85, 0.15) !important;
+    color: var(--aegis-accent-primary);
+    border: 1px solid rgba(212, 168, 85, 0.3);
+}
+
+.badge.bg-success {
+    background: rgba(122, 158, 126, 0.15) !important;
+    color: var(--aegis-earth-sage);
+    border: 1px solid rgba(122, 158, 126, 0.3);
+}
+
+.badge.bg-warning {
+    background: rgba(196, 163, 90, 0.15) !important;
+    color: var(--aegis-earth-ochre);
+    border: 1px solid rgba(196, 163, 90, 0.3);
+}
+
+.badge.bg-danger {
+    background: rgba(198, 123, 92, 0.15) !important;
+    color: var(--aegis-earth-terracotta);
+    border: 1px solid rgba(198, 123, 92, 0.3);
+}
+
+.badge.bg-info {
+    background: rgba(93, 122, 94, 0.15) !important;
+    color: var(--aegis-earth-moss);
+    border: 1px solid rgba(93, 122, 94, 0.3);
+}
+
+/* --------------------------------------------------------------------------
+   Form Controls — Search & Filters
+   -------------------------------------------------------------------------- */
+.form-control, input[type="text"] {
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    background: var(--aegis-bg-elevated);
+    border: 1px solid var(--aegis-border-medium);
+    border-radius: var(--radius-md);
+    color: var(--aegis-text-primary);
+    padding: var(--space-sm) var(--space-md);
+    transition: all var(--transition-fast);
+}
+
+.form-control:focus, input[type="text"]:focus {
+    background: var(--aegis-bg-card);
+    border-color: var(--aegis-accent-primary);
+    box-shadow: 0 0 0 3px var(--aegis-accent-glow);
+    outline: none;
+    color: var(--aegis-text-primary);
+}
+
+.form-control::placeholder {
+    color: var(--aegis-text-muted);
+    font-style: italic;
+}
+
+/* Checkboxes */
+.form-check-input {
+    background-color: var(--aegis-bg-elevated);
+    border: 1px solid var(--aegis-border-medium);
+    border-radius: var(--radius-sm);
+    width: 1.1em;
+    height: 1.1em;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.form-check-input:checked {
+    background-color: var(--aegis-accent-primary);
+    border-color: var(--aegis-accent-primary);
+}
+
+.form-check-input:focus {
+    box-shadow: 0 0 0 3px var(--aegis-accent-glow);
+    border-color: var(--aegis-accent-primary);
+}
+
+.form-check-label {
+    color: var(--aegis-text-secondary);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: color var(--transition-fast);
+}
+
+.form-check:hover .form-check-label {
+    color: var(--aegis-text-primary);
+}
+
+/* --------------------------------------------------------------------------
+   Tables — Data Display
+   -------------------------------------------------------------------------- */
+.table {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--aegis-text-secondary);
+    --bs-table-border-color: var(--aegis-border-subtle);
+    --bs-table-striped-bg: rgba(255, 255, 255, 0.02);
+    --bs-table-hover-bg: rgba(212, 168, 85, 0.05);
+
+    font-size: 0.9rem;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table thead th {
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--aegis-text-muted);
+    background: var(--aegis-bg-elevated);
+    border-bottom: 2px solid var(--aegis-border-medium);
+    padding: var(--space-md);
+    white-space: nowrap;
+}
+
+.table tbody td {
+    padding: var(--space-md);
+    vertical-align: middle;
+    border-bottom: 1px solid var(--aegis-border-subtle);
+    color: var(--aegis-text-secondary);
+}
+
+.table tbody tr {
+    transition: background-color var(--transition-fast);
+}
+
+.table tbody tr:hover {
+    background-color: var(--bs-table-hover-bg) !important;
+}
+
+.table tbody tr:hover td {
+    color: var(--aegis-text-primary);
+}
+
+.table a {
+    font-weight: 500;
+}
+
+/* Responsive tables */
+.table-responsive {
+    border-radius: var(--radius-md);
+    border: 1px solid var(--aegis-border-subtle);
+}
+
+/* --------------------------------------------------------------------------
+   Pagination
+   -------------------------------------------------------------------------- */
+.pagination {
+    gap: var(--space-xs);
+}
+
+.page-link {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 500;
+    background: var(--aegis-bg-elevated);
+    border: 1px solid var(--aegis-border-subtle);
+    color: var(--aegis-text-secondary);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md) !important;
+    transition: all var(--transition-fast);
+}
+
+.page-link:hover {
+    background: var(--aegis-bg-hover);
+    border-color: var(--aegis-border-accent);
+    color: var(--aegis-text-primary);
+}
+
+.page-item.active .page-link {
+    background: var(--aegis-accent-primary);
+    border-color: var(--aegis-accent-primary);
+    color: var(--aegis-bg-deep);
+}
+
+.page-item.disabled .page-link {
+    background: var(--aegis-bg-primary);
+    border-color: var(--aegis-border-subtle);
+    color: var(--aegis-text-muted);
+    opacity: 0.5;
+}
+
+/* --------------------------------------------------------------------------
+   Tabs
+   -------------------------------------------------------------------------- */
+.nav-tabs {
+    border-bottom: 1px solid var(--aegis-border-subtle);
+    gap: var(--space-xs);
+}
+
+.nav-tabs .nav-link {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--aegis-text-muted) !important;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all var(--transition-fast);
+}
+
+.nav-tabs .nav-link::after {
+    display: none;
+}
+
+.nav-tabs .nav-link:hover {
+    color: var(--aegis-text-secondary) !important;
+    border-bottom-color: var(--aegis-border-medium);
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--aegis-accent-primary) !important;
+    background: transparent;
+    border-bottom-color: var(--aegis-accent-primary);
+}
+
+/* --------------------------------------------------------------------------
+   Spinner / Loading
+   -------------------------------------------------------------------------- */
+.spinner-border {
+    color: var(--aegis-accent-primary);
+    width: 2rem;
+    height: 2rem;
+}
+
+/* --------------------------------------------------------------------------
+   Iframe (API Docs)
+   -------------------------------------------------------------------------- */
+iframe {
+    background: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+}
+
+/* --------------------------------------------------------------------------
+   Home Page — Hero Banner
+   -------------------------------------------------------------------------- */
+.hero-banner {
+    position: relative;
+    width: 100%;
+    min-height: 500px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: linear-gradient(
+        135deg,
+        var(--aegis-bg-deep) 0%,
+        var(--aegis-bg-primary) 25%,
+        var(--aegis-bg-elevated) 50%,
+        var(--aegis-bg-primary) 75%,
+        var(--aegis-bg-deep) 100%
+    );
+}
+
+.hero-banner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+        radial-gradient(ellipse at 20% 80%, rgba(212, 168, 85, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(122, 158, 126, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+/* Animated subtle lines suggesting DNA strands */
+.hero-banner::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+        repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 100px,
+            rgba(212, 168, 85, 0.03) 100px,
+            rgba(212, 168, 85, 0.03) 101px
+        );
+    pointer-events: none;
+    animation: subtleShift 20s linear infinite;
+}
+
+@keyframes subtleShift {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(101px); }
+}
+
+.hero-logo {
+    position: relative;
+    z-index: 1;
+    max-width: 600px;
+    width: 80%;
+    filter: invert(1) brightness(0.95) sepia(0.1);
+    animation: fadeInUp 1s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Home Page — Feature Cards
+   -------------------------------------------------------------------------- */
+.feature-card {
+    background: var(--aegis-bg-card);
+    border: 1px solid var(--aegis-border-subtle);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    transition: all var(--transition-base);
+    position: relative;
+    overflow: hidden;
+}
+
+.feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--aegis-accent-primary), var(--aegis-earth-sage));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--transition-base);
+}
+
+.feature-card:hover::before {
+    transform: scaleX(1);
+}
+
+.feature-card:hover {
+    border-color: var(--aegis-border-accent);
+    box-shadow: var(--shadow-lg), var(--shadow-glow);
+    transform: translateY(-4px);
+}
+
+.feature-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: var(--space-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    background: var(--aegis-accent-glow);
+    color: var(--aegis-accent-primary);
+    font-size: 1.5rem;
+}
+
+.feature-card h4 {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    margin-bottom: var(--space-sm);
+}
+
+.feature-card p {
+    flex-grow: 1;
+    margin-bottom: var(--space-lg);
+}
+
+/* --------------------------------------------------------------------------
+   Data Portal — Filters Sidebar
+   -------------------------------------------------------------------------- */
+.filters-card {
+    position: sticky;
+    top: 80px;
+}
+
+.filters-card .card-title {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--aegis-text-muted);
+    border-bottom: 1px solid var(--aegis-border-subtle);
+    padding-bottom: var(--space-sm);
+    margin-bottom: var(--space-md);
+}
+
+/* --------------------------------------------------------------------------
+   Status Legend — Pipeline Flow
+   -------------------------------------------------------------------------- */
+.status-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    background: var(--aegis-bg-elevated);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--aegis-border-subtle);
+    margin-bottom: var(--space-lg);
+}
+
+.status-legend .arrow {
+    color: var(--aegis-text-muted);
+    font-size: 0.8rem;
+}
+
+/* --------------------------------------------------------------------------
+   Detail Page — Taxonomy Breadcrumb
+   -------------------------------------------------------------------------- */
+.taxonomy-path {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-md) 0;
+}
+
+.taxonomy-path .taxonomy-level {
+    font-size: 0.75rem;
+    color: var(--aegis-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.taxonomy-path .taxonomy-separator {
+    color: var(--aegis-text-muted);
+    font-size: 0.75rem;
+}
+
+/* --------------------------------------------------------------------------
+   About Page — Content Styling
+   -------------------------------------------------------------------------- */
+.about-content ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.about-content li {
+    position: relative;
+    padding-left: var(--space-lg);
+    margin-bottom: var(--space-md);
+    color: var(--aegis-text-secondary);
+    line-height: 1.7;
+}
+
+.about-content li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.6em;
+    width: 8px;
+    height: 8px;
+    background: var(--aegis-accent-primary);
+    border-radius: 50%;
+    opacity: 0.7;
+}
+
+/* --------------------------------------------------------------------------
+   Utility Classes
+   -------------------------------------------------------------------------- */
+.text-accent { color: var(--aegis-accent-primary); }
+.text-muted { color: var(--aegis-text-muted) !important; }
+.bg-elevated { background: var(--aegis-bg-elevated); }
+.border-accent { border-color: var(--aegis-border-accent) !important; }
+
+.invisible {
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.visible {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive Adjustments
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+    :root {
+        --space-xl: 1.5rem;
+        --space-2xl: 2rem;
+    }
+
+    h1 { font-size: 2.25rem; }
+    h2 { font-size: 1.75rem; }
+    h3 { font-size: 1.5rem; }
+
+    .hero-banner {
+        min-height: 350px;
+    }
+
+    .hero-logo {
+        max-width: 300px;
+    }
+
+    .navbar-brand {
+        font-size: 1.25rem !important;
+    }
+
+    .status-legend {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .status-legend .arrow {
+        display: none;
+    }
+
+    .feature-card {
+        padding: var(--space-lg);
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Print Styles
+   -------------------------------------------------------------------------- */
+@media print {
+    body {
+        background: white;
+        color: black;
+    }
+
+    .navbar, .pagination {
+        display: none;
+    }
+
+    .card {
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Scrollbar Styling (Webkit)
+   -------------------------------------------------------------------------- */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--aegis-bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--aegis-bg-hover);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--aegis-text-muted);
+}
+
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--aegis-bg-hover) var(--aegis-bg-primary);
+}
+
+/* --------------------------------------------------------------------------
+   Selection Styling
+   -------------------------------------------------------------------------- */
+::selection {
+    background: var(--aegis-accent-primary);
+    color: var(--aegis-bg-deep);
+}
+
+::-moz-selection {
+    background: var(--aegis-accent-primary);
+    color: var(--aegis-bg-deep);
+}

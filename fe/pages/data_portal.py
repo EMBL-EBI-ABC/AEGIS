@@ -1,10 +1,12 @@
 import math
 import dash
-from dash import callback, Output, Input, html
+from dash import callback, Output, Input, html, dcc
 import dash_bootstrap_components as dbc
+import dash_leaflet as dl
 import requests
 
 PAGE_SIZE = 10
+BACKEND_URL = "https://aegis-be-1091670130981.europe-west2.run.app"
 
 dash.register_page(
     __name__,
@@ -95,6 +97,50 @@ layout = dbc.Container(
                                     },
                                 ),
                                 dbc.Checklist(id="checklist_input"),
+                                html.Div(
+                                    "Taxonomy",
+                                    style={
+                                        "fontSize": "0.8rem",
+                                        "fontWeight": "600",
+                                        "color": "var(--aegis-text-secondary)",
+                                        "marginBottom": "0.75rem",
+                                        "marginTop": "1rem",
+                                    },
+                                ),
+                                dbc.Checklist(id="kingdom_filter"),
+                                html.Div(
+                                    "Order",
+                                    style={
+                                        "fontSize": "0.8rem",
+                                        "fontWeight": "600",
+                                        "color": "var(--aegis-text-secondary)",
+                                        "marginBottom": "0.75rem",
+                                        "marginTop": "1rem",
+                                    },
+                                ),
+                                dbc.Checklist(id="order_filter"),
+                                html.Div(
+                                    "Family",
+                                    style={
+                                        "fontSize": "0.8rem",
+                                        "fontWeight": "600",
+                                        "color": "var(--aegis-text-secondary)",
+                                        "marginBottom": "0.75rem",
+                                        "marginTop": "1rem",
+                                    },
+                                ),
+                                dbc.Checklist(id="family_filter"),
+                                html.Div(
+                                    "Country",
+                                    style={
+                                        "fontSize": "0.8rem",
+                                        "fontWeight": "600",
+                                        "color": "var(--aegis-text-secondary)",
+                                        "marginBottom": "0.75rem",
+                                        "marginTop": "1rem",
+                                    },
+                                ),
+                                dbc.Checklist(id="country_filter"),
                             ]
                         ),
                         className="filters-card",
@@ -125,6 +171,23 @@ layout = dbc.Container(
                                     ),
                                     className="mb-3",
                                 ),
+                                # Map
+                                html.Div(
+                                    dl.Map(
+                                        [dl.TileLayer()],
+                                        id="sample-map",
+                                        center=[30, 0],
+                                        zoom=2,
+                                        style={
+                                            "height": "250px",
+                                            "borderRadius": "var(--radius-md)",
+                                            "border": "1px solid var(--aegis-border-subtle)",
+                                            "marginBottom": "1rem",
+                                        },
+                                    ),
+                                    id="map-container",
+                                ),
+                                dcc.Store(id="map-bounds"),
                                 # Status Legend
                                 status_legend(),
                                 # Data Table
@@ -187,16 +250,28 @@ def return_badge_status(badge_text: str, color: str = None) -> dbc.Badge:
     Output("data_table", "children"),
     Output("checklist_input", "options"),
     Output("pagination", "max_value"),
+    Output("kingdom_filter", "options"),
+    Output("order_filter", "options"),
+    Output("family_filter", "options"),
+    Output("country_filter", "options"),
     Input("checklist_input", "value"),
     Input("input", "value"),
     Input("pagination", "active_page"),
+    Input("kingdom_filter", "value"),
+    Input("order_filter", "value"),
+    Input("family_filter", "value"),
+    Input("country_filter", "value"),
+    Input("map-bounds", "data"),
     running=[
         (Output("input", "class_name"), "invisible", "visible"),
         (Output("pagination", "class_name"), "invisible", "justify-content-end"),
         (Output("filters-card", "class_name"), "invisible", "card-title"),
     ],
 )
-def create_update_data_table(filter_values, input_value, active_page):
+def create_update_data_table(
+    filter_values, input_value, active_page,
+    kingdom_values, order_values, family_values, country_values, map_bounds,
+):
     """Update the data table based on filters and search input."""
     # Build filters
     statuses = {
@@ -213,6 +288,23 @@ def create_update_data_table(filter_values, input_value, active_page):
     if input_value:
         params["q"] = input_value
 
+    # Taxonomy / country filters
+    if kingdom_values:
+        params["kingdom"] = kingdom_values[0]
+    if order_values:
+        params["tax_order"] = order_values[0]
+    if family_values:
+        params["family"] = family_values[0]
+    if country_values:
+        params["countries"] = country_values[0]
+
+    # Map bounds filters
+    if map_bounds:
+        params["top_left_lat"] = map_bounds.get("top_left_lat")
+        params["top_left_lon"] = map_bounds.get("top_left_lon")
+        params["bottom_right_lat"] = map_bounds.get("bottom_right_lat")
+        params["bottom_right_lon"] = map_bounds.get("bottom_right_lon")
+
     # Pagination params
     page = active_page or 1
     start = (page - 1) * PAGE_SIZE
@@ -221,7 +313,7 @@ def create_update_data_table(filter_values, input_value, active_page):
 
     # Fetch
     response = requests.get(
-        "https://aegis-be-1091670130981.europe-west2.run.app/data_portal",
+        f"{BACKEND_URL}/data_portal",
         params=params,
         timeout=30,
     ).json()
@@ -232,7 +324,12 @@ def create_update_data_table(filter_values, input_value, active_page):
             html.Tr(
                 [
                     html.Th(v)
-                    for v in ["Scientific Name", "Common Name", "Current Status"]
+                    for v in [
+                        "Scientific Name",
+                        "Common Name",
+                        "Samples",
+                        "Current Status",
+                    ]
                 ]
             )
         )
@@ -261,7 +358,7 @@ def create_update_data_table(filter_values, input_value, active_page):
             ],
             className="text-center py-5",
         )
-        return empty_state, [], 1
+        return empty_state, [], 1, [], [], [], []
 
     table_body = [
         html.Tbody(
@@ -273,6 +370,7 @@ def create_update_data_table(filter_values, input_value, active_page):
                             row.get("commonName") or "—",
                             style={"color": "var(--aegis-text-secondary)"},
                         ),
+                        html.Td(row.get("sampleCount", 0)),
                         html.Td(return_badge_status(row["currentStatus"])),
                     ]
                 )
@@ -314,6 +412,25 @@ def create_update_data_table(filter_values, input_value, active_page):
                     }
                 )
 
+    # Taxonomy / country checklist options from aggregations
+    aggregations = response.get("aggregations", {})
+    kingdom_options = [
+        {"label": f"{b['key']} ({b['doc_count']})", "value": b["key"]}
+        for b in aggregations.get("kingdom", {}).get("buckets", [])
+    ]
+    order_options = [
+        {"label": f"{b['key']} ({b['doc_count']})", "value": b["key"]}
+        for b in aggregations.get("tax_order", {}).get("buckets", [])
+    ]
+    family_options = [
+        {"label": f"{b['key']} ({b['doc_count']})", "value": b["key"]}
+        for b in aggregations.get("family", {}).get("buckets", [])
+    ]
+    country_options = [
+        {"label": f"{b['key']} ({b['doc_count']})", "value": b["key"]}
+        for b in aggregations.get("countries", {}).get("buckets", [])
+    ]
+
     # Compute total pages from backend total
     total = response.get("total")
     if isinstance(total, dict):
@@ -322,4 +439,49 @@ def create_update_data_table(filter_values, input_value, active_page):
         total = len(results)
     max_pages = max(1, math.ceil(total / PAGE_SIZE))
 
-    return table_container, options, max_pages
+    return (
+        table_container, options, max_pages,
+        kingdom_options, order_options, family_options, country_options,
+    )
+
+
+@callback(
+    Output("sample-map", "children"),
+    Input("sample-map", "bounds"),
+    Input("sample-map", "zoom"),
+)
+def update_map_clusters(bounds, zoom):
+    """Fetch geo clusters and render them as circle markers on the map."""
+    if not bounds or not zoom:
+        return [dl.TileLayer()]
+
+    params = {"zoom": zoom}
+    if bounds:
+        # bounds is [[south, west], [north, east]]
+        params["top_left_lat"] = bounds[1][0]
+        params["top_left_lon"] = bounds[0][1]
+        params["bottom_right_lat"] = bounds[0][0]
+        params["bottom_right_lon"] = bounds[1][1]
+
+    try:
+        response = requests.get(
+            f"{BACKEND_URL}/samples/geo_aggregation",
+            params=params,
+            timeout=15,
+        ).json()
+    except Exception:
+        return [dl.TileLayer()]
+
+    markers = []
+    for c in response.get("clusters", []):
+        markers.append(
+            dl.CircleMarker(
+                center=[c["lat"], c["lon"]],
+                radius=max(8, min(30, c["count"] / 2)),
+                children=dl.Tooltip(f"{c['count']} samples"),
+                color="#f0c674",
+                fillColor="#f0c674",
+                fillOpacity=0.7,
+            )
+        )
+    return [dl.TileLayer()] + markers

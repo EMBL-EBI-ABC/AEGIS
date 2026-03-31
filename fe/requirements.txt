@@ -1,3 +1,4 @@
 dash>=3.4.0
 dash-bootstrap-components[pandas]>=1.6.0
 gunicorn>=23.0.0
+dash-leaflet>=1.0.15

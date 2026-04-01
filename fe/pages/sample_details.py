@@ -59,8 +59,12 @@ def layout(tax_id=None, accession=None, **kwargs):
     )
 
 
-def _make_metadata_card(title, fields, data):
-    """Create a metadata card with a title and grid of label-value pairs."""
+def _make_metadata_card(title, fields, data, sample_link_fields=None, tax_id=None):
+    """Create a metadata card with a title and grid of label-value pairs.
+
+    sample_link_fields: set of field keys whose values are BioSample accessions
+    and should render as links to the sample detail page.
+    """
     items = []
     for label, key, mono in fields:
         value = data.get(key)
@@ -69,7 +73,18 @@ def _make_metadata_card(title, fields, data):
         style = {"color": "var(--aegis-text-primary)"}
         if mono:
             style["fontFamily"] = "var(--font-mono)"
-        display_value = html.Span(str(value), style=style)
+        if sample_link_fields and key in sample_link_fields and tax_id:
+            display_value = html.A(
+                str(value),
+                href=f"/data-portal/{tax_id}/samples/{value}",
+                style={
+                    "color": "var(--aegis-accent-primary)",
+                    "textDecoration": "none",
+                    "fontFamily": "var(--font-mono)",
+                },
+            )
+        else:
+            display_value = html.Span(str(value), style=style)
 
         items.append(
             html.Div(
@@ -288,9 +303,9 @@ def render_sample_detail(accession, tax_id):
     }
 
     # Build cards — only show cards that have at least one non-null value
-    def _card_if_has_data(title, fields, data):
+    def _card_if_has_data(title, fields, data, **kwargs):
         if any(data.get(key) is not None for _, key, _ in fields):
-            return _make_metadata_card(title, fields, data)
+            return _make_metadata_card(title, fields, data, **kwargs)
         return None
 
     cards = [
@@ -332,7 +347,7 @@ def render_sample_detail(accession, tax_id):
             ("Symbiont", "symbiont", False),
             ("Relationship", "relationship", False),
             ("Same As", "sampleSameAs", True),
-        ], sample),
+        ], sample, sample_link_fields={"derivedFrom", "sampleSymbiontOf", "sampleSameAs"}, tax_id=tax_id),
         _card_if_has_data("Original Location", [
             ("Date", "originalCollectionDate", False),
             ("Location", "originalGeographicLocation", False),

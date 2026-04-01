@@ -474,6 +474,7 @@ def toggle_sample_children(n_clicks):
     Output("intermediate-value", "data"),
     Output("species-map-markers", "children"),
     Output("taxonomy-row", "children"),
+    Output("species-map", "viewport"),
     Input("card", "key"),
     running=[
         (Output("tabs_card", "class_name"), "invisible", "visible"),
@@ -482,12 +483,12 @@ def toggle_sample_children(n_clicks):
 def create_data_portal_record(tax_id):
     """Fetch and display species record details."""
     if not tax_id:
-        return [], [], json.dumps({"samples": [], "rawData": [], "assemblies": [], "tax_id": None}), [], html.Div()
+        return [], [], json.dumps({"samples": [], "rawData": [], "assemblies": [], "tax_id": None}), [], html.Div(), dash.no_update
     response = requests.get(
         f"{BACKEND_URL}/data_portal/{tax_id}"
     ).json()
     if not response.get("results"):
-        return [], [], json.dumps({"samples": [], "rawData": [], "assemblies": [], "tax_id": tax_id}), [], html.Div()
+        return [], [], json.dumps({"samples": [], "rawData": [], "assemblies": [], "tax_id": tax_id}), [], html.Div(), dash.no_update
     response = response["results"][0]
 
     # Fetch samples from dedicated endpoint
@@ -695,7 +696,20 @@ def create_data_portal_record(tax_id):
         "assemblies": response.get("assemblies", []),
         "tax_id": tax_id,
     }
-    return children, tabs, json.dumps(agg_data), map_markers, taxonomy_path
+    # Compute map viewport to fit all marker positions
+    if location_groups:
+        all_lats = [lat for lat, lon in location_groups]
+        all_lons = [lon for lat, lon in location_groups]
+        if len(location_groups) == 1:
+            map_viewport = {"center": [all_lats[0], all_lons[0]], "zoom": 10}
+        else:
+            center_lat = (min(all_lats) + max(all_lats)) / 2
+            center_lon = (min(all_lons) + max(all_lons)) / 2
+            map_viewport = {"center": [center_lat, center_lon], "zoom": 6}
+    else:
+        map_viewport = dash.no_update
+
+    return children, tabs, json.dumps(agg_data), map_markers, taxonomy_path, map_viewport
 
 
 @callback(

@@ -73,7 +73,10 @@ def features_section():
                 [
                     dbc.Col(
                         feature_card(
-                            icon="🔬",
+                            icon=html.Img(
+                                src="/assets/icons/data-portal.svg",
+                                style={"width": "2.5rem", "height": "2.5rem", "opacity": "0.85"},
+                            ),
                             title="Data Portal",
                             description="Search and explore ancient eDNA datasets for barley, wheat, rice and their wild ancestors. Filter by taxonomy, processing status, and more.",
                             button_text="Explore Data",
@@ -84,7 +87,10 @@ def features_section():
                     ),
                     dbc.Col(
                         feature_card(
-                            icon="⚡",
+                            icon=html.Img(
+                                src="/assets/icons/api-access.svg",
+                                style={"width": "2.5rem", "height": "2.5rem", "opacity": "0.85"},
+                            ),
                             title="API Access",
                             description="Integrate AEGIS data into your bioinformatics pipelines. Access raw sequences, assemblies, and metadata programmatically.",
                             button_text="View Documentation",
@@ -95,7 +101,10 @@ def features_section():
                     ),
                     dbc.Col(
                         feature_card(
-                            icon="🌾",
+                            icon=html.Img(
+                                src="/assets/icons/about-aegis.svg",
+                                style={"width": "2.5rem", "height": "2.5rem", "opacity": "0.85"},
+                            ),
                             title="About AEGIS",
                             description="A £66M initiative by Novo Nordisk Foundation and Wellcome to unlock ancient genetic diversity for climate-resilient crops.",
                             button_text="Learn More",

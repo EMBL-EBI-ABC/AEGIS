@@ -44,11 +44,13 @@ layout = html.Div(
                     dbc.Col(
                         html.Div(
                             [
-                                html.Div(
-                                    "🔗",
+                                html.Img(
+                                    src="/assets/icons/base-url.svg",
                                     style={
-                                        "fontSize": "1.5rem",
+                                        "width": "1.75rem",
+                                        "height": "1.75rem",
                                         "marginBottom": "0.5rem",
+                                        "opacity": "0.85",
                                     },
                                 ),
                                 html.Div(
@@ -83,11 +85,13 @@ layout = html.Div(
                     dbc.Col(
                         html.Div(
                             [
-                                html.Div(
-                                    "📄",
+                                html.Img(
+                                    src="/assets/icons/format.svg",
                                     style={
-                                        "fontSize": "1.5rem",
+                                        "width": "1.75rem",
+                                        "height": "1.75rem",
                                         "marginBottom": "0.5rem",
+                                        "opacity": "0.85",
                                     },
                                 ),
                                 html.Div(
@@ -122,11 +126,13 @@ layout = html.Div(
                     dbc.Col(
                         html.Div(
                             [
-                                html.Div(
-                                    "🔓",
+                                html.Img(
+                                    src="/assets/icons/auth.svg",
                                     style={
-                                        "fontSize": "1.5rem",
+                                        "width": "1.75rem",
+                                        "height": "1.75rem",
                                         "marginBottom": "0.5rem",
+                                        "opacity": "0.85",
                                     },
                                 ),
                                 html.Div(

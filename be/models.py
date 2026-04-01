@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, create_model
 from typing import Generic, Literal, TypeVar
 
 T = TypeVar("T")  # Datasource data type
@@ -31,7 +31,7 @@ class ElasticResponse(BaseModel, Generic[T, A]):
     start: int
     size: int
     results: list[T]
-    aggregations: A
+    aggregations: dict
 
 
 class ElasticDetailsResponse(BaseModel, Generic[T]):
@@ -81,8 +81,15 @@ class DataSource:
     def generate_classes(self):
         fields = {field.name: (field.type, field.filterable) for field in self.fields}
 
-        class Data(BaseModel):
-            __annotations__ = {name: type for name, (type, _) in fields.items()}
+        # Build Data class: fields with None in their type get a default of None
+        data_field_definitions = {}
+        for name, (type_, _) in fields.items():
+            if "None" in str(type_):
+                data_field_definitions[name] = (type_, None)
+            else:
+                data_field_definitions[name] = (type_, ...)
+
+        Data = create_model("Data", **data_field_definitions)
 
         class AggregationResponse(BaseModel):
             __annotations__ = {
@@ -116,15 +123,36 @@ class DataSource:
         return Data, AggregationResponse, SearchParamsExtended
 
 
-# MaveDB.
+# Bounds and taxonomy filter mixins.
+
+
+class BoundsFilterMixin(BaseModel):
+    top_left_lat: float | None = Field(None, description="Bounding box top-left latitude")
+    top_left_lon: float | None = Field(None, description="Bounding box top-left longitude")
+    bottom_right_lat: float | None = Field(None, description="Bounding box bottom-right latitude")
+    bottom_right_lon: float | None = Field(None, description="Bounding box bottom-right longitude")
+
+    def has_bounds(self) -> bool:
+        return all(
+            v is not None
+            for v in [self.top_left_lat, self.top_left_lon, self.bottom_right_lat, self.bottom_right_lon]
+        )
+
+
+class TaxonomyFilterMixin(BaseModel):
+    kingdom: str | None = Field(None, description="Filter by kingdom")
+    tax_order: str | None = Field(None, description="Filter by order")
+    family: str | None = Field(None, description="Filter by family")
+
+
+# DataPortal.
 data_portal = DataSource(
     name="DataPortal",
     fields=[
         FieldDefinition(name="taxId", type=int),
         FieldDefinition(name="scientificName", type=str),
-        FieldDefinition(name="commonName", type=str),
+        FieldDefinition(name="commonName", type=str | None),
         FieldDefinition(name="phylogeny", type=dict[str, str]),
-        FieldDefinition(name="samples", type=list[dict[str, str | None]]),
         FieldDefinition(name="currentStatus", type=str),
         FieldDefinition(name="currentStatusOrder", type=int),
         FieldDefinition(name="bioSamplesStatus", type=str, filterable=True),
@@ -132,6 +160,9 @@ data_portal = DataSource(
         FieldDefinition(name="assembliesStatus", type=str, filterable=True),
         FieldDefinition(name="rawData", type=list[dict[str, str | None]]),
         FieldDefinition(name="assemblies", type=list[dict[str, str | None]]),
+        FieldDefinition(name="sampleCount", type=int | None),
+        FieldDefinition(name="locations", type=list[dict[str, float]] | None),
+        FieldDefinition(name="countries", type=list[str] | None, filterable=True),
     ],
     default_sort_field="currentStatusOrder",
     default_sort_order="desc",
@@ -139,3 +170,110 @@ data_portal = DataSource(
 (DataPortalData, DataPortalAggregationResponse, DataPortalSearchParams) = (
     data_portal.generate_classes()
 )
+
+
+class DataPortalSearchParamsExtended(DataPortalSearchParams, BoundsFilterMixin, TaxonomyFilterMixin):
+    pass
+
+DataPortalSearchParams = DataPortalSearchParamsExtended
+
+
+# Samples.
+samples_source = DataSource(
+    name="Samples",
+    fields=[
+        # Always present
+        FieldDefinition(name="accession", type=str),
+        FieldDefinition(name="taxId", type=int, filterable=True),
+        FieldDefinition(name="scientificName", type=str),
+        FieldDefinition(name="commonName", type=str | None),
+        FieldDefinition(name="trackingSystem", type=str | None),
+        FieldDefinition(name="projectName", type=str | None),
+        # Mandatory (ERC000053)
+        FieldDefinition(name="organismPart", type=str | None, filterable=True),
+        FieldDefinition(name="lifestage", type=str | None),
+        FieldDefinition(name="sex", type=str | None, filterable=True),
+        FieldDefinition(name="collectedBy", type=str | None),
+        FieldDefinition(name="collectionDate", type=str | None),
+        FieldDefinition(name="locality", type=str | None),
+        FieldDefinition(name="country", type=str | None, filterable=True),
+        FieldDefinition(name="habitat", type=str | None),
+        FieldDefinition(name="collectingInstitution", type=str | None, filterable=True),
+        # Recommended
+        FieldDefinition(name="location", type=dict[str, float] | None),
+        FieldDefinition(name="elevation", type=float | None),
+        FieldDefinition(name="tolid", type=str | None),
+        FieldDefinition(name="specimenVoucher", type=str | None),
+        # Relationships
+        FieldDefinition(name="derivedFrom", type=str | None),
+        FieldDefinition(name="sampleSymbiontOf", type=str | None),
+        FieldDefinition(name="symbiont", type=str | None),
+        FieldDefinition(name="relationship", type=str | None),
+        FieldDefinition(name="sampleSameAs", type=str | None),
+        # Collection metadata
+        FieldDefinition(name="sampleCollectionMethod", type=str | None),
+        FieldDefinition(name="identifiedBy", type=str | None),
+        FieldDefinition(name="identifierAffiliation", type=str | None),
+        FieldDefinition(name="sampleCoordinator", type=str | None),
+        FieldDefinition(name="sampleCoordinatorAffiliation", type=str | None),
+        FieldDefinition(name="barcodingCenter", type=str | None),
+        FieldDefinition(name="gal", type=str | None),
+        FieldDefinition(name="specimenId", type=str | None),
+        FieldDefinition(name="galSampleId", type=str | None),
+        FieldDefinition(name="proxyVoucher", type=str | None),
+        FieldDefinition(name="proxyBiomaterial", type=str | None),
+        FieldDefinition(name="bioMaterial", type=str | None),
+        FieldDefinition(name="cultureOrStrainId", type=str | None),
+        # Original location
+        FieldDefinition(name="originalCollectionDate", type=str | None),
+        FieldDefinition(name="originalGeographicLocation", type=str | None),
+        FieldDefinition(name="originalLatitude", type=float | None),
+        FieldDefinition(name="originalLongitude", type=float | None),
+        # Transect/numeric
+        FieldDefinition(name="latitudeStart", type=float | None),
+        FieldDefinition(name="longitudeStart", type=float | None),
+        FieldDefinition(name="latitudeEnd", type=float | None),
+        FieldDefinition(name="longitudeEnd", type=float | None),
+        FieldDefinition(name="depth", type=float | None),
+        # Custom fields
+        FieldDefinition(name="customFields", type=list[dict[str, str]] | None),
+    ],
+    default_sort_field="accession",
+    default_sort_order="asc",
+)
+(SampleData, SampleAggregationResponse, SampleSearchParams) = (
+    samples_source.generate_classes()
+)
+
+
+# Geo aggregation models.
+
+
+class GeoAggregationParams(BaseModel):
+    model_config = {"extra": "forbid"}
+    zoom: int = Field(..., ge=0, le=20, description="Map zoom level")
+    top_left_lat: float | None = Field(None, description="Bounding box top-left latitude")
+    top_left_lon: float | None = Field(None, description="Bounding box top-left longitude")
+    bottom_right_lat: float | None = Field(None, description="Bounding box bottom-right latitude")
+    bottom_right_lon: float | None = Field(None, description="Bounding box bottom-right longitude")
+    tax_id: int | None = Field(None, description="Filter to a specific species")
+    q: str | None = Field(None, description="Full text search query")
+    country: str | None = Field(None, description="Filter by country")
+    trackingSystem: str | None = Field(None, description="Filter by tracking status")
+
+    def has_bounds(self) -> bool:
+        return all(
+            v is not None
+            for v in [self.top_left_lat, self.top_left_lon, self.bottom_right_lat, self.bottom_right_lon]
+        )
+
+
+class GeoCluster(BaseModel):
+    lat: float
+    lon: float
+    count: int
+    key: str
+
+
+class GeoAggregationResponse(BaseModel):
+    clusters: list[GeoCluster]

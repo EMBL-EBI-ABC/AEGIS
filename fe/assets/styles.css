@@ -160,7 +160,13 @@ a:hover {
     backdrop-filter: blur(12px);
     position: sticky;
     top: 0;
-    z-index: 1000;
+    z-index: 1050;
+}
+
+/* Keep Leaflet controls below the sticky navbar */
+.leaflet-top,
+.leaflet-bottom {
+    z-index: 999 !important;
 }
 
 .navbar-brand {

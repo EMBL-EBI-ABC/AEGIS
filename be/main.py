@@ -80,7 +80,10 @@ async def elastic_search(
         for aggregation_field in aggregation_fields:
             filter_value = getattr(params, aggregation_field)
             if filter_value:
-                filters.append({"terms": {aggregation_field: [filter_value]}})
+                if isinstance(filter_value, list):
+                    filters.append({"terms": {aggregation_field: filter_value}})
+                else:
+                    filters.append({"terms": {aggregation_field: [filter_value]}})
 
     # Append any additional filters.
     if additional_filters:
@@ -205,7 +208,7 @@ async def data_portal_search(
             },
         }
         geo_response = await app.state.es_client.search(
-            index="2026-03-31_samples", body=geo_query
+            index="2026-04-01_samples", body=geo_query
         )
         tax_ids = [
             bucket["key"]
@@ -218,7 +221,7 @@ async def data_portal_search(
             additional_filters.append({"terms": {"taxId": [-1]}})
 
     return await elastic_search(
-        index_name="2026-03-31_data_portal",
+        index_name="2026-04-01_data_portal",
         params=params,
         data_class=DataPortalData,
         aggregation_class=DataPortalAggregationResponse,
@@ -232,7 +235,7 @@ async def data_portal_details(
     record_id: Annotated[str, Path(description="Record ID")],
 ) -> ElasticDetailsResponse[DataPortalData]:
     return await elastic_details(
-        index_name="2026-03-31_data_portal",
+        index_name="2026-04-01_data_portal",
         record_id=record_id,
         data_class=DataPortalData,
     )
@@ -246,7 +249,7 @@ async def samples_search(
     params: Annotated[SampleSearchParams, Query()],
 ) -> ElasticResponse[SampleData, SampleAggregationResponse]:
     return await elastic_search(
-        index_name="2026-03-31_samples",
+        index_name="2026-04-01_samples",
         params=params,
         data_class=SampleData,
         aggregation_class=SampleAggregationResponse,
@@ -261,6 +264,7 @@ async def samples_geo_aggregation(
 
     # Build filters.
     filters = []
+    must = []
     if params.has_bounds():
         filters.append(
             {
@@ -280,10 +284,20 @@ async def samples_geo_aggregation(
         )
     if params.tax_id is not None:
         filters.append({"term": {"taxId": params.tax_id}})
+    if params.country:
+        filters.append({"term": {"country": params.country}})
+    if params.trackingSystem:
+        filters.append({"term": {"trackingSystem": params.trackingSystem}})
+    if params.q:
+        must.append({"multi_match": {"query": params.q, "fields": ["*"]}})
 
     # Build query.
-    if filters:
-        query = {"bool": {"filter": filters}}
+    if filters or must:
+        query = {"bool": {}}
+        if filters:
+            query["bool"]["filter"] = filters
+        if must:
+            query["bool"]["must"] = must
     else:
         query = {"match_all": {}}
 
@@ -307,7 +321,7 @@ async def samples_geo_aggregation(
 
     try:
         response = await app.state.es_client.search(
-            index="2026-03-31_samples", body=search_body
+            index="2026-04-01_samples", body=search_body
         )
         clusters = [
             GeoCluster(
@@ -328,7 +342,7 @@ async def samples_details(
     accession: Annotated[str, Path(description="Sample accession")],
 ) -> ElasticDetailsResponse[SampleData]:
     return await elastic_details(
-        index_name="2026-03-31_samples",
+        index_name="2026-04-01_samples",
         record_id=accession,
         data_class=SampleData,
     )

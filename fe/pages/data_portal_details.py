@@ -5,15 +5,15 @@ import dash
 import dash_leaflet as dl
 import requests
 import json
-from dash import html, Output, Input, callback, dcc
+from dash import html, Output, Input, callback, dcc, MATCH
 import dash_bootstrap_components as dbc
 
 PAGE_SIZE = 10
-BACKEND_URL = "https://aegis-be-1091670130981.europe-west2.run.app"
+BACKEND_URL = "http://127.0.0.1:8000"
 
-from .data_portal import return_badge_status
+from .utils import return_badge_status
 
-dash.register_page(__name__, path_template="/data-portal/<tax_id>")
+dash.register_page(__name__, path_template="/data-portal/<tax_id>", order=1)
 
 
 def layout(tax_id=None, **kwargs):
@@ -46,7 +46,28 @@ def layout(tax_id=None, **kwargs):
                 dbc.Col(
                     dbc.Spinner(
                         dbc.Card(
-                            dbc.CardBody(id="card", key=tax_id),
+                            dbc.CardBody(
+                                [
+                                    dbc.Row([
+                                        dbc.Col(html.Div(id="card", key=tax_id), md=7),
+                                        dbc.Col(
+                                            dl.Map(
+                                                [dl.TileLayer(), dl.LayerGroup(id="species-map-markers")],
+                                                id="species-map",
+                                                center=[52, 0],
+                                                zoom=5,
+                                                style={
+                                                    "height": "250px",
+                                                    "borderRadius": "var(--radius-md)",
+                                                    "border": "1px solid var(--aegis-border-subtle)",
+                                                },
+                                            ),
+                                            md=5,
+                                        ),
+                                    ]),
+                                    html.Div(id="taxonomy-row"),
+                                ],
+                            ),
                             style={
                                 "background": "var(--aegis-bg-card)",
                                 "border": "1px solid var(--aegis-border-subtle)",
@@ -307,41 +328,98 @@ def build_sample_hierarchy(samples, tax_id):
     if not roots and samples:
         roots = samples
 
-    def make_sample_row(s):
-        accession = s["accession"]
-        organism_part = s.get("organismPart", "")
-        tracking_system = s.get("trackingSystem")
-        country = s.get("country", "")
+    def _format_sex(sex_value):
+        if not sex_value:
+            return None
+        lower = sex_value.lower()
+        if lower == "female":
+            return html.Span("♀", title="Female", style={"fontSize": "1rem"})
+        elif lower == "male":
+            return html.Span("♂", title="Male", style={"fontSize": "1rem"})
+        return html.Span(sex_value, style={"fontSize": "0.8rem"})
 
-        detail_parts = []
-        if organism_part:
-            detail_parts.append(organism_part)
-        if country:
-            detail_parts.append(country)
-        detail_str = " | ".join(detail_parts)
+    def _sample_detail_parts(s):
+        """Return list of components for sample detail display."""
+        parts = []
+        if s.get("organismPart"):
+            parts.append(html.Span(s["organismPart"]))
+        sex_el = _format_sex(s.get("sex"))
+        if sex_el:
+            parts.append(sex_el)
+        return parts
 
+    def make_sample_link(s):
+        return html.A(
+            s["accession"],
+            href=f"/data-portal/{tax_id}/samples/{s['accession']}",
+            style={
+                "color": "var(--aegis-accent-primary)",
+                "fontFamily": "var(--font-mono)",
+                "fontSize": "0.8rem",
+                "textDecoration": "none",
+            },
+        )
+
+    def make_child_row(s):
+        detail_parts = _sample_detail_parts(s)
+        left = [make_sample_link(s)]
+        for part in detail_parts:
+            left.append(html.Span(" \u00b7 ", style={"color": "var(--aegis-text-muted)", "fontSize": "0.8rem"}))
+            left.append(html.Span(part, style={"color": "var(--aegis-text-muted)", "fontSize": "0.8rem"}))
         return html.Div(
             [
-                html.Div([
-                    html.A(
-                        accession,
-                        href=f"/data-portal/{tax_id}/samples/{accession}",
-                        style={
-                            "color": "var(--aegis-accent-primary)",
-                            "fontFamily": "var(--font-mono)",
-                            "fontSize": "0.8rem",
-                            "textDecoration": "none",
-                        },
-                    ),
-                    html.Span(
-                        f" \u00b7 {detail_str}",
-                        style={
-                            "color": "var(--aegis-text-muted)",
-                            "fontSize": "0.8rem",
-                        },
-                    ) if detail_str else None,
-                ]),
-                return_badge_status(tracking_system) if tracking_system else html.Span(),
+                html.Div(left),
+                return_badge_status(s.get("trackingSystem", "")) if s.get("trackingSystem") else html.Span(),
+            ],
+            style={
+                "display": "flex",
+                "justifyContent": "space-between",
+                "alignItems": "center",
+                "padding": "0.4rem 0.5rem",
+                "borderBottom": "1px solid rgba(255,255,255,0.03)",
+            },
+        )
+
+    all_elements = []
+    for i, root in enumerate(roots):
+        accession = root["accession"]
+        detail_parts = _sample_detail_parts(root)
+        children = children_map.get(accession, [])
+        collapse_id = {"type": "sample-collapse", "index": i}
+        toggle_id = {"type": "sample-toggle", "index": i}
+
+        # Root row
+        left_items = [make_sample_link(root)]
+        for part in detail_parts:
+            left_items.append(html.Span(" \u00b7 ", style={"color": "var(--aegis-text-muted)", "fontSize": "0.8rem"}))
+            left_items.append(html.Span(part, style={"color": "var(--aegis-text-muted)", "fontSize": "0.8rem"}))
+
+        right_items = []
+        if children:
+            right_items.append(
+                html.Span(
+                    f"+ {len(children)} derived",
+                    id=toggle_id,
+                    n_clicks=0,
+                    style={
+                        "color": "var(--aegis-text-muted)",
+                        "fontSize": "0.75rem",
+                        "cursor": "pointer",
+                        "marginRight": "0.75rem",
+                        "border": "1px solid var(--aegis-border-subtle)",
+                        "padding": "0.15rem 0.5rem",
+                        "borderRadius": "4px",
+                    },
+                ),
+            )
+        right_items.append(
+            return_badge_status(root.get("trackingSystem", "")) if root.get("trackingSystem") else html.Span()
+        )
+
+        root_row = html.Div(
+            [
+                html.Div(left_items),
+                html.Div(right_items, style={"display": "flex", "alignItems": "center"}),
             ],
             style={
                 "display": "flex",
@@ -353,38 +431,48 @@ def build_sample_hierarchy(samples, tax_id):
                 "marginBottom": "0.3rem",
             },
         )
+        all_elements.append(root_row)
 
-    def build_tree(sample):
-        elements = [make_sample_row(sample)]
-        children = children_map.get(sample["accession"], [])
+        # Collapsible children
         if children:
-            child_elements = []
-            for child in children:
-                child_elements.extend(build_tree(child))
-            elements.append(
-                html.Div(
-                    child_elements,
-                    style={
-                        "marginLeft": "1.5rem",
-                        "borderLeft": "2px solid var(--aegis-border-subtle)",
-                        "paddingLeft": "0.75rem",
-                        "marginBottom": "0.5rem",
-                    },
+            child_rows = [make_child_row(c) for c in children]
+            all_elements.append(
+                dbc.Collapse(
+                    html.Div(
+                        child_rows,
+                        style={
+                            "marginLeft": "1.5rem",
+                            "borderLeft": "2px solid var(--aegis-border-subtle)",
+                            "paddingLeft": "0.75rem",
+                            "marginBottom": "0.5rem",
+                        },
+                    ),
+                    id=collapse_id,
+                    is_open=False,
                 )
             )
-        return elements
-
-    all_elements = []
-    for root in roots:
-        all_elements.extend(build_tree(root))
 
     return html.Div(all_elements)
+
+
+@callback(
+    Output({"type": "sample-collapse", "index": MATCH}, "is_open"),
+    Input({"type": "sample-toggle", "index": MATCH}, "n_clicks"),
+    prevent_initial_call=True,
+)
+def toggle_sample_children(n_clicks):
+    """Toggle visibility of derived samples."""
+    if n_clicks:
+        return n_clicks % 2 == 1
+    return False
 
 
 @callback(
     Output("card", "children"),
     Output("tabs_header", "children"),
     Output("intermediate-value", "data"),
+    Output("species-map-markers", "children"),
+    Output("taxonomy-row", "children"),
     Input("card", "key"),
     running=[
         (Output("tabs_card", "class_name"), "invisible", "visible"),
@@ -392,9 +480,13 @@ def build_sample_hierarchy(samples, tax_id):
 )
 def create_data_portal_record(tax_id):
     """Fetch and display species record details."""
+    if not tax_id:
+        return [], [], json.dumps({"samples": [], "rawData": [], "assemblies": [], "tax_id": None}), [], html.Div()
     response = requests.get(
         f"{BACKEND_URL}/data_portal/{tax_id}"
     ).json()
+    if not response.get("results"):
+        return [], [], json.dumps({"samples": [], "rawData": [], "assemblies": [], "tax_id": tax_id}), [], html.Div()
     response = response["results"][0]
 
     # Fetch samples from dedicated endpoint
@@ -480,40 +572,34 @@ def create_data_portal_record(tax_id):
         },
     )
 
-    # Build map from sample locations
-    markers = []
+    # Build map markers — deduplicate by position, show count
+    location_groups = {}
     for s in samples_list:
         loc = s.get("location")
         if loc and loc.get("lat") and loc.get("lon"):
-            markers.append(
-                dl.Marker(
-                    position=[loc["lat"], loc["lon"]],
-                    children=dl.Tooltip(f"{s['accession']} \u00b7 {s.get('organismPart', '')}"),
-                )
+            key = (loc["lat"], loc["lon"])
+            location_groups.setdefault(key, []).append(s)
+
+    map_markers = []
+    for (lat, lon), group in location_groups.items():
+        count = len(group)
+        if count == 1:
+            s = group[0]
+            tooltip_text = f"{s['accession']} \u00b7 {s.get('organismPart', '')}"
+        else:
+            tooltip_text = f"{count} samples"
+        map_markers.append(
+            dl.CircleMarker(
+                center=[lat, lon],
+                radius=max(8, min(30, count / 2)),
+                children=dl.Tooltip(tooltip_text),
+                color="#f0c674",
+                fillColor="#f0c674",
+                fillOpacity=0.7,
             )
-
-    if markers:
-        all_positions = [[m.position[0], m.position[1]] for m in markers]
-        species_map = dl.Map(
-            [dl.TileLayer()] + markers,
-            bounds=all_positions if len(all_positions) > 1 else None,
-            center=all_positions[0] if len(all_positions) == 1 else [0, 0],
-            zoom=10 if len(all_positions) == 1 else 6,
-            style={
-                "height": "200px",
-                "borderRadius": "var(--radius-md)",
-                "border": "1px solid var(--aegis-border-subtle)",
-            },
         )
-    else:
-        species_map = html.Div()
 
-    # Combine info grid and map in a row
-    summary_row = dbc.Row([
-        dbc.Col(info_grid, md=7),
-        dbc.Col(species_map, md=5),
-    ])
-    children.append(summary_row)
+    children.append(info_grid)
 
     # Taxonomy path
     phylogeny = response.get("phylogeny", {})
@@ -572,7 +658,7 @@ def create_data_portal_record(tax_id):
             "borderRadius": "var(--radius-md)",
         },
     )
-    children.append(taxonomy_path)
+    # taxonomy_path rendered in taxonomy-row (full width, outside the md=7 column)
 
     # Build tabs
     tabs = [
@@ -608,7 +694,7 @@ def create_data_portal_record(tax_id):
         "assemblies": response.get("assemblies", []),
         "tax_id": tax_id,
     }
-    return children, tabs, json.dumps(agg_data)
+    return children, tabs, json.dumps(agg_data), map_markers, taxonomy_path
 
 
 @callback(
@@ -627,6 +713,8 @@ def create_data_portal_record(tax_id):
 )
 def create_tabs(active_tab, agg_data, metadata_page, raw_data_page, assemblies_page):
     """Render tab content based on active tab."""
+    if not agg_data:
+        return html.Div(), 1, {"display": "none"}, 1, {"display": "none"}, 1, {"display": "none"}
     agg_data = json.loads(agg_data)
 
     # Hide pagination for non-active tabs

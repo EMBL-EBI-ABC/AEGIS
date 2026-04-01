@@ -6,12 +6,40 @@ import dash_leaflet as dl
 import requests
 
 PAGE_SIZE = 10
-BACKEND_URL = "https://aegis-be-1091670130981.europe-west2.run.app"
+BACKEND_URL = "http://127.0.0.1:8000"
 
 dash.register_page(
     __name__,
     title="Data Portal - AEGIS",
 )
+
+
+def _filter_card(title, checklist):
+    """Create a filter card with a title and scrollable checklist."""
+    return dbc.Card(
+        dbc.CardBody(
+            [
+                html.Div(
+                    title,
+                    style={
+                        "fontSize": "0.8rem",
+                        "fontWeight": "600",
+                        "color": "var(--aegis-text-secondary)",
+                        "marginBottom": "0.5rem",
+                    },
+                ),
+                html.Div(
+                    checklist,
+                    style={
+                        "maxHeight": "160px",
+                        "overflowY": "auto",
+                    },
+                ),
+            ],
+            style={"padding": "0.75rem"},
+        ),
+        className="filters-card",
+    )
 
 
 def status_legend():
@@ -62,88 +90,15 @@ layout = dbc.Container(
             [
                 # Filters Sidebar
                 dbc.Col(
-                    dbc.Card(
-                        dbc.CardBody(
-                            [
-                                html.Div(
-                                    [
-                                        html.Span(
-                                            "⚙",
-                                            style={
-                                                "marginRight": "0.5rem",
-                                                "opacity": "0.6",
-                                            },
-                                        ),
-                                        "Filters",
-                                    ],
-                                    className="card-title",
-                                    style={
-                                        "fontSize": "0.85rem",
-                                        "textTransform": "uppercase",
-                                        "letterSpacing": "0.08em",
-                                        "color": "var(--aegis-text-muted)",
-                                        "borderBottom": "1px solid var(--aegis-border-subtle)",
-                                        "paddingBottom": "0.75rem",
-                                        "marginBottom": "1rem",
-                                    },
-                                ),
-                                html.Div(
-                                    "Data Status",
-                                    style={
-                                        "fontSize": "0.8rem",
-                                        "fontWeight": "600",
-                                        "color": "var(--aegis-text-secondary)",
-                                        "marginBottom": "0.75rem",
-                                    },
-                                ),
-                                dbc.Checklist(id="checklist_input"),
-                                html.Div(
-                                    "Taxonomy",
-                                    style={
-                                        "fontSize": "0.8rem",
-                                        "fontWeight": "600",
-                                        "color": "var(--aegis-text-secondary)",
-                                        "marginBottom": "0.75rem",
-                                        "marginTop": "1rem",
-                                    },
-                                ),
-                                dbc.Checklist(id="kingdom_filter"),
-                                html.Div(
-                                    "Order",
-                                    style={
-                                        "fontSize": "0.8rem",
-                                        "fontWeight": "600",
-                                        "color": "var(--aegis-text-secondary)",
-                                        "marginBottom": "0.75rem",
-                                        "marginTop": "1rem",
-                                    },
-                                ),
-                                dbc.Checklist(id="order_filter"),
-                                html.Div(
-                                    "Family",
-                                    style={
-                                        "fontSize": "0.8rem",
-                                        "fontWeight": "600",
-                                        "color": "var(--aegis-text-secondary)",
-                                        "marginBottom": "0.75rem",
-                                        "marginTop": "1rem",
-                                    },
-                                ),
-                                dbc.Checklist(id="family_filter"),
-                                html.Div(
-                                    "Country",
-                                    style={
-                                        "fontSize": "0.8rem",
-                                        "fontWeight": "600",
-                                        "color": "var(--aegis-text-secondary)",
-                                        "marginBottom": "0.75rem",
-                                        "marginTop": "1rem",
-                                    },
-                                ),
-                                dbc.Checklist(id="country_filter"),
-                            ]
-                        ),
-                        className="filters-card",
+                    dbc.Stack(
+                        [
+                            _filter_card("Data Status", dbc.Checklist(id="checklist_input")),
+                            _filter_card("Kingdom", dbc.Checklist(id="kingdom_filter")),
+                            _filter_card("Order", dbc.Checklist(id="order_filter")),
+                            _filter_card("Family", dbc.Checklist(id="family_filter")),
+                            _filter_card("Country", dbc.Checklist(id="country_filter")),
+                        ],
+                        gap=2,
                     ),
                     id="filters-card",
                     md=3,
@@ -174,12 +129,12 @@ layout = dbc.Container(
                                 # Map
                                 html.Div(
                                     dl.Map(
-                                        [dl.TileLayer()],
+                                        [dl.TileLayer(), dl.LayerGroup(id="map-markers")],
                                         id="sample-map",
                                         center=[30, 0],
                                         zoom=2,
                                         style={
-                                            "height": "250px",
+                                            "height": "400px",
                                             "borderRadius": "var(--radius-md)",
                                             "border": "1px solid var(--aegis-border-subtle)",
                                             "marginBottom": "1rem",
@@ -188,6 +143,7 @@ layout = dbc.Container(
                                     id="map-container",
                                 ),
                                 dcc.Store(id="map-bounds"),
+                                dcc.Store(id="active-filters"),
                                 # Status Legend
                                 status_legend(),
                                 # Data Table
@@ -230,20 +186,7 @@ def return_tax_id_link(scientific_name: str, tax_id: str) -> html.A:
     )
 
 
-def return_badge_status(badge_text: str, color: str = None) -> dbc.Badge:
-    """Create a status badge with appropriate color."""
-    if color is not None:
-        return dbc.Badge(badge_text, pill=True, color=color)
-
-    color_map = {
-        "Submitted to BioSamples": "secondary",
-        "Raw Data - Submitted": "primary",
-        "Assemblies - Submitted": "success",
-        "Annotation Completed": "info",
-        "Annotation - Submitted": "danger",
-    }
-    color = color_map.get(badge_text, "secondary")
-    return dbc.Badge(badge_text, pill=True, color=color)
+from .utils import return_badge_status  # noqa: E402
 
 
 @callback(
@@ -254,6 +197,7 @@ def return_badge_status(badge_text: str, color: str = None) -> dbc.Badge:
     Output("order_filter", "options"),
     Output("family_filter", "options"),
     Output("country_filter", "options"),
+    Output("active-filters", "data"),
     Input("checklist_input", "value"),
     Input("input", "value"),
     Input("pagination", "active_page"),
@@ -298,8 +242,11 @@ def create_update_data_table(
     if country_values:
         params["countries"] = country_values[0]
 
-    # Map bounds filters
-    if map_bounds:
+    # Map bounds filters — only apply if map-bounds was the trigger
+    # (not when search/filter inputs changed, which would make bounds stale)
+    triggered = [t["prop_id"] for t in dash.callback_context.triggered]
+    bounds_active = map_bounds and any("map-bounds" in t for t in triggered)
+    if bounds_active:
         params["top_left_lat"] = map_bounds.get("top_left_lat")
         params["top_left_lon"] = map_bounds.get("top_left_lon")
         params["bottom_right_lat"] = map_bounds.get("bottom_right_lat")
@@ -358,7 +305,12 @@ def create_update_data_table(
             ],
             className="text-center py-5",
         )
-        return empty_state, [], 1, [], [], [], []
+        active = {"q": input_value}
+        if kingdom_values:
+            active["kingdom"] = kingdom_values[0]
+        if country_values:
+            active["country"] = country_values[0]
+        return empty_state, [], 1, [], [], [], [], active
 
     table_body = [
         html.Tbody(
@@ -439,29 +391,47 @@ def create_update_data_table(
         total = len(results)
     max_pages = max(1, math.ceil(total / PAGE_SIZE))
 
+    # Build active filters for the map callback
+    active = {}
+    if input_value:
+        active["q"] = input_value
+    if country_values:
+        active["country"] = country_values[0] if isinstance(country_values, list) else country_values
+
     return (
         table_container, options, max_pages,
         kingdom_options, order_options, family_options, country_options,
+        active,
     )
 
 
 @callback(
-    Output("sample-map", "children"),
-    Input("sample-map", "bounds"),
-    Input("sample-map", "zoom"),
+    Output("map-markers", "children"),
+    Input("sample-map", "viewport"),
+    Input("active-filters", "data"),
 )
-def update_map_clusters(bounds, zoom):
-    """Fetch geo clusters and render them as circle markers on the map."""
-    if not bounds or not zoom:
-        return [dl.TileLayer()]
-
+def update_map_clusters(viewport, active_filters):
+    """Fetch geo clusters filtered by active search/filters."""
+    zoom = 2
     params = {"zoom": zoom}
-    if bounds:
-        # bounds is [[south, west], [north, east]]
-        params["top_left_lat"] = bounds[1][0]
-        params["top_left_lon"] = bounds[0][1]
-        params["bottom_right_lat"] = bounds[0][0]
-        params["bottom_right_lon"] = bounds[1][1]
+
+    if viewport and viewport.get("bounds"):
+        bounds = viewport["bounds"]
+        zoom = viewport.get("zoom", 2)
+        params = {
+            "zoom": zoom,
+            "top_left_lat": bounds[1][0],
+            "top_left_lon": bounds[0][1],
+            "bottom_right_lat": bounds[0][0],
+            "bottom_right_lon": bounds[1][1],
+        }
+
+    # Pass active filters to geo_aggregation
+    if active_filters:
+        if active_filters.get("q"):
+            params["q"] = active_filters["q"]
+        if active_filters.get("country"):
+            params["country"] = active_filters["country"]
 
     try:
         response = requests.get(
@@ -470,7 +440,7 @@ def update_map_clusters(bounds, zoom):
             timeout=15,
         ).json()
     except Exception:
-        return [dl.TileLayer()]
+        return []
 
     markers = []
     for c in response.get("clusters", []):
@@ -479,9 +449,64 @@ def update_map_clusters(bounds, zoom):
                 center=[c["lat"], c["lon"]],
                 radius=max(8, min(30, c["count"] / 2)),
                 children=dl.Tooltip(f"{c['count']} samples"),
+                id={"type": "map-cluster", "key": c["key"]},
                 color="#f0c674",
                 fillColor="#f0c674",
                 fillOpacity=0.7,
             )
         )
-    return [dl.TileLayer()] + markers
+    return markers
+
+
+@callback(
+    Output("map-bounds", "data"),
+    Output("sample-map", "viewport"),
+    Input({"type": "map-cluster", "key": dash.ALL}, "n_clicks"),
+    prevent_initial_call=True,
+)
+def on_cluster_click(n_clicks):
+    """When a cluster is clicked, zoom in and filter table by that area."""
+    ctx = dash.callback_context
+    if not ctx.triggered or not any(n_clicks):
+        return dash.no_update, dash.no_update
+
+    # Find which cluster was clicked
+    triggered = ctx.triggered[0]
+    prop_id = triggered["prop_id"]
+    # Extract key like "12/2047/1362" from the pattern-match ID
+    import json as _json
+    try:
+        id_dict = _json.loads(prop_id.split(".")[0])
+        tile_key = id_dict["key"]
+    except Exception:
+        return dash.no_update, dash.no_update
+
+    # Parse geotile key: zoom/x/y → compute bounding box
+    parts = tile_key.split("/")
+    if len(parts) != 3:
+        return dash.no_update, dash.no_update
+
+    z, x, y = int(parts[0]), int(parts[1]), int(parts[2])
+    import math as _math
+    n = 2 ** z
+
+    def tile_to_lon(tx):
+        return tx / n * 360.0 - 180.0
+
+    def tile_to_lat(ty):
+        lat_rad = _math.atan(_math.sinh(_math.pi * (1 - 2 * ty / n)))
+        return _math.degrees(lat_rad)
+
+    bounds_data = {
+        "top_left_lat": tile_to_lat(y),
+        "top_left_lon": tile_to_lon(x),
+        "bottom_right_lat": tile_to_lat(y + 1),
+        "bottom_right_lon": tile_to_lon(x + 1),
+    }
+
+    # Zoom the map to the cluster area
+    center_lat = (bounds_data["top_left_lat"] + bounds_data["bottom_right_lat"]) / 2
+    center_lon = (bounds_data["top_left_lon"] + bounds_data["bottom_right_lon"]) / 2
+    new_viewport = {"center": [center_lat, center_lon], "zoom": z + 2}
+
+    return bounds_data, new_viewport

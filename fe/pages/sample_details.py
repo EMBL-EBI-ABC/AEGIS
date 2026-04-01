@@ -2,15 +2,17 @@ import dash
 import dash_bootstrap_components as dbc
 import dash_leaflet as dl
 import requests
-from dash import html, callback, Output, Input
+from dash import html, dcc, callback, Output, Input
 
-from .data_portal import return_badge_status
+from .utils import return_badge_status
 
 dash.register_page(
-    __name__, path_template="/data-portal/<tax_id>/samples/<accession>"
+    __name__,
+    path_template="/data-portal/<tax_id>/samples/<accession>",
+    order=0,
 )
 
-BACKEND_URL = "https://aegis-be-1091670130981.europe-west2.run.app"
+BACKEND_URL = "http://127.0.0.1:8000"
 
 
 def layout(tax_id=None, accession=None, **kwargs):
@@ -19,56 +21,36 @@ def layout(tax_id=None, accession=None, **kwargs):
             # Breadcrumb
             dbc.Row(
                 dbc.Col(
-                    html.Nav(
-                        html.Ol(
-                            [
-                                html.Li(
-                                    html.A(
-                                        "Data Portal",
-                                        href="/data-portal",
-                                        style={
-                                            "color": "var(--aegis-accent-primary)",
-                                            "textDecoration": "none",
-                                        },
-                                    ),
-                                    className="breadcrumb-item",
-                                ),
-                                html.Li(
-                                    html.A(
-                                        id="breadcrumb-species-name",
-                                        href=f"/data-portal/{tax_id}",
-                                        style={
-                                            "color": "var(--aegis-accent-primary)",
-                                            "textDecoration": "none",
-                                        },
-                                    ),
-                                    className="breadcrumb-item",
-                                ),
-                                html.Li(
-                                    accession or "",
-                                    className="breadcrumb-item active",
-                                    style={
-                                        "color": "var(--aegis-text-muted)",
-                                        "fontFamily": "var(--font-mono)",
-                                    },
-                                ),
-                            ],
-                            className="breadcrumb",
-                            style={"marginBottom": "0"},
-                        ),
+                    html.Div(
+                        [
+                            html.A(
+                                "Data Portal",
+                                href="/data-portal",
+                                style={"color": "var(--aegis-accent-primary)", "textDecoration": "none", "fontSize": "0.85rem"},
+                            ),
+                            html.Span(" → ", style={"color": "var(--aegis-text-muted)", "margin": "0 0.4rem", "fontSize": "0.85rem"}),
+                            html.A(
+                                id="breadcrumb-species-name",
+                                href=f"/data-portal/{tax_id}",
+                                style={"color": "var(--aegis-accent-primary)", "textDecoration": "none", "fontStyle": "italic", "fontSize": "0.85rem"},
+                            ),
+                            html.Span(" → ", style={"color": "var(--aegis-text-muted)", "margin": "0 0.4rem", "fontSize": "0.85rem"}),
+                            html.Span(
+                                accession or "",
+                                style={"color": "var(--aegis-text-muted)", "fontFamily": "var(--font-mono)", "fontSize": "0.85rem"},
+                            ),
+                        ],
+                        style={"display": "flex", "alignItems": "center"},
                     ),
                     className="pt-4 pb-3",
                 ),
             ),
+            # Stores for passing URL params to callback
+            dcc.Store(id="sample-accession-store", data=accession),
+            dcc.Store(id="sample-taxid-store", data=tax_id),
             # Main content wrapped in spinner
             dbc.Spinner(
-                html.Div(
-                    id="sample-detail-content",
-                    **{
-                        "data-accession": accession or "",
-                        "data-tax_id": tax_id or "",
-                    },
-                ),
+                html.Div(id="sample-detail-content"),
                 color="warning",
             ),
         ],
@@ -82,14 +64,11 @@ def _make_metadata_card(title, fields, data):
     for label, key, mono in fields:
         value = data.get(key)
         if value is None or value == "":
-            display_value = html.Span(
-                "\u2014", style={"color": "var(--aegis-text-muted)"}
-            )
-        else:
-            style = {"color": "var(--aegis-text-primary)"}
-            if mono:
-                style["fontFamily"] = "var(--font-mono)"
-            display_value = html.Span(str(value), style=style)
+            continue
+        style = {"color": "var(--aegis-text-primary)"}
+        if mono:
+            style["fontFamily"] = "var(--font-mono)"
+        display_value = html.Span(str(value), style=style)
 
         items.append(
             html.Div(
@@ -150,8 +129,8 @@ def _make_metadata_card(title, fields, data):
 @callback(
     Output("sample-detail-content", "children"),
     Output("breadcrumb-species-name", "children"),
-    Input("sample-detail-content", "data-accession"),
-    Input("sample-detail-content", "data-tax_id"),
+    Input("sample-accession-store", "data"),
+    Input("sample-taxid-store", "data"),
 )
 def render_sample_detail(accession, tax_id):
     """Fetch sample data and render the detail page."""
@@ -182,7 +161,10 @@ def render_sample_detail(accession, tax_id):
             "",
         )
 
-    sample = response.json()
+    data = response.json()
+    if not data.get("results"):
+        return html.P("Sample not found.", style={"color": "var(--aegis-text-muted)"}), ""
+    sample = data["results"][0]
     scientific_name = sample.get("scientificName", "")
     organism_part = sample.get("organismPart", "")
     tracking_system = sample.get("trackingSystem", "")
@@ -223,10 +205,31 @@ def render_sample_detail(accession, tax_id):
         ),
     ]
 
+    # Status badge + external links row
+    badge_and_links = []
     if tracking_system:
-        header_items.append(
-            html.Div(return_badge_status(tracking_system), style={"marginBottom": "1rem"})
-        )
+        badge_and_links.append(return_badge_status(tracking_system))
+
+    link_style = {
+        "color": "var(--aegis-accent-primary)",
+        "textDecoration": "none",
+        "padding": "0.3rem 0.75rem",
+        "background": "var(--aegis-bg-elevated)",
+        "borderRadius": "var(--radius-md)",
+        "border": "1px solid var(--aegis-border-subtle)",
+        "fontSize": "0.8rem",
+        "display": "inline-flex",
+        "alignItems": "center",
+    }
+    badge_and_links.append(
+        html.A("BioSamples", href=f"https://www.ebi.ac.uk/biosamples/samples/{accession}", target="_blank", style=link_style)
+    )
+    badge_and_links.append(
+        html.A("ENA", href=f"https://www.ebi.ac.uk/ena/browser/view/{accession}", target="_blank", style=link_style)
+    )
+    header_items.append(
+        html.Div(badge_and_links, style={"display": "flex", "gap": "0.5rem", "alignItems": "center", "flexWrap": "wrap"})
+    )
 
     children.append(
         html.Div(header_items, style={"marginBottom": "1.5rem"})
@@ -266,49 +269,124 @@ def render_sample_detail(accession, tax_id):
         )
 
     # --- Metadata cards (left) and Map (right) ---
-    # Collection fields: (label, key, mono)
-    collection_fields = [
-        ("Date", "collectionDate", False),
-        ("By", "collectedBy", False),
-        ("Institution", "collectingInstitution", False),
-        ("Project", "projectName", False),
-    ]
-
-    specimen_fields = [
-        ("Part", "organismPart", False),
-        ("Sex", "sex", False),
-        ("Lifestage", "lifestage", False),
-        ("TOL ID", "tolid", True),
-    ]
-
-    # Build location data dict with lat/lon promoted to top level
     location_data = {
         "country": sample.get("country"),
         "locality": sample.get("locality"),
         "habitat": sample.get("habitat"),
-        "elevation": sample.get("elevation"),
+        "elevation": f"{sample['elevation']}m" if sample.get("elevation") is not None else None,
+        "depth": f"{sample['depth']}m" if sample.get("depth") is not None else None,
         "lat": location.get("lat") if location else None,
         "lon": location.get("lon") if location else None,
     }
-    location_fields = [
-        ("Country", "country", False),
-        ("Locality", "locality", False),
-        ("Habitat", "habitat", False),
-        ("Elevation", "elevation", False),
-        ("Lat", "lat", True),
-        ("Lon", "lon", True),
+
+    original_location_data = {
+        "originalCollectionDate": sample.get("originalCollectionDate"),
+        "originalGeographicLocation": sample.get("originalGeographicLocation"),
+        "originalLatitude": sample.get("originalLatitude"),
+        "originalLongitude": sample.get("originalLongitude"),
+    }
+
+    # Build cards — only show cards that have at least one non-null value
+    def _card_if_has_data(title, fields, data):
+        if any(data.get(key) is not None for _, key, _ in fields):
+            return _make_metadata_card(title, fields, data)
+        return None
+
+    cards = [
+        _make_metadata_card("Collection", [
+            ("Date", "collectionDate", False),
+            ("Collected By", "collectedBy", False),
+            ("Institution", "collectingInstitution", False),
+            ("GAL", "gal", False),
+            ("Project", "projectName", False),
+            ("Method", "sampleCollectionMethod", False),
+        ], sample),
+        _make_metadata_card("Specimen", [
+            ("Part", "organismPart", False),
+            ("Sex", "sex", False),
+            ("Lifestage", "lifestage", False),
+            ("TOL ID", "tolid", True),
+            ("Specimen ID", "specimenId", True),
+            ("Specimen Voucher", "specimenVoucher", True),
+        ], sample),
+        _make_metadata_card("Location", [
+            ("Country", "country", False),
+            ("Locality", "locality", False),
+            ("Habitat", "habitat", False),
+            ("Elevation", "elevation", False),
+            ("Depth", "depth", False),
+            ("Lat", "lat", True),
+            ("Lon", "lon", True),
+        ], location_data),
+        _card_if_has_data("Identification", [
+            ("Identified By", "identifiedBy", False),
+            ("Identifier Affiliation", "identifierAffiliation", False),
+            ("Sample Coordinator", "sampleCoordinator", False),
+            ("Coordinator Affiliation", "sampleCoordinatorAffiliation", False),
+            ("Barcoding Center", "barcodingCenter", False),
+        ], sample),
+        _card_if_has_data("Relationships", [
+            ("Derived From", "derivedFrom", True),
+            ("Symbiont Of", "sampleSymbiontOf", True),
+            ("Symbiont", "symbiont", False),
+            ("Relationship", "relationship", False),
+            ("Same As", "sampleSameAs", True),
+        ], sample),
+        _card_if_has_data("Original Location", [
+            ("Date", "originalCollectionDate", False),
+            ("Location", "originalGeographicLocation", False),
+            ("Lat", "originalLatitude", True),
+            ("Lon", "originalLongitude", True),
+        ], original_location_data),
     ]
+    # Filter out None cards (those with no data)
+    cards = [c for c in cards if c is not None]
 
-    left_col = dbc.Col(
-        [
-            _make_metadata_card("Collection", collection_fields, sample),
-            _make_metadata_card("Specimen", specimen_fields, sample),
-            _make_metadata_card("Location", location_fields, location_data),
-        ],
-        md=6,
-    )
+    # Custom fields table
+    custom_fields = sample.get("customFields") or []
+    if custom_fields:
+        rows = [
+            html.Tr([
+                html.Td(
+                    cf.get("key", ""),
+                    style={"color": "var(--aegis-text-muted)", "fontSize": "0.85rem", "padding": "0.4rem 0.75rem"},
+                ),
+                html.Td(
+                    cf.get("value", ""),
+                    style={"color": "var(--aegis-text-primary)", "fontSize": "0.85rem", "padding": "0.4rem 0.75rem"},
+                ),
+            ])
+            for cf in custom_fields
+        ]
+        cards.append(
+            dbc.Card(
+                dbc.CardBody([
+                    html.H6(
+                        "Custom Fields",
+                        style={
+                            "fontFamily": "var(--font-display)",
+                            "color": "var(--aegis-text-primary)",
+                            "marginBottom": "1rem",
+                            "fontSize": "0.85rem",
+                            "textTransform": "uppercase",
+                            "letterSpacing": "0.05em",
+                        },
+                    ),
+                    dbc.Table(
+                        [html.Tbody(rows)],
+                        striped=True, bordered=False, hover=True, responsive=True,
+                        style={"marginBottom": "0"},
+                    ),
+                ]),
+                style={
+                    "background": "var(--aegis-bg-card)",
+                    "border": "1px solid var(--aegis-border-subtle)",
+                    "marginBottom": "1rem",
+                },
+            )
+        )
 
-    # Map (right column)
+    # Map (full width, on top)
     if location and location.get("lat") is not None and location.get("lon") is not None:
         lat = float(location["lat"])
         lon = float(location["lon"])
@@ -320,127 +398,32 @@ def render_sample_detail(accession, tax_id):
             center=[lat, lon],
             zoom=12,
             style={
-                "height": "100%",
-                "minHeight": "400px",
+                "height": "300px",
                 "borderRadius": "var(--radius-md)",
             },
         )
-    else:
-        map_component = html.Div(
-            [
-                html.P(
-                    "No location data available",
-                    style={
-                        "color": "var(--aegis-text-muted)",
-                        "textAlign": "center",
-                        "paddingTop": "3rem",
-                    },
-                ),
-            ],
-            style={
-                "height": "100%",
-                "minHeight": "400px",
-                "background": "var(--aegis-bg-elevated)",
-                "borderRadius": "var(--radius-md)",
-                "border": "1px solid var(--aegis-border-subtle)",
-                "display": "flex",
-                "alignItems": "center",
-                "justifyContent": "center",
-            },
+        children.append(
+            dbc.Card(
+                dbc.CardBody(map_component, style={"padding": "0"}),
+                style={
+                    "background": "var(--aegis-bg-card)",
+                    "border": "1px solid var(--aegis-border-subtle)",
+                    "overflow": "hidden",
+                    "marginBottom": "1rem",
+                },
+            )
         )
 
-    right_col = dbc.Col(
-        dbc.Card(
-            dbc.CardBody(map_component, style={"padding": "0"}),
-            style={
-                "background": "var(--aegis-bg-card)",
-                "border": "1px solid var(--aegis-border-subtle)",
-                "height": "100%",
-                "overflow": "hidden",
-            },
-        ),
-        md=6,
-    )
-
-    children.append(
-        dbc.Row([left_col, right_col], style={"marginBottom": "1.5rem"})
-    )
-
-    # --- External links ---
-    biosamples_link = html.A(
-        [
-            html.Span("BioSamples", style={"marginRight": "0.25rem"}),
-            html.Span(
-                accession,
-                style={"fontFamily": "var(--font-mono)", "fontSize": "0.85rem"},
-            ),
-        ],
-        href=f"https://www.ebi.ac.uk/biosamples/samples/{accession}",
-        target="_blank",
-        style={
-            "color": "var(--aegis-accent-primary)",
-            "textDecoration": "none",
-            "padding": "0.75rem 1.25rem",
-            "background": "var(--aegis-bg-elevated)",
-            "borderRadius": "var(--radius-md)",
-            "border": "1px solid var(--aegis-border-subtle)",
-            "display": "inline-flex",
-            "alignItems": "center",
-            "transition": "border-color 0.2s ease",
-        },
-    )
-
-    ena_link = html.A(
-        [
-            html.Span("ENA", style={"marginRight": "0.25rem"}),
-            html.Span(
-                accession,
-                style={"fontFamily": "var(--font-mono)", "fontSize": "0.85rem"},
-            ),
-        ],
-        href=f"https://www.ebi.ac.uk/ena/browser/view/{accession}",
-        target="_blank",
-        style={
-            "color": "var(--aegis-accent-primary)",
-            "textDecoration": "none",
-            "padding": "0.75rem 1.25rem",
-            "background": "var(--aegis-bg-elevated)",
-            "borderRadius": "var(--radius-md)",
-            "border": "1px solid var(--aegis-border-subtle)",
-            "display": "inline-flex",
-            "alignItems": "center",
-            "transition": "border-color 0.2s ease",
-        },
-    )
-
+    # Cards in two columns
+    left_cards = cards[::2]   # even indices
+    right_cards = cards[1::2]  # odd indices
     children.append(
         dbc.Row(
-            dbc.Col(
-                html.Div(
-                    [
-                        html.Span(
-                            "External Links",
-                            style={
-                                "fontSize": "0.75rem",
-                                "color": "var(--aegis-text-muted)",
-                                "textTransform": "uppercase",
-                                "letterSpacing": "0.05em",
-                                "display": "block",
-                                "marginBottom": "0.75rem",
-                            },
-                        ),
-                        html.Div(
-                            [biosamples_link, ena_link],
-                            style={
-                                "display": "flex",
-                                "flexWrap": "wrap",
-                                "gap": "1rem",
-                            },
-                        ),
-                    ]
-                ),
-            ),
-            style={"marginBottom": "2rem"},
+            [
+                dbc.Col(left_cards, md=6),
+                dbc.Col(right_cards, md=6),
+            ],
+            style={"marginBottom": "1.5rem"},
         )
     )
 

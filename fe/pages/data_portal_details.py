@@ -9,7 +9,8 @@ from dash import html, Output, Input, callback, dcc, MATCH
 import dash_bootstrap_components as dbc
 
 PAGE_SIZE = 10
-BACKEND_URL = "http://127.0.0.1:8000"
+import os
+BACKEND_URL = os.getenv("BACKEND_URL", "https://aegis-be-1091670130981.europe-west2.run.app")
 
 from .utils import return_badge_status
 

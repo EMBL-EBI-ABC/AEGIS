@@ -12,7 +12,8 @@ dash.register_page(
     order=0,
 )
 
-BACKEND_URL = "http://127.0.0.1:8000"
+import os
+BACKEND_URL = os.getenv("BACKEND_URL", "https://aegis-be-1091670130981.europe-west2.run.app")
 
 
 def layout(tax_id=None, accession=None, **kwargs):

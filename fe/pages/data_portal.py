@@ -6,7 +6,8 @@ import dash_leaflet as dl
 import requests
 
 PAGE_SIZE = 10
-BACKEND_URL = "http://127.0.0.1:8000"
+import os
+BACKEND_URL = os.getenv("BACKEND_URL", "https://aegis-be-1091670130981.europe-west2.run.app")
 
 dash.register_page(
     __name__,

@@ -257,6 +257,7 @@ class GeoAggregationParams(BaseModel):
     bottom_right_lat: float | None = Field(None, description="Bounding box bottom-right latitude")
     bottom_right_lon: float | None = Field(None, description="Bounding box bottom-right longitude")
     tax_id: int | None = Field(None, description="Filter to a specific species")
+    tax_ids: str | None = Field(None, description="Comma-separated taxIds to filter by")
     q: str | None = Field(None, description="Full text search query")
     country: str | None = Field(None, description="Filter by country")
     trackingSystem: str | None = Field(None, description="Filter by tracking status")

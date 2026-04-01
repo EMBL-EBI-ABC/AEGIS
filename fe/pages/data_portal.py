@@ -306,12 +306,7 @@ def create_update_data_table(
             ],
             className="text-center py-5",
         )
-        active = {"q": input_value}
-        if kingdom_values:
-            active["kingdom"] = kingdom_values[0]
-        if country_values:
-            active["country"] = country_values[0]
-        return empty_state, [], 1, [], [], [], [], active
+        return empty_state, [], 1, [], [], [], [], {}
 
     table_body = [
         html.Tbody(
@@ -392,12 +387,30 @@ def create_update_data_table(
         total = len(results)
     max_pages = max(1, math.ceil(total / PAGE_SIZE))
 
-    # Build active filters for the map callback
+    # Collect all taxIds from the full filtered result for the map
+    # (response.total may be > PAGE_SIZE, but we have the current page's taxIds
+    # plus we pass the filter params so the map can query independently)
     active = {}
     if input_value:
         active["q"] = input_value
     if country_values:
         active["country"] = country_values[0] if isinstance(country_values, list) else country_values
+    if kingdom_values:
+        active["kingdom"] = kingdom_values[0] if isinstance(kingdom_values, list) else kingdom_values
+    if order_values:
+        active["tax_order"] = order_values[0] if isinstance(order_values, list) else order_values
+    if family_values:
+        active["family"] = family_values[0] if isinstance(family_values, list) else family_values
+    if filter_values:
+        status_to_tracking = {
+            "bioSamplesStatus": "Submitted to BioSamples",
+            "rawDataStatus": "Raw Data - Submitted",
+            "assembliesStatus": "Assemblies - Submitted",
+        }
+        for fv in filter_values:
+            if fv in status_to_tracking:
+                active["trackingSystem"] = status_to_tracking[fv]
+                break
 
     return (
         table_container, options, max_pages,
@@ -429,10 +442,27 @@ def update_map_clusters(viewport, active_filters):
 
     # Pass active filters to geo_aggregation
     if active_filters:
-        if active_filters.get("q"):
-            params["q"] = active_filters["q"]
-        if active_filters.get("country"):
-            params["country"] = active_filters["country"]
+        for key in ("q", "country", "trackingSystem"):
+            if active_filters.get(key):
+                params[key] = active_filters[key]
+
+        # Taxonomy filters (kingdom, order, family) live on data_portal, not samples.
+        # If any are set, fetch matching taxIds from data_portal and pass to geo_aggregation.
+        has_taxonomy = any(active_filters.get(k) for k in ("kingdom", "tax_order", "family"))
+        if has_taxonomy:
+            dp_params = {"size": 10000, "start": 0}
+            for k in ("kingdom", "tax_order", "family"):
+                if active_filters.get(k):
+                    dp_params[k] = active_filters[k]
+            try:
+                dp_resp = requests.get(f"{BACKEND_URL}/data_portal", params=dp_params, timeout=15).json()
+                tax_ids = [str(r["taxId"]) for r in dp_resp.get("results", [])]
+                if tax_ids:
+                    params["tax_ids"] = ",".join(tax_ids)
+                else:
+                    return []  # No matching species, no markers
+            except Exception:
+                pass
 
     try:
         response = requests.get(

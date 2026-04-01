@@ -284,6 +284,10 @@ async def samples_geo_aggregation(
         )
     if params.tax_id is not None:
         filters.append({"term": {"taxId": params.tax_id}})
+    if params.tax_ids:
+        id_list = [int(x.strip()) for x in params.tax_ids.split(",") if x.strip()]
+        if id_list:
+            filters.append({"terms": {"taxId": id_list}})
     if params.country:
         filters.append({"term": {"country": params.country}})
     if params.trackingSystem:

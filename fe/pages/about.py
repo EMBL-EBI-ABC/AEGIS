@@ -235,7 +235,7 @@ layout = dbc.Container(
                                                     },
                                                 ),
                                                 html.P(
-                                                    "Environmental DNA preserved in soil, ice, and water samples can be thousands to millions of years old. By sequencing these fragments and comparing them to modern reference genomes, we can identify genetic variants that helped ancient plants survive past climate shifts.",
+                                                    "Environmental DNA preserved in soil, ice, and sediment samples can be thousands to millions of years old. By sequencing these fragments and comparing them to modern reference genomes, we can identify genetic variants that helped ancient plants survive past climate shifts.",
                                                     style={
                                                         "color": "var(--aegis-text-secondary)",
                                                         "lineHeight": "1.7",
@@ -307,7 +307,7 @@ layout = dbc.Container(
                                                     },
                                                 ),
                                                 html.P(
-                                                    "All genomic data is stored in the European Nucleotide Archive (ENA) and made publicly available through this portal. We're also developing new metadata standards and bioinformatics tools for crop breeders, ecologists, and conservation biologists worldwide.",
+                                                    "All genomic data is stored in the European Nucleotide Archive (ENA) and made publicly available through this portal. We're also developing new metadata checklists and bioinformatics tools for crop breeders, ecologists, and conservation biologists worldwide.",
                                                     style={
                                                         "color": "var(--aegis-text-secondary)",
                                                         "lineHeight": "1.7",

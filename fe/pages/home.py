@@ -30,7 +30,7 @@ def hero_section():
             html.Img(
                 src="/assets/aegis_logo-byline_RGB_black_01.png",
                 className="hero-logo",
-                alt="AEGIS - Ancient Environmental Genomic Investigation & Solutions",
+                alt="AEGIS - Ancient Environmental Genomics Initiative for Sustainability",
             ),
         ],
         className="hero-banner",

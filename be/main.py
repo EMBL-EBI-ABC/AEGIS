@@ -2,7 +2,7 @@ import os
 import urllib.parse
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Query, Path
+from fastapi import APIRouter, FastAPI, HTTPException, Query, Path
 from elasticsearch import AsyncElasticsearch
 from fastapi.middleware.cors import CORSMiddleware
 from collections import defaultdict
@@ -40,15 +40,21 @@ async def lifespan(app: FastAPI):
 
 
 # Initialize FastAPI with lifespan manager.
+# Served behind a proxy at https://portal.aegisearth.bio/api/* (proxy does not strip
+# the prefix), so docs and routes live under /api.
 app = FastAPI(
     lifespan=lifespan,
     title="AEGIS Data Portal API",
     version="0.0.1",
+    docs_url="/api/docs",
+    openapi_url="/api/openapi.json",
     license_info={
         "name": "Apache 2.0",
         "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
     },
 )
+
+api = APIRouter(prefix="/api")
 
 # Allow all origins.
 app.add_middleware(
@@ -153,7 +159,7 @@ async def elastic_details(index_name, record_id, data_class):
 # Data Portal
 
 
-@app.get("/data_portal")
+@api.get("/data_portal")
 async def data_portal_search(
     params: Annotated[DataPortalSearchParams, Query()],
 ) -> ElasticResponse[DataPortalData, DataPortalAggregationResponse]:
@@ -230,7 +236,7 @@ async def data_portal_search(
     )
 
 
-@app.get("/data_portal/{record_id}")
+@api.get("/data_portal/{record_id}")
 async def data_portal_details(
     record_id: Annotated[str, Path(description="Record ID")],
 ) -> ElasticDetailsResponse[DataPortalData]:
@@ -244,7 +250,7 @@ async def data_portal_details(
 # Samples
 
 
-@app.get("/samples")
+@api.get("/samples")
 async def samples_search(
     params: Annotated[SampleSearchParams, Query()],
 ) -> ElasticResponse[SampleData, SampleAggregationResponse]:
@@ -256,7 +262,7 @@ async def samples_search(
     )
 
 
-@app.get("/samples/geo_aggregation")
+@api.get("/samples/geo_aggregation")
 async def samples_geo_aggregation(
     params: Annotated[GeoAggregationParams, Query()],
 ) -> GeoAggregationResponse:
@@ -341,7 +347,7 @@ async def samples_geo_aggregation(
         raise HTTPException(status_code=500, detail=f"Geo aggregation error: {str(e)}")
 
 
-@app.get("/samples/{accession}")
+@api.get("/samples/{accession}")
 async def samples_details(
     accession: Annotated[str, Path(description="Sample accession")],
 ) -> ElasticDetailsResponse[SampleData]:
@@ -350,3 +356,6 @@ async def samples_details(
         record_id=accession,
         data_class=SampleData,
     )
+
+
+app.include_router(api)

@@ -63,7 +63,7 @@ layout = html.Div(
                                     },
                                 ),
                                 html.Code(
-                                    "aegis-be-*.run.app",
+                                    "portal.aegisearth.bio/api",
                                     style={
                                         "color": "var(--aegis-accent-primary)",
                                         "fontFamily": "var(--font-mono)",
@@ -171,7 +171,7 @@ layout = html.Div(
         # Swagger UI Iframe
         html.Div(
             html.Iframe(
-                src="https://aegis-be-1091670130981.europe-west2.run.app/docs",
+                src="https://portal.aegisearth.bio/api/docs",
                 style={
                     "display": "block",
                     "height": "calc(100vh - 250px)",

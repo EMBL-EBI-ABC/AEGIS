@@ -7,7 +7,7 @@ import requests
 
 PAGE_SIZE = 10
 import os
-BACKEND_URL = os.getenv("BACKEND_URL", "https://aegis-be-1091670130981.europe-west2.run.app")
+BACKEND_URL = os.getenv("BACKEND_URL", "https://portal.aegisearth.bio/api")
 
 dash.register_page(
     __name__,
@@ -130,7 +130,13 @@ layout = dbc.Container(
                                 # Map
                                 html.Div(
                                     dl.Map(
-                                        [dl.TileLayer(), dl.LayerGroup(id="map-markers")],
+                                        [
+                                            dl.TileLayer(
+                                                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+                                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                                            ),
+                                            dl.LayerGroup(id="map-markers"),
+                                        ],
                                         id="sample-map",
                                         center=[30, 0],
                                         zoom=2,
@@ -481,8 +487,8 @@ def update_map_clusters(viewport, active_filters):
                 radius=max(8, min(30, c["count"] / 2)),
                 children=dl.Tooltip(f"{c['count']} samples"),
                 id={"type": "map-cluster", "key": c["key"]},
-                color="#f0c674",
-                fillColor="#f0c674",
+                color="#4E6B66",
+                fillColor="#4E6B66",
                 fillOpacity=0.7,
             )
         )

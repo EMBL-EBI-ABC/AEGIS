@@ -102,7 +102,7 @@ async def test_samples_search(client, mock_es_client):
         "aggregations": SAMPLE_AGGREGATIONS,
     }
 
-    response = await client.get("/samples")
+    response = await client.get("/api/samples")
     assert response.status_code == 200
 
     data = response.json()
@@ -126,7 +126,7 @@ async def test_sample_detail(client, mock_es_client):
         },
     }
 
-    response = await client.get("/samples/SAMEA7522340")
+    response = await client.get("/api/samples/SAMEA7522340")
     assert response.status_code == 200
 
     data = response.json()
@@ -162,7 +162,7 @@ async def test_geo_aggregation(client, mock_es_client):
         }
     }
 
-    response = await client.get("/samples/geo_aggregation?zoom=5")
+    response = await client.get("/api/samples/geo_aggregation?zoom=5")
     assert response.status_code == 200
 
     data = response.json()
@@ -184,7 +184,7 @@ async def test_geo_aggregation_with_bounds(client, mock_es_client):
     }
 
     response = await client.get(
-        "/samples/geo_aggregation"
+        "/api/samples/geo_aggregation"
         "?zoom=5"
         "&top_left_lat=60.0&top_left_lon=-10.0"
         "&bottom_right_lat=50.0&bottom_right_lon=10.0"
@@ -213,7 +213,7 @@ async def test_data_portal_with_taxonomy_filters(client, mock_es_client):
         "aggregations": DATA_PORTAL_AGGREGATIONS,
     }
 
-    response = await client.get("/data_portal?kingdom=Plantae")
+    response = await client.get("/api/data_portal?kingdom=Plantae")
     assert response.status_code == 200
 
     # Inspect the ES query body for the taxonomy filter.

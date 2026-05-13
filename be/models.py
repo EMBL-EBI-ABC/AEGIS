@@ -152,7 +152,7 @@ data_portal = DataSource(
         FieldDefinition(name="taxId", type=int),
         FieldDefinition(name="scientificName", type=str),
         FieldDefinition(name="commonName", type=str | None),
-        FieldDefinition(name="phylogeny", type=dict[str, str]),
+        FieldDefinition(name="phylogeny", type=dict[str, str] | None),
         FieldDefinition(name="currentStatus", type=str),
         FieldDefinition(name="currentStatusOrder", type=int),
         FieldDefinition(name="bioSamplesStatus", type=str, filterable=True),

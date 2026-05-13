@@ -1,59 +1,61 @@
 /* ==========================================================================
-   AEGIS Data Portal — Scientific Editorial Design System
-   Ancient Environmental Genomics Initiative for Sustainability
+   AEGIS Data Portal — Editorial Scientific Design System
+   Aligned with aegisearth.bio (light theme, mossy teal accent)
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
    Google Fonts Import
    -------------------------------------------------------------------------- */
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Source+Sans+3:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 /* --------------------------------------------------------------------------
    CSS Custom Properties (Design Tokens)
    -------------------------------------------------------------------------- */
 :root {
-    /* Color Palette — Earthy Ancient/Archaeological */
-    --aegis-bg-deep: #0D0C0A;
-    --aegis-bg-primary: #151413;
-    --aegis-bg-elevated: #1D1B19;
-    --aegis-bg-card: #242220;
-    --aegis-bg-hover: #2D2A27;
+    /* Surfaces — light, paper-like */
+    --aegis-bg-deep:     #F2F0EA;   /* deepest tint, used for hero / contrast bands */
+    --aegis-bg-primary:  #FFFFFF;   /* page background */
+    --aegis-bg-elevated: #FAFAF7;   /* section background */
+    --aegis-bg-card:     #FFFFFF;   /* card background */
+    --aegis-bg-hover:    #F2F0EA;   /* hover surface */
 
-    /* Accent Colors — Amber/Gold (Ancient Discovery) */
-    --aegis-accent-primary: #D4A855;
-    --aegis-accent-secondary: #C49A47;
-    --aegis-accent-muted: #8B7340;
-    --aegis-accent-glow: rgba(212, 168, 85, 0.15);
+    /* Brand — mossy teal-green (matches aegisearth.bio #4E6B66) */
+    --aegis-accent-primary:   #4E6B66;
+    --aegis-accent-secondary: #3E5651;
+    --aegis-accent-muted:     #8FA5A1;
+    --aegis-accent-glow:      rgba(78, 107, 102, 0.12);
+    --aegis-accent-soft:      #E8EEED;
 
-    /* Earth Tones for Status/Categories */
-    --aegis-earth-sage: #7A9E7E;
-    --aegis-earth-terracotta: #C67B5C;
-    --aegis-earth-slate: #6B7C8A;
-    --aegis-earth-ochre: #C4A35A;
-    --aegis-earth-moss: #5D7A5E;
+    /* Earth tones for status/categories — anchored in new palette */
+    --aegis-earth-sage:       #6B8E5A;
+    --aegis-earth-terracotta: #B45A4A;
+    --aegis-earth-slate:      #6B7C8A;
+    --aegis-earth-ochre:      #A87A2E;
+    --aegis-earth-moss:       #4E6B66;
 
-    /* Text Colors */
-    --aegis-text-primary: #F5F2ED;
-    --aegis-text-secondary: #B8B3A9;
-    --aegis-text-muted: #7D7869;
-    --aegis-text-accent: var(--aegis-accent-primary);
+    /* Text */
+    --aegis-text-primary:   #2D2D29;
+    --aegis-text-secondary: #5B5B57;
+    --aegis-text-muted:     #8C8C87;
+    --aegis-text-accent:    var(--aegis-accent-primary);
+    --aegis-text-inverse:   #FFFFFF;
 
     /* Borders & Lines */
-    --aegis-border-subtle: rgba(255, 255, 255, 0.06);
-    --aegis-border-medium: rgba(255, 255, 255, 0.1);
-    --aegis-border-accent: rgba(212, 168, 85, 0.3);
+    --aegis-border-subtle: rgba(45, 45, 41, 0.08);
+    --aegis-border-medium: rgba(45, 45, 41, 0.16);
+    --aegis-border-accent: rgba(78, 107, 102, 0.4);
 
     /* Typography */
-    --font-display: 'Cormorant Garamond', Georgia, serif;
-    --font-body: 'Source Sans 3', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-body:    'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono:    'JetBrains Mono', 'Fira Code', monospace;
 
     /* Spacing Scale */
-    --space-xs: 0.25rem;
-    --space-sm: 0.5rem;
-    --space-md: 1rem;
-    --space-lg: 1.5rem;
-    --space-xl: 2rem;
+    --space-xs:  0.25rem;
+    --space-sm:  0.5rem;
+    --space-md:  1rem;
+    --space-lg:  1.5rem;
+    --space-xl:  2rem;
     --space-2xl: 3rem;
     --space-3xl: 4rem;
 
@@ -62,17 +64,17 @@
     --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
     --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
 
-    /* Shadows */
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
-    --shadow-glow: 0 0 40px var(--aegis-accent-glow);
+    /* Shadows — soft, paper-like */
+    --shadow-sm: 0 1px 2px rgba(45, 45, 41, 0.04);
+    --shadow-md: 0 2px 8px rgba(45, 45, 41, 0.06);
+    --shadow-lg: 0 8px 24px rgba(45, 45, 41, 0.08);
+    --shadow-glow: 0 0 0 4px var(--aegis-accent-glow);
 
     /* Border Radius */
     --radius-sm: 4px;
-    --radius-md: 8px;
-    --radius-lg: 12px;
-    --radius-xl: 16px;
+    --radius-md: 6px;
+    --radius-lg: 10px;
+    --radius-xl: 14px;
 }
 
 /* --------------------------------------------------------------------------
@@ -94,23 +96,9 @@ body {
     font-weight: 400;
     line-height: 1.6;
     color: var(--aegis-text-primary);
-    background: var(--aegis-bg-deep);
+    background: var(--aegis-bg-primary);
     margin: 0;
     min-height: 100vh;
-}
-
-/* Subtle noise texture overlay */
-body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 9999;
-    opacity: 0.03;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
 }
 
 /* --------------------------------------------------------------------------
@@ -118,16 +106,16 @@ body::before {
    -------------------------------------------------------------------------- */
 h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
-    font-weight: 500;
-    line-height: 1.2;
+    font-weight: 400;
+    line-height: 1.1;
     color: var(--aegis-text-primary);
     margin-top: 0;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
 }
 
-h1 { font-size: 3rem; font-weight: 600; }
-h2 { font-size: 2.25rem; }
-h3 { font-size: 1.75rem; }
+h1 { font-size: clamp(2.5rem, 5vw, 4rem); }
+h2 { font-size: clamp(1.875rem, 3.5vw, 2.75rem); }
+h3 { font-size: clamp(1.5rem, 2.5vw, 2rem); }
 h4 { font-size: 1.375rem; }
 h5 { font-size: 1.125rem; }
 h6 { font-size: 1rem; }
@@ -145,7 +133,7 @@ a {
 }
 
 a:hover {
-    color: var(--aegis-text-primary);
+    color: var(--aegis-accent-secondary);
     text-decoration: underline;
     text-underline-offset: 3px;
 }
@@ -157,7 +145,6 @@ a:hover {
     background: var(--aegis-bg-primary) !important;
     border-bottom: 1px solid var(--aegis-border-subtle);
     padding: var(--space-md) var(--space-xl);
-    backdrop-filter: blur(12px);
     position: sticky;
     top: 0;
     z-index: 1050;
@@ -172,17 +159,16 @@ a:hover {
 .navbar-brand {
     font-family: var(--font-display) !important;
     font-size: 1.5rem !important;
-    font-weight: 600 !important;
+    font-weight: 500 !important;
     color: var(--aegis-text-primary) !important;
-    letter-spacing: 0.15em;
+    letter-spacing: -0.01em;
     display: flex;
     align-items: center;
     gap: var(--space-sm);
 }
 
 .navbar-brand img {
-    filter: invert(1) brightness(0.9) sepia(0.2);
-    opacity: 0.9;
+    opacity: 0.95;
     transition: opacity var(--transition-fast);
 }
 
@@ -192,11 +178,10 @@ a:hover {
 
 .nav-link {
     font-family: var(--font-body);
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     font-weight: 500;
-    color: var(--aegis-text-secondary) !important;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+    color: var(--aegis-text-primary) !important;
+    letter-spacing: 0;
     padding: var(--space-sm) var(--space-md) !important;
     position: relative;
     transition: color var(--transition-fast);
@@ -215,7 +200,7 @@ a:hover {
 }
 
 .nav-link:hover {
-    color: var(--aegis-text-primary) !important;
+    color: var(--aegis-accent-primary) !important;
     text-decoration: none !important;
 }
 
@@ -225,10 +210,6 @@ a:hover {
 
 .navbar-toggler {
     border-color: var(--aegis-border-medium) !important;
-}
-
-.navbar-toggler-icon {
-    filter: invert(1);
 }
 
 /* --------------------------------------------------------------------------
@@ -246,21 +227,21 @@ a:hover {
 }
 
 /* --------------------------------------------------------------------------
-   Cards — Elevated Editorial Style
+   Cards — Hairline Editorial Style
    -------------------------------------------------------------------------- */
 .card {
     background: var(--aegis-bg-card);
     border: 1px solid var(--aegis-border-subtle);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-sm);
     transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
     overflow: hidden;
 }
 
 .card:hover {
     transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
-    border-color: var(--aegis-border-accent);
+    box-shadow: var(--shadow-md);
+    border-color: var(--aegis-border-medium);
 }
 
 .card-header {
@@ -286,6 +267,7 @@ a:hover {
     font-weight: 500;
     color: var(--aegis-text-primary);
     margin-bottom: var(--space-sm);
+    letter-spacing: -0.01em;
 }
 
 .card-text {
@@ -302,27 +284,20 @@ a:hover {
 
 .card-img, .card-img-top {
     border-radius: 0;
-    opacity: 0.9;
     transition: opacity var(--transition-base);
 }
 
-.card:hover .card-img,
-.card:hover .card-img-top {
-    opacity: 1;
-}
-
 /* --------------------------------------------------------------------------
-   Buttons — Refined with Subtle Glow
+   Buttons — Solid Brand, Editorial Outline
    -------------------------------------------------------------------------- */
 .btn {
     font-family: var(--font-body);
     font-size: 0.875rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+    font-weight: 500;
+    letter-spacing: 0.01em;
     padding: var(--space-sm) var(--space-lg);
     border-radius: var(--radius-md);
-    border: none;
+    border: 1px solid transparent;
     cursor: pointer;
     transition: all var(--transition-base);
     position: relative;
@@ -331,25 +306,27 @@ a:hover {
 
 .btn-dark, .btn-primary {
     background: var(--aegis-accent-primary);
-    color: var(--aegis-bg-deep);
+    color: var(--aegis-text-inverse);
+    border-color: var(--aegis-accent-primary);
 }
 
 .btn-dark:hover, .btn-primary:hover {
     background: var(--aegis-accent-secondary);
-    color: var(--aegis-bg-deep);
-    box-shadow: var(--shadow-glow);
+    border-color: var(--aegis-accent-secondary);
+    color: var(--aegis-text-inverse);
     transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
 }
 
 .btn-secondary {
-    background: var(--aegis-bg-elevated);
+    background: transparent;
     color: var(--aegis-text-primary);
     border: 1px solid var(--aegis-border-medium);
 }
 
 .btn-secondary:hover {
     background: var(--aegis-bg-hover);
-    border-color: var(--aegis-accent-muted);
+    border-color: var(--aegis-text-primary);
     color: var(--aegis-text-primary);
 }
 
@@ -361,18 +338,17 @@ a:hover {
 
 .btn-outline-primary:hover {
     background: var(--aegis-accent-primary);
-    color: var(--aegis-bg-deep);
+    color: var(--aegis-text-inverse);
 }
 
 /* --------------------------------------------------------------------------
-   Badges — Status Indicators with Scientific Colors
+   Badges — Status Indicators
    -------------------------------------------------------------------------- */
 .badge {
     font-family: var(--font-body);
     font-size: 0.75rem;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.02em;
     padding: 0.35em 0.75em;
     border-radius: 100px;
     display: inline-flex;
@@ -389,41 +365,41 @@ a:hover {
     opacity: 0.7;
 }
 
-/* Custom Badge Colors for Pipeline Stages */
+/* Pipeline-stage badge palette */
 .badge.bg-secondary {
-    background: rgba(107, 124, 138, 0.2) !important;
+    background: rgba(107, 124, 138, 0.12) !important;
     color: var(--aegis-earth-slate);
-    border: 1px solid rgba(107, 124, 138, 0.3);
+    border: 1px solid rgba(107, 124, 138, 0.25);
 }
 
 .badge.bg-primary {
-    background: rgba(212, 168, 85, 0.15) !important;
+    background: var(--aegis-accent-soft) !important;
     color: var(--aegis-accent-primary);
-    border: 1px solid rgba(212, 168, 85, 0.3);
+    border: 1px solid var(--aegis-border-accent);
 }
 
 .badge.bg-success {
-    background: rgba(122, 158, 126, 0.15) !important;
+    background: rgba(107, 142, 90, 0.12) !important;
     color: var(--aegis-earth-sage);
-    border: 1px solid rgba(122, 158, 126, 0.3);
+    border: 1px solid rgba(107, 142, 90, 0.25);
 }
 
 .badge.bg-warning {
-    background: rgba(196, 163, 90, 0.15) !important;
+    background: rgba(168, 122, 46, 0.12) !important;
     color: var(--aegis-earth-ochre);
-    border: 1px solid rgba(196, 163, 90, 0.3);
+    border: 1px solid rgba(168, 122, 46, 0.25);
 }
 
 .badge.bg-danger {
-    background: rgba(198, 123, 92, 0.15) !important;
+    background: rgba(180, 90, 74, 0.12) !important;
     color: var(--aegis-earth-terracotta);
-    border: 1px solid rgba(198, 123, 92, 0.3);
+    border: 1px solid rgba(180, 90, 74, 0.25);
 }
 
 .badge.bg-info {
-    background: rgba(93, 122, 94, 0.15) !important;
+    background: rgba(78, 107, 102, 0.12) !important;
     color: var(--aegis-earth-moss);
-    border: 1px solid rgba(93, 122, 94, 0.3);
+    border: 1px solid rgba(78, 107, 102, 0.25);
 }
 
 /* --------------------------------------------------------------------------
@@ -432,7 +408,7 @@ a:hover {
 .form-control, input[type="text"] {
     font-family: var(--font-body);
     font-size: 0.95rem;
-    background: var(--aegis-bg-elevated);
+    background: var(--aegis-bg-primary);
     border: 1px solid var(--aegis-border-medium);
     border-radius: var(--radius-md);
     color: var(--aegis-text-primary);
@@ -441,9 +417,9 @@ a:hover {
 }
 
 .form-control:focus, input[type="text"]:focus {
-    background: var(--aegis-bg-card);
+    background: var(--aegis-bg-primary);
     border-color: var(--aegis-accent-primary);
-    box-shadow: 0 0 0 3px var(--aegis-accent-glow);
+    box-shadow: var(--shadow-glow);
     outline: none;
     color: var(--aegis-text-primary);
 }
@@ -455,7 +431,7 @@ a:hover {
 
 /* Checkboxes */
 .form-check-input {
-    background-color: var(--aegis-bg-elevated);
+    background-color: var(--aegis-bg-primary);
     border: 1px solid var(--aegis-border-medium);
     border-radius: var(--radius-sm);
     width: 1.1em;
@@ -470,7 +446,7 @@ a:hover {
 }
 
 .form-check-input:focus {
-    box-shadow: 0 0 0 3px var(--aegis-accent-glow);
+    box-shadow: var(--shadow-glow);
     border-color: var(--aegis-accent-primary);
 }
 
@@ -490,10 +466,10 @@ a:hover {
    -------------------------------------------------------------------------- */
 .table {
     --bs-table-bg: transparent;
-    --bs-table-color: var(--aegis-text-secondary);
+    --bs-table-color: var(--aegis-text-primary);
     --bs-table-border-color: var(--aegis-border-subtle);
-    --bs-table-striped-bg: rgba(255, 255, 255, 0.02);
-    --bs-table-hover-bg: rgba(212, 168, 85, 0.05);
+    --bs-table-striped-bg: rgba(45, 45, 41, 0.02);
+    --bs-table-hover-bg: var(--aegis-accent-soft);
 
     font-size: 0.9rem;
     border-collapse: separate;
@@ -505,10 +481,10 @@ a:hover {
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     color: var(--aegis-text-muted);
     background: var(--aegis-bg-elevated);
-    border-bottom: 2px solid var(--aegis-border-medium);
+    border-bottom: 1px solid var(--aegis-border-medium);
     padding: var(--space-md);
     white-space: nowrap;
 }
@@ -536,7 +512,6 @@ a:hover {
     font-weight: 500;
 }
 
-/* Responsive tables */
 .table-responsive {
     border-radius: var(--radius-md);
     border: 1px solid var(--aegis-border-subtle);
@@ -553,7 +528,7 @@ a:hover {
     font-family: var(--font-body);
     font-size: 0.85rem;
     font-weight: 500;
-    background: var(--aegis-bg-elevated);
+    background: var(--aegis-bg-primary);
     border: 1px solid var(--aegis-border-subtle);
     color: var(--aegis-text-secondary);
     padding: var(--space-sm) var(--space-md);
@@ -563,21 +538,21 @@ a:hover {
 
 .page-link:hover {
     background: var(--aegis-bg-hover);
-    border-color: var(--aegis-border-accent);
+    border-color: var(--aegis-border-medium);
     color: var(--aegis-text-primary);
 }
 
 .page-item.active .page-link {
     background: var(--aegis-accent-primary);
     border-color: var(--aegis-accent-primary);
-    color: var(--aegis-bg-deep);
+    color: var(--aegis-text-inverse);
 }
 
 .page-item.disabled .page-link {
-    background: var(--aegis-bg-primary);
+    background: var(--aegis-bg-elevated);
     border-color: var(--aegis-border-subtle);
     color: var(--aegis-text-muted);
-    opacity: 0.5;
+    opacity: 0.6;
 }
 
 /* --------------------------------------------------------------------------
@@ -590,7 +565,7 @@ a:hover {
 
 .nav-tabs .nav-link {
     font-family: var(--font-body);
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     font-weight: 500;
     color: var(--aegis-text-muted) !important;
     background: transparent;
@@ -598,8 +573,8 @@ a:hover {
     border-bottom: 2px solid transparent;
     padding: var(--space-sm) var(--space-md);
     border-radius: 0;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    text-transform: none;
+    letter-spacing: 0;
     transition: all var(--transition-fast);
 }
 
@@ -608,7 +583,7 @@ a:hover {
 }
 
 .nav-tabs .nav-link:hover {
-    color: var(--aegis-text-secondary) !important;
+    color: var(--aegis-text-primary) !important;
     border-bottom-color: var(--aegis-border-medium);
 }
 
@@ -633,7 +608,8 @@ a:hover {
 iframe {
     background: white;
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--aegis-border-subtle);
+    box-shadow: var(--shadow-sm);
 }
 
 /* --------------------------------------------------------------------------
@@ -642,58 +618,13 @@ iframe {
 .hero-banner {
     position: relative;
     width: 100%;
-    min-height: 500px;
+    min-height: 480px;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    background: linear-gradient(
-        135deg,
-        var(--aegis-bg-deep) 0%,
-        var(--aegis-bg-primary) 25%,
-        var(--aegis-bg-elevated) 50%,
-        var(--aegis-bg-primary) 75%,
-        var(--aegis-bg-deep) 100%
-    );
-}
-
-.hero-banner::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background:
-        radial-gradient(ellipse at 20% 80%, rgba(212, 168, 85, 0.08) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 20%, rgba(122, 158, 126, 0.06) 0%, transparent 50%),
-        radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 70%);
-    pointer-events: none;
-}
-
-/* Animated subtle lines suggesting DNA strands */
-.hero-banner::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image:
-        repeating-linear-gradient(
-            90deg,
-            transparent,
-            transparent 100px,
-            rgba(212, 168, 85, 0.03) 100px,
-            rgba(212, 168, 85, 0.03) 101px
-        );
-    pointer-events: none;
-    animation: subtleShift 20s linear infinite;
-}
-
-@keyframes subtleShift {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(101px); }
+    background: var(--aegis-bg-deep);
+    border-bottom: 1px solid var(--aegis-border-subtle);
 }
 
 .hero-logo {
@@ -701,7 +632,6 @@ iframe {
     z-index: 1;
     max-width: 600px;
     width: 80%;
-    filter: invert(1) brightness(0.95) sepia(0.1);
     animation: fadeInUp 1s ease-out;
 }
 
@@ -738,8 +668,8 @@ iframe {
     top: 0;
     left: 0;
     right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--aegis-accent-primary), var(--aegis-earth-sage));
+    height: 2px;
+    background: var(--aegis-accent-primary);
     transform: scaleX(0);
     transform-origin: left;
     transition: transform var(--transition-base);
@@ -750,9 +680,9 @@ iframe {
 }
 
 .feature-card:hover {
-    border-color: var(--aegis-border-accent);
-    box-shadow: var(--shadow-lg), var(--shadow-glow);
-    transform: translateY(-4px);
+    border-color: var(--aegis-border-medium);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-3px);
 }
 
 .feature-icon {
@@ -763,14 +693,15 @@ iframe {
     align-items: center;
     justify-content: center;
     border-radius: var(--radius-md);
-    background: var(--aegis-accent-glow);
+    background: var(--aegis-accent-soft);
     color: var(--aegis-accent-primary);
     font-size: 1.5rem;
 }
 
 .feature-card h4 {
     font-family: var(--font-display);
-    font-size: 1.25rem;
+    font-size: 1.375rem;
+    font-weight: 500;
     margin-bottom: var(--space-sm);
 }
 
@@ -788,7 +719,9 @@ iframe {
 }
 
 .filters-card .card-title {
-    font-size: 0.85rem;
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--aegis-text-muted);
@@ -862,11 +795,11 @@ iframe {
     position: absolute;
     left: 0;
     top: 0.6em;
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     background: var(--aegis-accent-primary);
     border-radius: 50%;
-    opacity: 0.7;
+    opacity: 0.8;
 }
 
 /* --------------------------------------------------------------------------
@@ -897,12 +830,8 @@ iframe {
         --space-2xl: 2rem;
     }
 
-    h1 { font-size: 2.25rem; }
-    h2 { font-size: 1.75rem; }
-    h3 { font-size: 1.5rem; }
-
     .hero-banner {
-        min-height: 350px;
+        min-height: 320px;
     }
 
     .hero-logo {
@@ -950,27 +879,27 @@ iframe {
    Scrollbar Styling (Webkit)
    -------------------------------------------------------------------------- */
 ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-    background: var(--aegis-bg-primary);
+    background: var(--aegis-bg-elevated);
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--aegis-bg-hover);
-    border-radius: 4px;
+    background: var(--aegis-border-medium);
+    border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--aegis-text-muted);
+    background: var(--aegis-accent-muted);
 }
 
 /* Firefox */
 * {
     scrollbar-width: thin;
-    scrollbar-color: var(--aegis-bg-hover) var(--aegis-bg-primary);
+    scrollbar-color: var(--aegis-border-medium) var(--aegis-bg-elevated);
 }
 
 /* --------------------------------------------------------------------------
@@ -978,10 +907,10 @@ iframe {
    -------------------------------------------------------------------------- */
 ::selection {
     background: var(--aegis-accent-primary);
-    color: var(--aegis-bg-deep);
+    color: var(--aegis-text-inverse);
 }
 
 ::-moz-selection {
     background: var(--aegis-accent-primary);
-    color: var(--aegis-bg-deep);
+    color: var(--aegis-text-inverse);
 }

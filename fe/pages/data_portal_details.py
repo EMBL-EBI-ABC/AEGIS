@@ -10,7 +10,7 @@ import dash_bootstrap_components as dbc
 
 PAGE_SIZE = 10
 import os
-BACKEND_URL = os.getenv("BACKEND_URL", "https://aegis-be-1091670130981.europe-west2.run.app")
+BACKEND_URL = os.getenv("BACKEND_URL", "https://portal.aegisearth.bio/api")
 
 from .utils import return_badge_status
 
@@ -53,7 +53,13 @@ def layout(tax_id=None, **kwargs):
                                         dbc.Col(html.Div(id="card", key=tax_id), md=7),
                                         dbc.Col(
                                             dl.Map(
-                                                [dl.TileLayer(), dl.LayerGroup(id="species-map-markers")],
+                                                [
+                                                    dl.TileLayer(
+                                                        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+                                                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                                                    ),
+                                                    dl.LayerGroup(id="species-map-markers"),
+                                                ],
                                                 id="species-map",
                                                 center=[52, 0],
                                                 zoom=5,
@@ -427,7 +433,7 @@ def build_sample_hierarchy(samples, tax_id):
                 "justifyContent": "space-between",
                 "alignItems": "center",
                 "padding": "0.5rem",
-                "background": "rgba(255,255,255,0.03)",
+                "background": "var(--aegis-bg-elevated)",
                 "borderRadius": "4px",
                 "marginBottom": "0.3rem",
             },
@@ -595,8 +601,8 @@ def create_data_portal_record(tax_id):
                 center=[lat, lon],
                 radius=max(8, min(30, count / 2)),
                 children=dl.Tooltip(tooltip_text),
-                color="#f0c674",
-                fillColor="#f0c674",
+                color="#4E6B66",
+                fillColor="#4E6B66",
                 fillOpacity=0.7,
             )
         )

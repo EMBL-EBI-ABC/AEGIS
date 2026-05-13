@@ -13,7 +13,7 @@ dash.register_page(
 )
 
 import os
-BACKEND_URL = os.getenv("BACKEND_URL", "https://aegis-be-1091670130981.europe-west2.run.app")
+BACKEND_URL = os.getenv("BACKEND_URL", "https://portal.aegisearth.bio/api")
 
 
 def layout(tax_id=None, accession=None, **kwargs):
@@ -408,7 +408,10 @@ def render_sample_detail(accession, tax_id):
         lon = float(location["lon"])
         map_component = dl.Map(
             [
-                dl.TileLayer(),
+                dl.TileLayer(
+                    url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                ),
                 dl.Marker(position=[lat, lon]),
             ],
             center=[lat, lon],

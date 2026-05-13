@@ -1,7 +1,7 @@
 # AEGIS Data Portal
 
  - Front end - https://aegis-fe-1091670130981.europe-west2.run.app
- - Back end - https://aegis-be-1091670130981.europe-west2.run.app
+ - Back end - https://portal.aegisearth.bio/api
 
 How to run locally:
 ```

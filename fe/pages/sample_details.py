@@ -346,12 +346,26 @@ def render_sample_detail(accession, tax_id):
         "fontSize": "0.8rem",
         "display": "inline-flex",
         "alignItems": "center",
+        "gap": "0.3rem",
     }
+    arrow_style = {"fontSize": "0.9em", "lineHeight": "1"}
     badge_and_links.append(
-        html.A("BioSamples", href=f"https://www.ebi.ac.uk/biosamples/samples/{accession}", target="_blank", style=link_style)
+        html.A(
+            ["BioSamples", html.Span("↗", style=arrow_style)],
+            href=f"https://www.ebi.ac.uk/biosamples/samples/{accession}",
+            target="_blank",
+            rel="noopener noreferrer",
+            style=link_style,
+        )
     )
     badge_and_links.append(
-        html.A("ENA", href=f"https://www.ebi.ac.uk/ena/browser/view/{accession}", target="_blank", style=link_style)
+        html.A(
+            ["ENA", html.Span("↗", style=arrow_style)],
+            href=f"https://www.ebi.ac.uk/ena/browser/view/{accession}",
+            target="_blank",
+            rel="noopener noreferrer",
+            style=link_style,
+        )
     )
     header_items.append(
         html.Div(badge_and_links, style={"display": "flex", "gap": "0.5rem", "alignItems": "center", "flexWrap": "wrap"})

@@ -180,14 +180,21 @@ layout = dbc.Container(
 
 
 def return_tax_id_link(scientific_name: str, tax_id: str) -> html.A:
-    """Create a link to the species detail page."""
+    """Create a link to the species detail page.
+
+    Underlined so the affordance reads as clickable even within a table
+    of styled scientific names (italic + teal already differentiates them
+    from plain data, but doesn't on its own signal 'link').
+    """
     return html.A(
         scientific_name,
         href=f"/data-portal/{tax_id}",
         style={
             "color": "var(--aegis-accent-primary)",
             "fontWeight": "500",
-            "textDecoration": "none",
+            "textDecoration": "underline",
+            "textUnderlineOffset": "3px",
+            "textDecorationThickness": "1px",
         },
     )
 

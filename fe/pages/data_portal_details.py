@@ -31,7 +31,8 @@ def layout(tax_id=None, **kwargs):
                         href="/data-portal",
                         style={
                             "color": "var(--aegis-text-muted)",
-                            "textDecoration": "none",
+                            "textDecoration": "underline",
+                            "textUnderlineOffset": "3px",
                             "fontSize": "0.9rem",
                             "display": "inline-flex",
                             "alignItems": "center",
@@ -193,32 +194,42 @@ def layout(tax_id=None, **kwargs):
     )
 
 
+_EXTERNAL_ARROW_STYLE = {
+    "fontSize": "0.85em",
+    "marginLeft": "0.2em",
+    "fontFamily": "var(--font-body)",
+    "textDecoration": "none",
+    "display": "inline-block",
+}
+
+
+def _external_anchor(label: str, href: str, *, mono: bool = True, font_size: str = "0.85rem") -> html.A:
+    """Internal helper: external link styled with underline + ↗ glyph."""
+    style = {
+        "color": "var(--aegis-accent-primary)",
+        "fontSize": font_size,
+        "textDecoration": "underline",
+        "textUnderlineOffset": "3px",
+    }
+    if mono:
+        style["fontFamily"] = "var(--font-mono)"
+    return html.A(
+        [label, html.Span("↗", style=_EXTERNAL_ARROW_STYLE)],
+        href=href,
+        target="_blank",
+        rel="noopener noreferrer",
+        style=style,
+    )
+
+
 def return_biosamples_accession_link(accession: str) -> html.A:
     """Create a link to BioSamples."""
-    return html.A(
-        accession,
-        href=f"https://www.ebi.ac.uk/biosamples/samples/{accession}",
-        target="_blank",
-        style={
-            "color": "var(--aegis-accent-primary)",
-            "fontFamily": "var(--font-mono)",
-            "fontSize": "0.85rem",
-        },
-    )
+    return _external_anchor(accession, f"https://www.ebi.ac.uk/biosamples/samples/{accession}")
 
 
 def return_ena_accession_link(accession: str) -> html.A:
     """Create a link to ENA."""
-    return html.A(
-        accession,
-        href=f"https://www.ebi.ac.uk/ena/browser/view/{accession}",
-        target="_blank",
-        style={
-            "color": "var(--aegis-accent-primary)",
-            "fontFamily": "var(--font-mono)",
-            "fontSize": "0.85rem",
-        },
-    )
+    return _external_anchor(accession, f"https://www.ebi.ac.uk/ena/browser/view/{accession}")
 
 
 def return_ftp_download_link(url: str) -> html.Div:
@@ -229,16 +240,7 @@ def return_ftp_download_link(url: str) -> html.Div:
         if i > 0:
             links.append(html.Br())
         links.append(
-            html.A(
-                link_name,
-                href=f"https://{link}",
-                target="_blank",
-                style={
-                    "color": "var(--aegis-accent-primary)",
-                    "fontFamily": "var(--font-mono)",
-                    "fontSize": "0.8rem",
-                },
-            )
+            _external_anchor(link_name, f"https://{link}", font_size="0.8rem")
         )
     return html.Div(links)
 
@@ -363,7 +365,8 @@ def build_sample_hierarchy(samples, tax_id):
                 "color": "var(--aegis-accent-primary)",
                 "fontFamily": "var(--font-mono)",
                 "fontSize": "0.8rem",
-                "textDecoration": "none",
+                "textDecoration": "underline",
+                "textUnderlineOffset": "3px",
             },
         )
 
@@ -403,19 +406,36 @@ def build_sample_hierarchy(samples, tax_id):
 
         right_items = []
         if children:
+            chevron_id = {"type": "sample-chevron", "index": i}
             right_items.append(
                 html.Span(
-                    f"+ {len(children)} derived",
+                    [
+                        html.Span(
+                            "▸",
+                            id=chevron_id,
+                            style={
+                                "display": "inline-block",
+                                "marginRight": "0.35rem",
+                                "fontSize": "0.95rem",
+                                "lineHeight": "1",
+                                "verticalAlign": "middle",
+                            },
+                        ),
+                        f"+{len(children)} derived",
+                    ],
                     id=toggle_id,
                     n_clicks=0,
                     style={
-                        "color": "var(--aegis-text-muted)",
+                        "color": "var(--aegis-accent-primary)",
                         "fontSize": "0.75rem",
+                        "fontWeight": "500",
                         "cursor": "pointer",
                         "marginRight": "0.75rem",
-                        "border": "1px solid var(--aegis-border-subtle)",
-                        "padding": "0.15rem 0.5rem",
+                        "background": "var(--aegis-accent-soft)",
+                        "border": "1px solid var(--aegis-border-accent)",
+                        "padding": "0.15rem 0.55rem",
                         "borderRadius": "4px",
+                        "userSelect": "none",
                     },
                 ),
             )
@@ -472,6 +492,15 @@ def toggle_sample_children(n_clicks):
     if n_clicks:
         return n_clicks % 2 == 1
     return False
+
+
+@callback(
+    Output({"type": "sample-chevron", "index": MATCH}, "children"),
+    Input({"type": "sample-collapse", "index": MATCH}, "is_open"),
+)
+def update_chevron(is_open):
+    """Rotate the chevron to reflect the collapse state."""
+    return "▾" if is_open else "▸"
 
 
 @callback(

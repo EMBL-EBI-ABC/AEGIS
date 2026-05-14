@@ -39,7 +39,6 @@ def _filter_card(title, checklist):
             ],
             style={"padding": "0.75rem"},
         ),
-        className="filters-card",
     )
 
 

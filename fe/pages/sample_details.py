@@ -59,8 +59,90 @@ def layout(tax_id=None, accession=None, **kwargs):
     )
 
 
+def _is_component(value):
+    """True if value is a Dash component (rather than a primitive)."""
+    return not isinstance(value, (str, int, float, bool, list))
+
+
+def _has_value(value):
+    """True if value should render — non-empty primitive, non-empty list, or component."""
+    if value is None or value == "":
+        return False
+    if isinstance(value, list) and not value:
+        return False
+    return True
+
+
+def _format_date(value):
+    """Normalize an ES date string to YYYY-MM-DD.
+
+    ES may return dates as plain 'YYYY-MM-DD' or as ISO 8601
+    ('YYYY-MM-DDTHH:MM:SS...'); we just slice the ISO prefix.
+    """
+    if value is None or value == "":
+        return None
+    text = str(value)
+    return text[:10] if len(text) >= 10 else text
+
+
+def _date_or_text(date_value, text_value):
+    """Return the date if present, otherwise the text token in italics, otherwise None.
+
+    Used for ERC000053 fields where the date may be missing but the source
+    provides an allowed-missing token (e.g. 'not provided', 'restricted access').
+    """
+    if date_value:
+        return date_value
+    if text_value:
+        return html.Em(
+            str(text_value),
+            style={"color": "var(--aegis-text-secondary)"},
+        )
+    return None
+
+
+def _external_link(value, href, mono=False):
+    """Render an external clickable anchor opening in a new tab.
+
+    Uses a visible underline + trailing ↗ glyph so the affordance reads
+    clearly even when the surrounding metadata row uses colored 'data'
+    text. Colour comes from the global a rule so :hover can re-tint.
+    """
+    style = {
+        "textDecoration": "underline",
+        "textUnderlineOffset": "3px",
+    }
+    if mono:
+        style["fontFamily"] = "var(--font-mono)"
+    return html.A(
+        [
+            str(value),
+            html.Span(
+                "↗",  # ↗ NORTH EAST ARROW — universally reads as "external"
+                style={
+                    "fontSize": "0.8em",
+                    "marginLeft": "0.25em",
+                    "fontFamily": "var(--font-body)",
+                    "textDecoration": "none",
+                    "display": "inline-block",
+                },
+            ),
+        ],
+        href=href,
+        target="_blank",
+        rel="noopener noreferrer",
+        style=style,
+    )
+
+
 def _make_metadata_card(title, fields, data, sample_link_fields=None, tax_id=None):
     """Create a metadata card with a title and grid of label-value pairs.
+
+    Each field is (label, key, mono). data[key] may be:
+      - None / "" / empty list  -> row hidden
+      - list of strings         -> joined with "; "
+      - Dash component          -> rendered as-is (allows italics, links, etc.)
+      - str / int / float       -> rendered as text
 
     sample_link_fields: set of field keys whose values are BioSample accessions
     and should render as links to the sample detail page.
@@ -68,12 +150,18 @@ def _make_metadata_card(title, fields, data, sample_link_fields=None, tax_id=Non
     items = []
     for label, key, mono in fields:
         value = data.get(key)
-        if value is None or value == "":
+        if not _has_value(value):
             continue
+
+        if isinstance(value, list):
+            value = "; ".join(str(v) for v in value if v is not None and v != "")
+            if not value:
+                continue
+
         style = {"color": "var(--aegis-text-primary)"}
         if mono:
             style["fontFamily"] = "var(--font-mono)"
-        if sample_link_fields and key in sample_link_fields and tax_id:
+        if sample_link_fields and key in sample_link_fields and tax_id and not _is_component(value):
             display_value = html.A(
                 str(value),
                 href=f"/data-portal/{tax_id}/samples/{value}",
@@ -83,6 +171,8 @@ def _make_metadata_card(title, fields, data, sample_link_fields=None, tax_id=Non
                     "fontFamily": "var(--font-mono)",
                 },
             )
+        elif _is_component(value):
+            display_value = value
         else:
             display_value = html.Span(str(value), style=style)
 
@@ -182,7 +272,8 @@ def render_sample_detail(accession, tax_id):
         return html.P("Sample not found.", style={"color": "var(--aegis-text-muted)"}), ""
     sample = data["results"][0]
     scientific_name = sample.get("scientificName", "")
-    organism_part = sample.get("organismPart", "")
+    common_name = sample.get("commonName") or ""
+    organism_part = sample.get("organismPart") or ""
     tracking_system = sample.get("trackingSystem", "")
     derived_from = sample.get("derivedFrom")
     location = sample.get("location")
@@ -190,6 +281,44 @@ def render_sample_detail(accession, tax_id):
     children = []
 
     # --- Header ---
+    name_lines = []
+    if scientific_name:
+        name_lines.append(
+            html.Div(
+                scientific_name,
+                style={
+                    "fontStyle": "italic",
+                    "color": "var(--aegis-text-primary)",
+                    "fontSize": "1.15rem",
+                    "lineHeight": "1.3",
+                },
+            )
+        )
+    if common_name:
+        name_lines.append(
+            html.Div(
+                common_name,
+                style={
+                    "color": "var(--aegis-text-secondary)",
+                    "fontSize": "1rem",
+                    "lineHeight": "1.3",
+                },
+            )
+        )
+    if organism_part:
+        name_lines.append(
+            html.Div(
+                organism_part,
+                style={
+                    "color": "var(--aegis-text-muted)",
+                    "fontSize": "0.8rem",
+                    "textTransform": "uppercase",
+                    "letterSpacing": "0.05em",
+                    "marginTop": "0.25rem",
+                },
+            )
+        )
+
     header_items = [
         html.H2(
             accession,
@@ -199,26 +328,7 @@ def render_sample_detail(accession, tax_id):
                 "marginBottom": "0.25rem",
             },
         ),
-        html.Div(
-            [
-                html.Span(
-                    scientific_name,
-                    style={
-                        "fontStyle": "italic",
-                        "color": "var(--aegis-text-primary)",
-                        "fontSize": "1.1rem",
-                    },
-                ),
-                html.Span(
-                    f" \u2014 {organism_part}" if organism_part else "",
-                    style={
-                        "color": "var(--aegis-text-secondary)",
-                        "fontSize": "1.1rem",
-                    },
-                ),
-            ],
-            style={"marginBottom": "0.75rem"},
-        ),
+        html.Div(name_lines, style={"marginBottom": "0.75rem"}),
     ]
 
     # Status badge + external links row
@@ -284,39 +394,55 @@ def render_sample_detail(accession, tax_id):
             )
         )
 
-    # --- Metadata cards (left) and Map (right) ---
-    location_data = {
-        "country": sample.get("country"),
-        "locality": sample.get("locality"),
-        "habitat": sample.get("habitat"),
-        "elevation": f"{sample['elevation']}m" if sample.get("elevation") is not None else None,
-        "depth": f"{sample['depth']}m" if sample.get("depth") is not None else None,
-        "lat": location.get("lat") if location else None,
-        "lon": location.get("lon") if location else None,
-    }
+    # --- Build display data ---
+    # Start from the sample dict and overlay derived/formatted values.
+    display = dict(sample)
+    display["collectionDate"] = _date_or_text(
+        _format_date(sample.get("collectionDate")), sample.get("collectionDateText")
+    )
+    display["originalCollectionDate"] = _date_or_text(
+        _format_date(sample.get("originalCollectionDate")),
+        sample.get("originalCollectionDateText"),
+    )
+    display["insdcFirstPublic"] = _format_date(sample.get("insdcFirstPublic"))
+    display["insdcLastUpdate"] = _format_date(sample.get("insdcLastUpdate"))
+    if sample.get("elevation") is not None:
+        display["elevation"] = f"{sample['elevation']}m"
+    if sample.get("depth") is not None:
+        display["depth"] = f"{sample['depth']}m"
+    display["lat"] = location.get("lat") if location else None
+    display["lon"] = location.get("lon") if location else None
 
-    original_location_data = {
-        "originalCollectionDate": sample.get("originalCollectionDate"),
-        "originalGeographicLocation": sample.get("originalGeographicLocation"),
-        "originalLatitude": sample.get("originalLatitude"),
-        "originalLongitude": sample.get("originalLongitude"),
-    }
+    # Pre-build link components for Provenance.
+    if sample.get("sraAccession"):
+        display["sraAccession"] = _external_link(
+            sample["sraAccession"],
+            f"https://www.ncbi.nlm.nih.gov/sra/{sample['sraAccession']}",
+            mono=True,
+        )
 
-    # Build cards — only show cards that have at least one non-null value
+    # Build cards — only show conditional cards that have at least one value
     def _card_if_has_data(title, fields, data, **kwargs):
-        if any(data.get(key) is not None for _, key, _ in fields):
+        if any(_has_value(data.get(key)) for _, key, _ in fields):
             return _make_metadata_card(title, fields, data, **kwargs)
         return None
 
-    cards = [
+    # Order matters — fixed by spec:
+    # Collection, Specimen, Location, Identification, Relationships, Custom Fields,
+    # then the new conditional boxes (Origin, Marine Event, Provenance).
+    core_cards = [
         _make_metadata_card("Collection", [
             ("Date", "collectionDate", False),
             ("Collected By", "collectedBy", False),
             ("Institution", "collectingInstitution", False),
             ("GAL", "gal", False),
-            ("Project", "projectName", False),
+            ("Project Tag", "projectTag", False),
+            ("Project Name", "projectName", False),
             ("Method", "sampleCollectionMethod", False),
-        ], sample),
+            ("Sample Coordinator", "sampleCoordinator", False),
+            ("Coordinator Affiliation", "sampleCoordinatorAffiliation", False),
+            ("Barcoding Center", "barcodingCenter", False),
+        ], display),
         _make_metadata_card("Specimen", [
             ("Part", "organismPart", False),
             ("Sex", "sex", False),
@@ -324,7 +450,12 @@ def render_sample_detail(accession, tax_id):
             ("TOL ID", "tolid", True),
             ("Specimen ID", "specimenId", True),
             ("Specimen Voucher", "specimenVoucher", True),
-        ], sample),
+            ("GAL Sample ID", "galSampleId", True),
+            ("Bio Material", "bioMaterial", False),
+            ("Proxy Voucher", "proxyVoucher", True),
+            ("Proxy Biomaterial", "proxyBiomaterial", False),
+            ("Culture / Strain ID", "cultureOrStrainId", True),
+        ], display),
         _make_metadata_card("Location", [
             ("Country", "country", False),
             ("Locality", "locality", False),
@@ -333,30 +464,41 @@ def render_sample_detail(accession, tax_id):
             ("Depth", "depth", False),
             ("Lat", "lat", True),
             ("Lon", "lon", True),
-        ], location_data),
+        ], display),
         _card_if_has_data("Identification", [
             ("Identified By", "identifiedBy", False),
             ("Identifier Affiliation", "identifierAffiliation", False),
-            ("Sample Coordinator", "sampleCoordinator", False),
-            ("Coordinator Affiliation", "sampleCoordinatorAffiliation", False),
-            ("Barcoding Center", "barcodingCenter", False),
-        ], sample),
+        ], display),
         _card_if_has_data("Relationships", [
-            ("Derived From", "derivedFrom", True),
+            ("Relationship", "relationship", False),
             ("Symbiont Of", "sampleSymbiontOf", True),
             ("Symbiont", "symbiont", False),
-            ("Relationship", "relationship", False),
+            ("Derived From", "derivedFrom", True),
             ("Same As", "sampleSameAs", True),
-        ], sample, sample_link_fields={"derivedFrom", "sampleSymbiontOf", "sampleSameAs"}, tax_id=tax_id),
-        _card_if_has_data("Original Location", [
-            ("Date", "originalCollectionDate", False),
-            ("Location", "originalGeographicLocation", False),
-            ("Lat", "originalLatitude", True),
-            ("Lon", "originalLongitude", True),
-        ], original_location_data),
+        ], display, sample_link_fields={"derivedFrom", "sampleSymbiontOf", "sampleSameAs"}, tax_id=tax_id),
     ]
-    # Filter out None cards (those with no data)
-    cards = [c for c in cards if c is not None]
+    extra_cards = [
+        _card_if_has_data("Origin", [
+            ("Original Date", "originalCollectionDate", False),
+            ("Original Location", "originalGeographicLocation", False),
+            ("Original Lat", "originalLatitude", True),
+            ("Original Lon", "originalLongitude", True),
+        ], display),
+        _card_if_has_data("Marine Event", [
+            ("Lat Start", "latitudeStart", True),
+            ("Lon Start", "longitudeStart", True),
+            ("Lat End", "latitudeEnd", True),
+            ("Lon End", "longitudeEnd", True),
+        ], display),
+        _card_if_has_data("Provenance", [
+            ("SRA Accession", "sraAccession", True),
+            ("INSDC Center", "insdcCenterName", False),
+            ("INSDC Status", "insdcStatus", False),
+            ("First Public", "insdcFirstPublic", False),
+            ("Last Update", "insdcLastUpdate", False),
+        ], display),
+    ]
+    cards = [c for c in core_cards if c is not None]
 
     # Custom fields table
     custom_fields = sample.get("customFields") or []
@@ -401,6 +543,9 @@ def render_sample_detail(accession, tax_id):
                 },
             )
         )
+
+    # Append conditional new boxes after Custom Fields per spec.
+    cards.extend(c for c in extra_cards if c is not None)
 
     # Map (full width, on top)
     if location and location.get("lat") is not None and location.get("lon") is not None:

@@ -214,7 +214,7 @@ async def data_portal_search(
             },
         }
         geo_response = await app.state.es_client.search(
-            index="2026-04-01_samples", body=geo_query
+            index="2026-05-14_samples", body=geo_query
         )
         tax_ids = [
             bucket["key"]
@@ -227,7 +227,7 @@ async def data_portal_search(
             additional_filters.append({"terms": {"taxId": [-1]}})
 
     return await elastic_search(
-        index_name="2026-04-01_data_portal",
+        index_name="2026-05-14_data_portal",
         params=params,
         data_class=DataPortalData,
         aggregation_class=DataPortalAggregationResponse,
@@ -241,7 +241,7 @@ async def data_portal_details(
     record_id: Annotated[str, Path(description="Record ID")],
 ) -> ElasticDetailsResponse[DataPortalData]:
     return await elastic_details(
-        index_name="2026-04-01_data_portal",
+        index_name="2026-05-14_data_portal",
         record_id=record_id,
         data_class=DataPortalData,
     )
@@ -255,7 +255,7 @@ async def samples_search(
     params: Annotated[SampleSearchParams, Query()],
 ) -> ElasticResponse[SampleData, SampleAggregationResponse]:
     return await elastic_search(
-        index_name="2026-04-01_samples",
+        index_name="2026-05-14_samples",
         params=params,
         data_class=SampleData,
         aggregation_class=SampleAggregationResponse,
@@ -331,7 +331,7 @@ async def samples_geo_aggregation(
 
     try:
         response = await app.state.es_client.search(
-            index="2026-04-01_samples", body=search_body
+            index="2026-05-14_samples", body=search_body
         )
         clusters = [
             GeoCluster(
@@ -352,7 +352,7 @@ async def samples_details(
     accession: Annotated[str, Path(description="Sample accession")],
 ) -> ElasticDetailsResponse[SampleData]:
     return await elastic_details(
-        index_name="2026-04-01_samples",
+        index_name="2026-05-14_samples",
         record_id=accession,
         data_class=SampleData,
     )

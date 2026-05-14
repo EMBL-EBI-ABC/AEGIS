@@ -113,7 +113,7 @@ async def test_samples_search(client, mock_es_client):
 
     # Verify ES was called with the correct index.
     call_kwargs = mock_es_client.search.call_args
-    assert call_kwargs.kwargs["index"] == "2026-03-31_samples"
+    assert call_kwargs.kwargs["index"] == "2026-05-14_samples"
 
 
 @pytest.mark.anyio

@@ -713,21 +713,12 @@ iframe {
 /* --------------------------------------------------------------------------
    Data Portal — Filters Sidebar
    -------------------------------------------------------------------------- */
-.filters-card {
+/* Sticky on the whole sidebar wrapper, not per-card — otherwise each card
+   independently pins at top:80px and they overlap on scroll. */
+#filters-card {
     position: sticky;
     top: 80px;
-}
-
-.filters-card .card-title {
-    font-family: var(--font-body);
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--aegis-text-muted);
-    border-bottom: 1px solid var(--aegis-border-subtle);
-    padding-bottom: var(--space-sm);
-    margin-bottom: var(--space-md);
+    align-self: flex-start;
 }
 
 /* --------------------------------------------------------------------------

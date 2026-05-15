@@ -41,7 +41,7 @@ _PARTNERS = [
     ("EMBL-EBI", "European Bioinformatics Institute", "https://www.ebi.ac.uk/"),
     ("University of Colorado Boulder", "United States", "https://www.colorado.edu/"),
     ("Wageningen University & Research", "Netherlands", "https://www.wur.nl/en.htm"),
-    ("Carlsberg Research Laboratory", "Denmark", "https://www.carlsbergresearchlaboratory.com/"),
+    ("Carlsberg Research Laboratory", "Denmark", "https://www.carlsbergfondet.dk/en/about-the-foundation/the-carlsberg-family/carlsberg-research-laboratory/"),
     ("Crop Science Centre", "Cambridge, United Kingdom", "https://www.cropsciencecentre.org/"),
     ("Seoul National University", "South Korea", "https://en.snu.ac.kr/"),
     ("Institut Pasteur", "France", "https://www.pasteur.fr/en"),

@@ -66,6 +66,50 @@ app.layout = html.Div(
             className="navbar",
         ),
         dash.page_container,
+        html.Footer(
+            dbc.Container(
+                html.Div(
+                    [
+                        html.P(
+                            "AEGIS — Ancient Environmental Genomics Initiative for Sustainability",
+                            style={
+                                "color": "var(--aegis-text-muted)",
+                                "marginBottom": "0.5rem",
+                                "fontSize": "0.9rem",
+                            },
+                        ),
+                        html.P(
+                            [
+                                html.A(
+                                    "Visit aegisearth.bio ↗",
+                                    href="https://aegisearth.bio/en",
+                                    target="_blank",
+                                    style={"color": "var(--aegis-accent-primary)"},
+                                ),
+                                html.Span(" · ", style={"color": "var(--aegis-text-muted)"}),
+                                "Powered by ",
+                                html.A(
+                                    "EMBL-EBI",
+                                    href="https://www.ebi.ac.uk/",
+                                    target="_blank",
+                                    style={"color": "var(--aegis-accent-primary)"},
+                                ),
+                            ],
+                            style={
+                                "color": "var(--aegis-text-muted)",
+                                "fontSize": "0.8rem",
+                                "marginBottom": "0",
+                            },
+                        ),
+                    ],
+                    className="text-center py-4",
+                ),
+            ),
+            style={
+                "borderTop": "1px solid var(--aegis-border-subtle)",
+                "marginTop": "auto",
+            },
+        ),
     ]
 )
 

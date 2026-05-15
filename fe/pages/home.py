@@ -177,43 +177,5 @@ layout = html.Div(
         hero_section(),
         stats_section(),
         features_section(),
-        # Footer
-        html.Footer(
-            dbc.Container(
-                html.Div(
-                    [
-                        html.P(
-                            "AEGIS — Ancient Environmental Genomics Initiative for Sustainability",
-                            style={
-                                "color": "var(--aegis-text-muted)",
-                                "marginBottom": "0.5rem",
-                                "fontSize": "0.9rem",
-                            },
-                        ),
-                        html.P(
-                            [
-                                "Powered by ",
-                                html.A(
-                                    "EMBL-EBI",
-                                    href="https://www.ebi.ac.uk/",
-                                    target="_blank",
-                                    style={"color": "var(--aegis-accent-primary)"},
-                                ),
-                            ],
-                            style={
-                                "color": "var(--aegis-text-muted)",
-                                "fontSize": "0.8rem",
-                                "marginBottom": "0",
-                            },
-                        ),
-                    ],
-                    className="text-center py-4",
-                ),
-            ),
-            style={
-                "borderTop": "1px solid var(--aegis-border-subtle)",
-                "marginTop": "auto",
-            },
-        ),
     ]
 )

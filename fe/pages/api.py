@@ -25,7 +25,7 @@ layout = html.Div(
                                 },
                             ),
                             html.P(
-                                "Programmatic access to ancient eDNA sequences, assemblies, and metadata",
+                                "Programmatic access to AEGIS genomic data, assemblies, and sample metadata",
                                 style={
                                     "color": "var(--aegis-text-muted)",
                                     "marginBottom": "0",

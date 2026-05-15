@@ -77,7 +77,7 @@ layout = dbc.Container(
                             },
                         ),
                         html.P(
-                            "Explore ancient eDNA datasets for barley, wheat, rice, and their wild ancestors",
+                            "Browse genomic data contributed by the AEGIS consortium.",
                             style={"color": "var(--aegis-text-muted)"},
                         ),
                     ],

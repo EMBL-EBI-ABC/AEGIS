@@ -47,7 +47,7 @@ def features_section():
                         html.Div(
                             [
                                 html.H2(
-                                    "Explore Ancient Environmental DNA",
+                                    "The past is a road map to a sustainable future",
                                     style={
                                         "fontFamily": "var(--font-display)",
                                         "color": "var(--aegis-text-primary)",
@@ -55,10 +55,10 @@ def features_section():
                                     },
                                 ),
                                 html.P(
-                                    "Access genomic data from soil, ice, and sediment samples to understand how ancient crops adapted to climate change.",
+                                    "AEGIS analyses ancient environmental DNA from soils, sediments, ice, and oceans alongside modern reference genomes to uncover how past ecosystems adapted to climate change — informing climate-resilient crops and biodiversity conservation.",
                                     style={
                                         "color": "var(--aegis-text-muted)",
-                                        "maxWidth": "600px",
+                                        "maxWidth": "720px",
                                         "margin": "0 auto",
                                     },
                                 ),
@@ -78,7 +78,7 @@ def features_section():
                                 style={"width": "2.5rem", "height": "2.5rem", "opacity": "0.85"},
                             ),
                             title="Data Portal",
-                            description="Search and explore ancient eDNA datasets for barley, wheat, rice and their wild ancestors. Filter by taxonomy, processing status, and more.",
+                            description="Browse genomic data contributed by the AEGIS consortium. Filter by taxonomy, processing status, and more.",
                             button_text="Explore Data",
                             href="/data-portal",
                         ),
@@ -106,7 +106,7 @@ def features_section():
                                 style={"width": "2.5rem", "height": "2.5rem", "opacity": "0.85"},
                             ),
                             title="About AEGIS",
-                            description="A £66M initiative by Novo Nordisk Foundation and Wellcome to unlock ancient genetic diversity for climate-resilient crops.",
+                            description="A global consortium directed from the Globe Institute, University of Copenhagen, supported by the Novo Nordisk Foundation and the Wellcome Trust, working to unlock ancient genetic diversity for climate-resilient crops.",
                             button_text="Learn More",
                             href="/about",
                         ),
@@ -125,7 +125,7 @@ def stats_section():
     """Create a statistics/highlights section."""
     stats = [
         {"value": "Ancient eDNA", "label": "Research Focus"},
-        {"value": "Barley, Wheat & Rice", "label": "Primary Crops"},
+        {"value": "18 Institutions", "label": "Global Consortium"},
         {"value": "Open Access", "label": "Data Policy"},
     ]
 

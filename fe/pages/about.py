@@ -7,6 +7,50 @@ dash.register_page(
     title="About - AEGIS",
 )
 
+
+def _partner_card(name: str, subtitle: str, href: str) -> html.Div:
+    return html.Div(
+        [
+            html.A(
+                name,
+                href=href,
+                target="_blank",
+                style={
+                    "color": "var(--aegis-accent-primary)",
+                    "fontWeight": "500",
+                },
+            ),
+            html.Br(),
+            html.Span(
+                subtitle,
+                style={
+                    "fontSize": "0.8rem",
+                    "color": "var(--aegis-text-muted)",
+                },
+            ),
+        ],
+        style={"textAlign": "center", "padding": "1rem"},
+    )
+
+
+_PARTNERS = [
+    ("University of Copenhagen", "Globe Institute · Denmark (lead)", "https://www.ku.dk/english/"),
+    ("University of Cambridge", "United Kingdom", "https://www.cam.ac.uk/"),
+    ("University of California, Berkeley", "United States", "https://www.berkeley.edu/"),
+    ("Wellcome Sanger Institute", "United Kingdom", "https://www.sanger.ac.uk/"),
+    ("EMBL-EBI", "European Bioinformatics Institute", "https://www.ebi.ac.uk/"),
+    ("University of Colorado Boulder", "United States", "https://www.colorado.edu/"),
+    ("Wageningen University & Research", "Netherlands", "https://www.wur.nl/en.htm"),
+    ("Carlsberg Research Laboratory", "Denmark", "https://www.carlsbergresearchlaboratory.com/"),
+    ("Crop Science Centre", "Cambridge, United Kingdom", "https://www.cropsciencecentre.org/"),
+    ("Seoul National University", "South Korea", "https://en.snu.ac.kr/"),
+    ("Institut Pasteur", "France", "https://www.pasteur.fr/en"),
+    ("NIAB", "United Kingdom", "https://www.niab.com/"),
+    ("Agroscope", "Switzerland", "https://www.agroscope.admin.ch/agroscope/en/home.html"),
+    ("University of Zürich", "Switzerland", "https://www.uzh.ch/en.html"),
+    ("MARUM, University of Bremen", "Germany", "https://www.marum.de/en/"),
+]
+
 layout = dbc.Container(
     [
         # Page Header
@@ -64,7 +108,7 @@ layout = dbc.Container(
                                 html.Div(
                                     [
                                         html.H2(
-                                            "Unlocking Ancient Genetic Diversity for Climate-Resilient Crops",
+                                            "The past is a road map to a sustainable future",
                                             style={
                                                 "fontFamily": "var(--font-display)",
                                                 "fontSize": "1.75rem",
@@ -74,7 +118,7 @@ layout = dbc.Container(
                                             },
                                         ),
                                         html.P(
-                                            "AEGIS is a seven-year, £66 million research initiative funded by the Novo Nordisk Foundation and Wellcome. By extracting DNA from ancient soil, ice, and sediment samples—some thousands to millions of years old—we're uncovering how crops like barley, wheat, and rice evolved and adapted to past climate changes.",
+                                            "AEGIS is a global consortium directed by Professor Eske Willerslev at the Globe Institute, University of Copenhagen, supported by the Novo Nordisk Foundation and the Wellcome Trust. By analysing ancient environmental DNA from soils, sediments, ice, and oceans alongside modern reference genomes, we uncover how past ecosystems adapted to climate change - to inform the development of climate-resilient crops and stronger biodiversity conservation.",
                                             style={
                                                 "fontSize": "1.05rem",
                                                 "color": "var(--aegis-text-secondary)",
@@ -84,13 +128,13 @@ layout = dbc.Container(
                                         ),
                                     ]
                                 ),
-                                # Funding Info
+                                # Headline stats
                                 html.Div(
                                     [
                                         html.Div(
                                             [
                                                 html.Div(
-                                                    "£66M",
+                                                    "18",
                                                     style={
                                                         "fontFamily": "var(--font-display)",
                                                         "fontSize": "1.75rem",
@@ -99,7 +143,7 @@ layout = dbc.Container(
                                                     },
                                                 ),
                                                 html.Div(
-                                                    "Total Funding",
+                                                    "Institutions Worldwide",
                                                     style={
                                                         "fontSize": "0.8rem",
                                                         "color": "var(--aegis-text-muted)",
@@ -116,7 +160,7 @@ layout = dbc.Container(
                                         html.Div(
                                             [
                                                 html.Div(
-                                                    "7 Years",
+                                                    "Ancient eDNA",
                                                     style={
                                                         "fontFamily": "var(--font-display)",
                                                         "fontSize": "1.75rem",
@@ -125,7 +169,7 @@ layout = dbc.Container(
                                                     },
                                                 ),
                                                 html.Div(
-                                                    "Project Duration",
+                                                    "Research Focus",
                                                     style={
                                                         "fontSize": "0.8rem",
                                                         "color": "var(--aegis-text-muted)",
@@ -142,7 +186,7 @@ layout = dbc.Container(
                                         html.Div(
                                             [
                                                 html.Div(
-                                                    "4+",
+                                                    "Open Access",
                                                     style={
                                                         "fontFamily": "var(--font-display)",
                                                         "fontSize": "1.75rem",
@@ -151,7 +195,7 @@ layout = dbc.Container(
                                                     },
                                                 ),
                                                 html.Div(
-                                                    "Partner Institutions",
+                                                    "Data Policy",
                                                     style={
                                                         "fontSize": "0.8rem",
                                                         "color": "var(--aegis-text-muted)",
@@ -199,7 +243,7 @@ layout = dbc.Container(
                                                     },
                                                 ),
                                                 html.P(
-                                                    "Through millennia of human cultivation, crop plants like barley, wheat, and rice have lost much of the genetic diversity present in their wild ancestors. This genetic bottleneck limits our ability to breed crops that can withstand climate change.",
+                                                    "Centuries of domestication have left today's crops with only a fraction of the genetic diversity present in their wild ancestors. Combined with reliance on uniform genetics and heavy inputs, this limits our ability to breed crops resilient to heat, drought, pests, and extreme weather.",
                                                     style={
                                                         "color": "var(--aegis-text-secondary)",
                                                         "lineHeight": "1.7",
@@ -235,7 +279,7 @@ layout = dbc.Container(
                                                     },
                                                 ),
                                                 html.P(
-                                                    "Environmental DNA preserved in soil, ice, and sediment samples can be thousands to millions of years old. By sequencing these fragments and comparing them to modern reference genomes, we can identify genetic variants that helped ancient plants survive past climate shifts.",
+                                                    "Environmental DNA preserved in soils, sediments, ice, and ocean cores can be thousands to millions of years old. By sequencing these fragments and comparing them to modern reference genomes, we identify genetic variants and beneficial species interactions that helped past ecosystems adapt to climate shifts.",
                                                     style={
                                                         "color": "var(--aegis-text-secondary)",
                                                         "lineHeight": "1.7",
@@ -271,7 +315,7 @@ layout = dbc.Container(
                                                     },
                                                 ),
                                                 html.P(
-                                                    "Beyond individual species, AEGIS uses ecosystem modelling to understand how combinations of species—including crops, microbiomes, and wild plants—created sustainable systems in the past. These insights inform modern agricultural practices.",
+                                                    "Beyond individual species, AEGIS uses ecosystem modelling to understand how combinations of species, including crops, microbiomes, and wild plants, created sustainable systems in the past. These insights inform modern agricultural practices.",
                                                     style={
                                                         "color": "var(--aegis-text-secondary)",
                                                         "lineHeight": "1.7",
@@ -358,111 +402,10 @@ layout = dbc.Container(
                                 },
                             ),
                             html.Div(
-                                [
-                                    html.Div(
-                                        [
-                                            html.A(
-                                                "EMBL-EBI",
-                                                href="https://www.ebi.ac.uk/",
-                                                target="_blank",
-                                                style={
-                                                    "color": "var(--aegis-accent-primary)",
-                                                    "fontWeight": "500",
-                                                },
-                                            ),
-                                            html.Br(),
-                                            html.Span(
-                                                "European Bioinformatics Institute",
-                                                style={
-                                                    "fontSize": "0.8rem",
-                                                    "color": "var(--aegis-text-muted)",
-                                                },
-                                            ),
-                                        ],
-                                        style={
-                                            "textAlign": "center",
-                                            "padding": "1rem",
-                                        },
-                                    ),
-                                    html.Div(
-                                        [
-                                            html.A(
-                                                "University of Copenhagen",
-                                                href="https://www.ku.dk/english/",
-                                                target="_blank",
-                                                style={
-                                                    "color": "var(--aegis-accent-primary)",
-                                                    "fontWeight": "500",
-                                                },
-                                            ),
-                                            html.Br(),
-                                            html.Span(
-                                                "Globe Institute",
-                                                style={
-                                                    "fontSize": "0.8rem",
-                                                    "color": "var(--aegis-text-muted)",
-                                                },
-                                            ),
-                                        ],
-                                        style={
-                                            "textAlign": "center",
-                                            "padding": "1rem",
-                                        },
-                                    ),
-                                    html.Div(
-                                        [
-                                            html.A(
-                                                "University of Cambridge",
-                                                href="https://www.cam.ac.uk/",
-                                                target="_blank",
-                                                style={
-                                                    "color": "var(--aegis-accent-primary)",
-                                                    "fontWeight": "500",
-                                                },
-                                            ),
-                                            html.Br(),
-                                            html.Span(
-                                                "Department of Genetics",
-                                                style={
-                                                    "fontSize": "0.8rem",
-                                                    "color": "var(--aegis-text-muted)",
-                                                },
-                                            ),
-                                        ],
-                                        style={
-                                            "textAlign": "center",
-                                            "padding": "1rem",
-                                        },
-                                    ),
-                                    html.Div(
-                                        [
-                                            html.A(
-                                                "Wellcome Sanger Institute",
-                                                href="https://www.sanger.ac.uk/",
-                                                target="_blank",
-                                                style={
-                                                    "color": "var(--aegis-accent-primary)",
-                                                    "fontWeight": "500",
-                                                },
-                                            ),
-                                            html.Br(),
-                                            html.Span(
-                                                "Genome Research",
-                                                style={
-                                                    "fontSize": "0.8rem",
-                                                    "color": "var(--aegis-text-muted)",
-                                                },
-                                            ),
-                                        ],
-                                        style={
-                                            "textAlign": "center",
-                                            "padding": "1rem",
-                                        },
-                                    ),
-                                ],
+                                [_partner_card(name, subtitle, href) for name, subtitle, href in _PARTNERS],
                                 style={
                                     "display": "grid",
-                                    "gridTemplateColumns": "repeat(auto-fit, minmax(200px, 1fr))",
+                                    "gridTemplateColumns": "repeat(auto-fit, minmax(220px, 1fr))",
                                     "gap": "1rem",
                                 },
                             ),

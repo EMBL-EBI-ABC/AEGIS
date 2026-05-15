@@ -11,6 +11,7 @@ import dash_bootstrap_components as dbc
 PAGE_SIZE = 10
 import os
 BACKEND_URL = os.getenv("BACKEND_URL", "https://portal.aegisearth.bio/api")
+ENSEMBL_RAPID_RELEASE_BASE = "https://ftp.ebi.ac.uk/pub/ensemblorganisms"
 
 from .utils import return_badge_status
 
@@ -134,6 +135,17 @@ def layout(tax_id=None, **kwargs):
                                             dbc.Badge(
                                                 "Assemblies - Submitted",
                                                 pill=True,
+                                                color="info",
+                                                className="me-1",
+                                            ),
+                                            html.Span(
+                                                "→",
+                                                className="mx-1",
+                                                style={"color": "var(--aegis-text-muted)"},
+                                            ),
+                                            dbc.Badge(
+                                                "Annotation Complete",
+                                                pill=True,
                                                 color="success",
                                             ),
                                         ],
@@ -196,15 +208,17 @@ def layout(tax_id=None, **kwargs):
 
 _EXTERNAL_ARROW_STYLE = {
     "fontSize": "0.85em",
-    "marginLeft": "0.2em",
     "fontFamily": "var(--font-body)",
-    "textDecoration": "none",
-    "display": "inline-block",
 }
 
 
 def _external_anchor(label: str, href: str, *, mono: bool = True, font_size: str = "0.85rem") -> html.A:
-    """Internal helper: external link styled with underline + ↗ glyph."""
+    """Internal helper: external link styled with underline + ↗ glyph.
+
+    Wraps the arrow in a `display: inline` span (not inline-block) so the line layout
+    treats label+arrow as one inline run — no extra break opportunity is introduced
+    between them. Hyphens inside long file-name labels remain natural wrap points.
+    """
     style = {
         "color": "var(--aegis-accent-primary)",
         "fontSize": font_size,
@@ -214,7 +228,7 @@ def _external_anchor(label: str, href: str, *, mono: bool = True, font_size: str
     if mono:
         style["fontFamily"] = "var(--font-mono)"
     return html.A(
-        [label, html.Span("↗", style=_EXTERNAL_ARROW_STYLE)],
+        [label, html.Span(" ↗", style=_EXTERNAL_ARROW_STYLE)],
         href=href,
         target="_blank",
         rel="noopener noreferrer",
@@ -285,6 +299,158 @@ def return_table(
             "borderRadius": "var(--radius-md)",
             "border": "1px solid var(--aegis-border-subtle)",
             "overflow": "hidden",
+        },
+    )
+
+
+def _annotation_file_section(title: str, files: list[dict]) -> html.Div | None:
+    """Render one of the three file lists on an annotation card. Returns None if empty."""
+    if not files:
+        return None
+    by_category: dict[str, list[dict]] = {}
+    for f in files:
+        by_category.setdefault(f.get("category") or "files", []).append(f)
+
+    blocks = [
+        html.Div(
+            title,
+            style={
+                "fontSize": "0.75rem",
+                "fontWeight": "600",
+                "color": "var(--aegis-text-secondary)",
+                "textTransform": "uppercase",
+                "letterSpacing": "0.05em",
+                "marginBottom": "0.5rem",
+            },
+        ),
+    ]
+    for category, entries in by_category.items():
+        blocks.append(
+            html.Div(
+                category,
+                style={
+                    "fontSize": "0.7rem",
+                    "color": "var(--aegis-text-muted)",
+                    "textTransform": "uppercase",
+                    "letterSpacing": "0.05em",
+                    "marginTop": "0.5rem",
+                    "marginBottom": "0.25rem",
+                },
+            )
+        )
+        for entry in entries:
+            name = entry.get("name") or entry.get("path", "").split("/")[-1]
+            path = entry.get("path", "")
+            blocks.append(
+                html.Div(
+                    _external_anchor(name, f"{ENSEMBL_RAPID_RELEASE_BASE}/{path}", font_size="0.85rem"),
+                    style={"marginLeft": "0.75rem", "marginBottom": "0.25rem"},
+                )
+            )
+
+    return html.Div(
+        blocks,
+        style={
+            "padding": "1rem",
+            "background": "var(--aegis-bg-elevated)",
+            "borderRadius": "var(--radius-md)",
+            "border": "1px solid var(--aegis-border-subtle)",
+        },
+    )
+
+
+def _reference_specimen_link(biosample_id: str, sample_accessions: set, tax_id) -> html.A:
+    """Internal portal link when the biosample is in our index, BioSamples fallback otherwise."""
+    if biosample_id in sample_accessions:
+        return html.A(
+            biosample_id,
+            href=f"/data-portal/{tax_id}/samples/{biosample_id}",
+            style={
+                "color": "var(--aegis-accent-primary)",
+                "fontFamily": "var(--font-mono)",
+                "fontSize": "0.9rem",
+                "textDecoration": "underline",
+                "textUnderlineOffset": "3px",
+            },
+        )
+    return return_biosamples_accession_link(biosample_id)
+
+
+def _annotation_card(annotation: dict, sample_accessions: set, tax_id) -> html.Div:
+    """Render one annotation entry as a card with header, reference specimen, and file lists."""
+    assembly_name = annotation.get("assemblyName") or "—"
+    assembly_accession = annotation.get("assemblyAccession") or "—"
+    provider = annotation.get("provider") or "—"
+    release = annotation.get("release") or ""
+    strain = annotation.get("strain")
+    biosample = annotation.get("biosampleId")
+
+    header_parts = [
+        html.Span(
+            assembly_name,
+            style={"fontFamily": "var(--font-mono)", "fontWeight": "600"},
+        ),
+        html.Span(f" ({assembly_accession})", style={"color": "var(--aegis-text-muted)"}),
+        html.Span(" — "),
+        html.Span(provider, style={"color": "var(--aegis-accent-primary)", "fontWeight": "500"}),
+        html.Span(f" {release}".rstrip(), style={"color": "var(--aegis-text-secondary)"}),
+    ]
+
+    meta_rows = []
+    if biosample:
+        meta_rows.append(
+            html.Div(
+                [
+                    html.Span(
+                        "Reference specimen: ",
+                        style={"color": "var(--aegis-text-muted)", "fontSize": "0.85rem"},
+                    ),
+                    _reference_specimen_link(biosample, sample_accessions, tax_id),
+                ],
+                style={"marginBottom": "0.4rem"},
+            )
+        )
+    if strain and strain != "reference":
+        meta_rows.append(
+            html.Div(
+                [
+                    html.Span(
+                        "Strain: ",
+                        style={"color": "var(--aegis-text-muted)", "fontSize": "0.85rem"},
+                    ),
+                    html.Span(strain, style={"color": "var(--aegis-text-primary)", "fontSize": "0.85rem"}),
+                ],
+                style={"marginBottom": "0.4rem"},
+            )
+        )
+
+    sections = [
+        _annotation_file_section("Annotation files", annotation.get("annotationFiles") or []),
+        _annotation_file_section("Genome / assembly files", annotation.get("assemblyFiles") or []),
+        _annotation_file_section("Homology files", annotation.get("homologyFiles") or []),
+    ]
+    sections = [s for s in sections if s is not None]
+
+    return html.Div(
+        [
+            html.Div(header_parts, style={"fontSize": "1rem", "marginBottom": "0.75rem"}),
+            *meta_rows,
+            html.Div(
+                sections,
+                style={
+                    "display": "grid",
+                    "gridTemplateColumns": "repeat(auto-fit, minmax(260px, 1fr))",
+                    "gap": "0.75rem",
+                    "marginTop": "0.75rem",
+                },
+            ),
+        ],
+        style={
+            "padding": "1.25rem",
+            "background": "var(--aegis-bg-card)",
+            "border": "1px solid var(--aegis-border-subtle)",
+            "borderRadius": "var(--radius-md)",
+            "marginBottom": "1rem",
         },
     )
 
@@ -414,11 +580,9 @@ def build_sample_hierarchy(samples, tax_id):
                             "▸",
                             id=chevron_id,
                             style={
-                                "display": "inline-block",
-                                "marginRight": "0.35rem",
-                                "fontSize": "0.95rem",
+                                "fontSize": "1.15rem",
                                 "lineHeight": "1",
-                                "verticalAlign": "middle",
+                                "marginRight": "0.4rem",
                             },
                         ),
                         f"+{len(children)} derived",
@@ -436,6 +600,8 @@ def build_sample_hierarchy(samples, tax_id):
                         "padding": "0.15rem 0.55rem",
                         "borderRadius": "4px",
                         "userSelect": "none",
+                        "display": "inline-flex",
+                        "alignItems": "center",
                     },
                 ),
             )
@@ -724,11 +890,21 @@ def create_data_portal_record(tax_id):
                 active_label_style={"color": "var(--aegis-accent-primary)"},
             )
         )
+    if len(response.get("annotations") or []) > 0:
+        tabs.append(
+            dbc.Tab(
+                label="Annotations",
+                tab_id="annotations_tab",
+                label_style={"color": "var(--aegis-text-secondary)"},
+                active_label_style={"color": "var(--aegis-accent-primary)"},
+            )
+        )
 
     agg_data = {
         "samples": samples_list,
         "rawData": response.get("rawData", []),
         "assemblies": response.get("assemblies", []),
+        "annotations": response.get("annotations") or [],
         "tax_id": tax_id,
     }
     # Compute map viewport to fit all marker positions
@@ -830,7 +1006,7 @@ def create_tabs(active_tab, agg_data, metadata_page, raw_data_page, assemblies_p
         pagination_style = {"display": "flex"} if total > PAGE_SIZE else {"display": "none"}
         return table, 1, hidden_pagination, max_pages, pagination_style, 1, hidden_pagination
 
-    else:  # assemblies_tab
+    elif active_tab == "assemblies_tab":
         assemblies = agg_data.get("assemblies", [])
         total = len(assemblies)
         max_pages = max(1, math.ceil(total / PAGE_SIZE))
@@ -880,3 +1056,38 @@ def create_tabs(active_tab, agg_data, metadata_page, raw_data_page, assemblies_p
         )
         pagination_style = {"display": "flex"} if total > PAGE_SIZE else {"display": "none"}
         return table, 1, hidden_pagination, 1, hidden_pagination, max_pages, pagination_style
+
+    else:  # annotations_tab
+        annotations = agg_data.get("annotations") or []
+        tax_id = agg_data.get("tax_id")
+        sample_accessions = {s["accession"] for s in agg_data.get("samples", []) if s.get("accession")}
+
+        if not annotations:
+            return (
+                html.Div(
+                    [
+                        html.Div(
+                            "📑",
+                            style={
+                                "fontSize": "2rem",
+                                "marginBottom": "0.5rem",
+                                "opacity": "0.5",
+                            },
+                        ),
+                        html.P(
+                            "No annotations available",
+                            style={"color": "var(--aegis-text-muted)"},
+                        ),
+                    ],
+                    className="text-center py-4",
+                ),
+                1,
+                hidden_pagination,
+                1,
+                hidden_pagination,
+                1,
+                hidden_pagination,
+            )
+
+        cards = [_annotation_card(a, sample_accessions, tax_id) for a in annotations]
+        return html.Div(cards), 1, hidden_pagination, 1, hidden_pagination, 1, hidden_pagination

@@ -51,11 +51,9 @@ def status_legend():
             html.Span("→", className="arrow mx-2"),
             dbc.Badge("Raw Data - Submitted", pill=True, color="primary"),
             html.Span("→", className="arrow mx-2"),
-            dbc.Badge("Assemblies - Submitted", pill=True, color="success"),
+            dbc.Badge("Assemblies - Submitted", pill=True, color="info"),
             html.Span("→", className="arrow mx-2"),
-            dbc.Badge("Annotation Completed", pill=True, color="info"),
-            html.Span("→", className="arrow mx-2"),
-            dbc.Badge("Annotation - Submitted", pill=True, color="danger"),
+            dbc.Badge("Annotation Complete", pill=True, color="success"),
         ],
         className="status-legend",
     )
@@ -235,6 +233,7 @@ def create_update_data_table(
         "bioSamplesStatus": "Submitted to BioSamples",
         "rawDataStatus": "Raw Data submitted to ENA",
         "assembliesStatus": "Assemblies submitted to ENA",
+        "annotationStatus": "Annotation Complete",
     }
     params = {}
     try:
@@ -418,6 +417,7 @@ def create_update_data_table(
             "bioSamplesStatus": "Submitted to BioSamples",
             "rawDataStatus": "Raw Data - Submitted",
             "assembliesStatus": "Assemblies - Submitted",
+            "annotationStatus": "Annotation Complete",
         }
         for fv in filter_values:
             if fv in status_to_tracking:

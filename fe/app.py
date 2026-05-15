@@ -71,7 +71,16 @@ app.layout = html.Div(
                 html.Div(
                     [
                         html.P(
-                            "AEGIS — Ancient Environmental Genomics Initiative for Sustainability",
+                            [
+                                "AEGIS - Ancient Environmental Genomics Initiative for Sustainability",
+                                html.Span(" | ", style={"color": "var(--aegis-text-muted)"}),
+                                html.A(
+                                    "Visit aegisearth.bio ↗",
+                                    href="https://aegisearth.bio/en",
+                                    target="_blank",
+                                    style={"color": "var(--aegis-accent-primary)"},
+                                ),
+                            ],
                             style={
                                 "color": "var(--aegis-text-muted)",
                                 "marginBottom": "0.5rem",
@@ -80,13 +89,6 @@ app.layout = html.Div(
                         ),
                         html.P(
                             [
-                                html.A(
-                                    "Visit aegisearth.bio ↗",
-                                    href="https://aegisearth.bio/en",
-                                    target="_blank",
-                                    style={"color": "var(--aegis-accent-primary)"},
-                                ),
-                                html.Span(" · ", style={"color": "var(--aegis-text-muted)"}),
                                 "Powered by ",
                                 html.A(
                                     "EMBL-EBI",

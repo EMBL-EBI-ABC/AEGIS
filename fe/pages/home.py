@@ -55,7 +55,7 @@ def features_section():
                                     },
                                 ),
                                 html.P(
-                                    "AEGIS analyses ancient environmental DNA from soils, sediments, ice, and oceans alongside modern reference genomes to uncover how past ecosystems adapted to climate change — informing climate-resilient crops and biodiversity conservation.",
+                                    "AEGIS analyses ancient environmental DNA from soils, sediments, ice, and oceans alongside modern reference genomes to uncover how past ecosystems adapted to climate change - informing climate-resilient crops and biodiversity conservation.",
                                     style={
                                         "color": "var(--aegis-text-muted)",
                                         "maxWidth": "720px",

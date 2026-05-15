@@ -160,7 +160,7 @@ a:hover {
     font-family: var(--font-display) !important;
     font-size: 1.5rem !important;
     font-weight: 500 !important;
-    color: var(--aegis-text-primary) !important;
+    color: var(--aegis-accent-primary) !important;
     letter-spacing: -0.01em;
     display: flex;
     align-items: center;

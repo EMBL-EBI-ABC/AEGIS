@@ -9,9 +9,8 @@ def return_badge_status(badge_text: str, color: str = None) -> dbc.Badge:
     color_map = {
         "Submitted to BioSamples": "secondary",
         "Raw Data - Submitted": "primary",
-        "Assemblies - Submitted": "success",
-        "Annotation Completed": "info",
-        "Annotation - Submitted": "danger",
+        "Assemblies - Submitted": "info",
+        "Annotation Complete": "success",
     }
     color = color_map.get(badge_text, "secondary")
     return dbc.Badge(badge_text, pill=True, color=color)

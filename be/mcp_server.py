@@ -1,4 +1,6 @@
 # be/mcp_server.py
+import shlex
+
 from elasticsearch import AsyncElasticsearch
 from mcp.server.fastmcp import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
@@ -226,3 +228,90 @@ async def aggregate_samples_by_location(
         samples_index=_SAMPLES_INDEX,
     )
     return result.model_dump()
+
+
+@mcp.tool()
+def build_bulk_download_command(
+    types: str | None = None,
+    tax_id: str | None = None,
+    kingdom: str | None = None,
+    order: str | None = None,
+    family: str | None = None,
+    country: str | None = None,
+    q: str | None = None,
+    output: str = "./aegis-data",
+    workers: int | None = None,
+    dry_run: bool = False,
+) -> dict:
+    """Render the exact `aegis-download` shell command for a user's filters.
+
+    Use this whenever the user wants to BULK DOWNLOAD species data they've
+    been exploring via `search_species` or `search_samples`. The data portal
+    REST/MCP API is fine for inspecting a few records, but for fetching
+    actual files (raw FASTQs, assembly FASTAs, annotation bundles), the
+    `aegis-download` CLI is the right tool — it handles concurrency, retries,
+    resume, and manifest tracking.
+
+    Pass the same filters the user is interested in. The tool returns a
+    `command` string (literal shell command) and an `explanation` string
+    summarising what it will do. The full CLI README is also available as
+    the resource `bulk-downloader://readme`.
+
+    Args:
+      types: Comma-separated. Any of: raw-data, assemblies, annotations,
+        samples-metadata. Default: all four.
+      tax_id: Comma-separated explicit NCBI tax IDs.
+      kingdom / order / family: Phylogeny filters.
+      country: Country filter.
+      q: Free-text search.
+      output: Output directory (default ./aegis-data).
+      workers: Concurrent downloads (default 8, capped at 32).
+      dry_run: Build the manifest without downloading.
+    """
+    parts = ["aegis-download"]
+
+    def add(flag: str, value):
+        if value is None or value == "":
+            return
+        parts.extend([flag, shlex.quote(str(value))])
+
+    add("--type", types)
+    add("--tax-id", tax_id)
+    add("--kingdom", kingdom)
+    add("--order", order)
+    add("--family", family)
+    add("--country", country)
+    add("-q", q)
+    add("--output", output)
+    if workers is not None:
+        add("--workers", workers)
+    if dry_run:
+        parts.append("--dry-run")
+
+    command = " ".join(parts)
+
+    filters_described = []
+    if tax_id:
+        filters_described.append(f"tax_id={tax_id}")
+    if kingdom:
+        filters_described.append(f"kingdom={kingdom}")
+    if order:
+        filters_described.append(f"order={order}")
+    if family:
+        filters_described.append(f"family={family}")
+    if country:
+        filters_described.append(f"country={country}")
+    if q:
+        filters_described.append(f"q={q!r}")
+    filter_summary = ", ".join(filters_described) or "no filters (everything)"
+
+    type_summary = types or "all four data types (raw-data, assemblies, annotations, samples-metadata)"
+    dry_note = " (dry-run: build manifest only, no files downloaded)" if dry_run else ""
+
+    explanation = (
+        f"This will run aegis-download against {filter_summary}, fetching "
+        f"{type_summary} into {output}{dry_note}. Install the CLI first with "
+        f"`pip install -e ./downloader` from the AEGIS repo, then run the command."
+    )
+
+    return {"command": command, "explanation": explanation}

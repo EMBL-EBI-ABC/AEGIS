@@ -187,3 +187,33 @@ async def test_aggregate_samples_by_location_returns_clusters():
     assert result["clusters"][0]["count"] == 42
     assert result["clusters"][0]["lat"] == 51.5
     assert es.search.call_args.kwargs["index"] == "2026-05-15_samples"
+
+
+def test_build_bulk_download_command_basic():
+    from mcp_server import build_bulk_download_command
+
+    cmd = build_bulk_download_command(tax_id="43171", types="assemblies", output="./linaria")
+    assert cmd["command"].startswith("aegis-download")
+    assert "--tax-id 43171" in cmd["command"]
+    assert "--type assemblies" in cmd["command"]
+    assert "--output ./linaria" in cmd["command"]
+
+
+def test_build_bulk_download_command_quotes_shell_unsafe_args():
+    from mcp_server import build_bulk_download_command
+
+    cmd = build_bulk_download_command(q="Homo sapiens; rm -rf /")
+    # The dangerous payload must be inside single quotes so the shell treats
+    # it as a literal string.
+    assert "'Homo sapiens; rm -rf /'" in cmd["command"]
+
+
+def test_build_bulk_download_command_explains_filters():
+    from mcp_server import build_bulk_download_command
+
+    cmd = build_bulk_download_command(order="Lepidoptera", types="annotations,raw-data", dry_run=True)
+    assert "--order Lepidoptera" in cmd["command"]
+    assert "--type annotations,raw-data" in cmd["command"]
+    assert "--dry-run" in cmd["command"]
+    assert "explanation" in cmd
+    assert "Lepidoptera" in cmd["explanation"]

@@ -45,6 +45,55 @@ def test_download_one_happy_path_writes_file_and_renames_partial(tmp_path):
     assert not (tmp_path / "raw/a.fq.gz.partial").exists()
 
 
+def test_download_one_progress_callbacks_report_size_and_chunks(tmp_path):
+    payload = b"P" * (2 * 1024 * 1024 + 17)  # 2 full 1 MiB chunks + a 17-byte tail
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.method == "HEAD":
+            return httpx.Response(200, headers={"content-length": str(len(payload))})
+        return httpx.Response(200, content=payload)
+
+    totals: list[int | None] = []
+    chunks: list[int] = []
+
+    result = _download_one(
+        task=_task(),
+        client=_client_with(handler),
+        output_root=tmp_path,
+        resume=False,
+        max_retries=0,
+        on_total=totals.append,
+        on_chunk=chunks.append,
+    )
+    assert result.status == "ok"
+    assert totals == [len(payload)]
+    assert sum(chunks) == len(payload)
+    assert len(chunks) >= 2  # at least one chunk per MiB
+
+
+def test_download_one_on_total_called_with_none_for_head_unsupported(tmp_path):
+    payload = b"X" * 32
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.method == "HEAD":
+            raise AssertionError("HEAD must be skipped for head_supported=False")
+        return httpx.Response(200, content=payload)
+
+    totals: list[int | None] = []
+
+    result = _download_one(
+        task=_task(head_supported=False),
+        client=_client_with(handler),
+        output_root=tmp_path,
+        resume=False,
+        max_retries=0,
+        on_total=totals.append,
+        on_chunk=lambda _: None,
+    )
+    assert result.status == "ok"
+    assert totals == [None]
+
+
 def test_download_one_skips_when_existing_file_size_matches(tmp_path):
     payload = b"x" * 50
 

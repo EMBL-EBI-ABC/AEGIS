@@ -1,0 +1,33 @@
+{
+  "taxId": 43171,
+  "scientificName": "Linaria vulgaris",
+  "rawData": [
+    {
+      "study_accession": "PRJEB59030",
+      "sample_accession": "SAMEA7522288",
+      "experiment_accession": "ERX9854321",
+      "run_accession": "ERR10828371",
+      "fastq_ftp": "ftp.sra.ebi.ac.uk/vol1/fastq/ERR108/001/ERR10828371/ERR10828371_1.fastq.gz;ftp.sra.ebi.ac.uk/vol1/fastq/ERR108/001/ERR10828371/ERR10828371_2.fastq.gz"
+    }
+  ],
+  "assemblies": [
+    {"accession": "GCA_948329855", "version": "1", "assembly_name": "daLinVulg1.1 alternate haplotype"},
+    {"accession": "GCA_948329865", "version": "1", "assembly_name": "daLinVulg1.1"}
+  ],
+  "annotations": [
+    {
+      "assemblyName": "daLinVulg1.1",
+      "assemblyAccession": "GCA_948329865.1",
+      "provider": "Ensembl Rapid Release",
+      "annotationFiles": [
+        {"name": "genes.gff3.gz", "path": "linaria_vulgaris/GCA_948329865.1/ensembl/geneset/2024_03/genes.gff3.gz", "category": "geneset"}
+      ],
+      "assemblyFiles": [
+        {"name": "softmasked.fa.gz", "path": "linaria_vulgaris/GCA_948329865.1/ensembl/genome/softmasked.fa.gz", "category": "genome"}
+      ],
+      "homologyFiles": [
+        {"name": "homology.tsv.gz", "path": "linaria_vulgaris/GCA_948329865.1/ensembl/homology/2024_03/homology.tsv.gz", "category": "homology"}
+      ]
+    }
+  ]
+}

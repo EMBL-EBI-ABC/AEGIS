@@ -110,3 +110,46 @@ def test_download_one_skips_on_existence_when_head_unsupported(tmp_path):
         max_retries=3,
     )
     assert result.status == "skipped"
+
+
+def test_download_one_retries_on_5xx_and_eventually_succeeds(tmp_path, monkeypatch):
+    monkeypatch.setattr("aegis_downloader.downloader.time.sleep", lambda *_: None)
+    calls = {"n": 0}
+    payload = b"final"
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.method == "HEAD":
+            return httpx.Response(200, headers={"content-length": str(len(payload))})
+        calls["n"] += 1
+        if calls["n"] < 3:
+            return httpx.Response(503)
+        return httpx.Response(200, content=payload)
+
+    result = _download_one(
+        task=_task(),
+        client=_client_with(handler),
+        output_root=tmp_path,
+        resume=False,
+        max_retries=3,
+    )
+    assert result.status == "ok"
+    assert calls["n"] == 3
+
+
+def test_download_one_marks_failed_after_max_retries(tmp_path, monkeypatch):
+    monkeypatch.setattr("aegis_downloader.downloader.time.sleep", lambda *_: None)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.method == "HEAD":
+            return httpx.Response(200, headers={"content-length": "1"})
+        return httpx.Response(503)
+
+    result = _download_one(
+        task=_task(),
+        client=_client_with(handler),
+        output_root=tmp_path,
+        resume=False,
+        max_retries=2,
+    )
+    assert result.status == "failed"
+    assert "503" in result.error

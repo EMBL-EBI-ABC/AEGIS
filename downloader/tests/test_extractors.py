@@ -89,3 +89,39 @@ def test_extract_annotations_skips_empty_file_lists():
         "annotations": [{"assemblyName": "a1", "annotationFiles": [], "assemblyFiles": None, "homologyFiles": []}],
     }
     assert extract_annotations(record) == []
+
+
+from aegis_downloader.extractors import extract_assemblies
+
+
+def test_extract_assemblies_builds_ena_url_with_version():
+    record = _load("data_portal_43171.json")
+    tasks = extract_assemblies(record)
+    assert len(tasks) == 2
+    urls = sorted(t.url for t in tasks)
+    assert urls == [
+        "https://www.ebi.ac.uk/ena/browser/api/fasta/GCA_948329855.1?download=true&gzip=true",
+        "https://www.ebi.ac.uk/ena/browser/api/fasta/GCA_948329865.1?download=true&gzip=true",
+    ]
+    dests = sorted(str(t.dest) for t in tasks)
+    assert dests == [
+        "by_species/43171_linaria_vulgaris/assemblies/GCA_948329855.1.fasta.gz",
+        "by_species/43171_linaria_vulgaris/assemblies/GCA_948329865.1.fasta.gz",
+    ]
+    for task in tasks:
+        assert task.data_type == "assemblies"
+        assert task.head_supported is False
+
+
+def test_extract_assemblies_omits_version_when_missing():
+    record = {
+        "taxId": 1, "scientificName": "X",
+        "assemblies": [{"accession": "GCA_999", "version": None, "assembly_name": "x"}],
+    }
+    tasks = extract_assemblies(record)
+    assert tasks[0].url == "https://www.ebi.ac.uk/ena/browser/api/fasta/GCA_999?download=true&gzip=true"
+    assert tasks[0].dest.name == "GCA_999.fasta.gz"
+
+
+def test_extract_assemblies_handles_missing_assemblies_field():
+    assert extract_assemblies({"taxId": 1, "scientificName": "X", "assemblies": None}) == []

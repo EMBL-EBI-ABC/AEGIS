@@ -39,6 +39,35 @@ def extract_annotations(record: dict) -> list[DownloadTask]:
     return tasks
 
 
+ENA_BROWSER_FASTA_BASE = "https://www.ebi.ac.uk/ena/browser/api/fasta"
+
+
+def extract_assemblies(record: dict) -> list[DownloadTask]:
+    tax_id = record["taxId"]
+    scientific_name = record["scientificName"]
+    slug = slugify(scientific_name)
+    tasks: list[DownloadTask] = []
+    for entry in record.get("assemblies") or []:
+        accession = entry.get("accession")
+        if not accession:
+            continue
+        version = entry.get("version")
+        ref = f"{accession}.{version}" if version else accession
+        url = f"{ENA_BROWSER_FASTA_BASE}/{ref}?download=true&gzip=true"
+        filename = f"{ref}.fasta.gz"
+        tasks.append(
+            DownloadTask(
+                url=url,
+                dest=Path(f"by_species/{tax_id}_{slug}/assemblies/{filename}"),
+                data_type="assemblies",
+                tax_id=tax_id,
+                scientific_name=scientific_name,
+                head_supported=False,
+            )
+        )
+    return tasks
+
+
 def extract_raw_data(record: dict) -> list[DownloadTask]:
     tax_id = record["taxId"]
     scientific_name = record["scientificName"]

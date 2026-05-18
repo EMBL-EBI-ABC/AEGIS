@@ -1,3 +1,4 @@
+import json as _json
 from pathlib import Path
 
 from aegis_downloader.manifest import Manifest
@@ -47,3 +48,17 @@ def test_update_replaces_row_for_completed_task(tmp_path):
     assert fields[5] == "1024"      # expected_size
     assert fields[6] == "1024"      # bytes_downloaded
     assert fields[7] == "ok"        # status
+
+
+def test_manifest_json_format_writes_array_of_objects(tmp_path):
+    manifest_path = tmp_path / "manifest.json"
+    manifest = Manifest(manifest_path, format="json")
+    task = _task("https://example.com/a.fq.gz", "by_species/43171_x/raw_data/a.fq.gz")
+    manifest.write_initial([task])
+    manifest.update(FileResult(task=task, status="failed", bytes_downloaded=0, error="boom"))
+
+    data = _json.loads(manifest_path.read_text())
+    assert len(data) == 1
+    assert data[0]["status"] == "failed"
+    assert data[0]["error"] == "boom"
+    assert data[0]["url"] == "https://example.com/a.fq.gz"

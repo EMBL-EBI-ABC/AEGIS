@@ -1,6 +1,5 @@
 import pytest
 from unittest.mock import AsyncMock
-from httpx import ASGITransport, AsyncClient
 
 
 @pytest.mark.anyio
@@ -13,44 +12,16 @@ async def test_mcp_module_imports_and_exposes_factory():
 
 
 @pytest.mark.anyio
-async def test_mcp_endpoint_responds_to_initialize(mock_es_client):
+async def test_mcp_endpoint_responds_to_initialize(mcp_http_session):
     """POST a JSON-RPC `initialize` to /api/mcp; expect a 200 with a session header.
 
-    This test uses its own client so it can run the MCP session-manager lifespan
-    (via mcp_app.router.lifespan_context) alongside the HTTP request. The shared
-    `client` fixture in conftest.py bypasses the FastAPI lifespan to avoid real
-    Elasticsearch connections; that pattern doesn't work here because the MCP
-    session manager requires its task group to be initialised before requests arrive.
+    Uses the `mcp_http_session` fixture which manages the StreamableHTTPSessionManager
+    lifespan (which can only be started once per instance) and performs the initialize
+    handshake, yielding the response and session-id for assertions.
     """
-    from main import app, mcp_app
-    from mcp_server import set_es_client
-    set_es_client(mock_es_client)
-    app.state.es_client = mock_es_client
-
-    body = {
-        "jsonrpc": "2.0",
-        "id": 1,
-        "method": "initialize",
-        "params": {
-            "protocolVersion": "2025-03-26",
-            "capabilities": {},
-            "clientInfo": {"name": "test", "version": "0.0"},
-        },
-    }
-    headers = {
-        "Accept": "application/json, text/event-stream",
-        "Content-Type": "application/json",
-    }
-    transport = ASGITransport(app=app)
-    async with mcp_app.router.lifespan_context(app):
-        async with AsyncClient(
-            transport=transport,
-            base_url="http://test",
-            follow_redirects=True,
-        ) as ac:
-            response = await ac.post("/api/mcp", json=body, headers=headers)
-    assert response.status_code == 200
-    assert "mcp-session-id" in {k.lower() for k in response.headers.keys()}
+    init_resp = mcp_http_session["init_resp"]
+    assert init_resp.status_code == 200
+    assert "mcp-session-id" in {k.lower() for k in init_resp.headers.keys()}
 
 
 @pytest.mark.anyio
@@ -227,3 +198,34 @@ def test_bulk_downloader_readme_resource_returns_full_text():
     assert content == README_TEXT
     assert "aegis-download" in content
     assert "## Flags" in content
+
+
+@pytest.mark.anyio
+async def test_mcp_endpoint_lists_all_tools(mcp_http_session):
+    """Initialize a session, then call tools/list — expect all six tools.
+
+    Uses the `mcp_http_session` fixture which manages the StreamableHTTPSessionManager
+    lifespan (started exactly once) so this test can make a follow-up request without
+    hitting the "run() can only be called once" restriction on the shared session manager.
+    """
+    ac = mcp_http_session["ac"]
+    session_id = mcp_http_session["session_id"]
+    headers = mcp_http_session["headers"]
+
+    list_resp = await ac.post(
+        "/api/mcp",
+        json={"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}},
+        headers={**headers, "mcp-session-id": session_id},
+    )
+    assert list_resp.status_code == 200
+
+    text = list_resp.text
+    for name in [
+        "search_species",
+        "get_species",
+        "search_samples",
+        "get_sample",
+        "aggregate_samples_by_location",
+        "build_bulk_download_command",
+    ]:
+        assert name in text, f"tool {name!r} not advertised; response (first 500 chars): {text[:500]}"

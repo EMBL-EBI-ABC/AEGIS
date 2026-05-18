@@ -46,7 +46,16 @@ mcp = FastMCP(
 
 
 def build_mcp_app():
-    """Return the Streamable HTTP ASGI app to mount on FastAPI."""
+    """Return a Streamable HTTP ASGI app backed by a fresh session manager.
+
+    Each call resets the FastMCP instance's cached session manager so that a
+    new ``StreamableHTTPSessionManager`` is created.  This is required in tests
+    where ``lifespan_context`` is called more than once across the process
+    lifetime (the manager enforces a one-shot invariant per instance).
+    In production the function is called exactly once at startup, so the reset
+    is a no-op from an operational standpoint.
+    """
+    mcp._session_manager = None  # ensure a fresh StreamableHTTPSessionManager
     return mcp.streamable_http_app()
 
 

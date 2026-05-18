@@ -4,8 +4,9 @@ from mcp.server.fastmcp import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
 from models import (
     DataPortalSearchParams, DataPortalAggregationResponse, DataPortalData,
+    SampleSearchParams, SampleAggregationResponse, SampleData,
 )
-from queries import data_portal_search_full, elastic_details
+from queries import data_portal_search_full, elastic_details, elastic_search
 
 
 _DATA_PORTAL_INDEX = "2026-05-15_data_portal"
@@ -118,5 +119,48 @@ async def get_species(tax_id: int) -> dict:
         index_name=_DATA_PORTAL_INDEX,
         record_id=str(tax_id),
         data_class=DataPortalData,
+    )
+    return result.model_dump()
+
+
+@mcp.tool()
+async def search_samples(
+    q: str | None = None,
+    taxId: int | None = None,
+    country: str | None = None,
+    organismPart: str | None = None,
+    sex: str | None = None,
+    collectingInstitution: str | None = None,
+    start: int = 0,
+    size: int = 10,
+) -> dict:
+    """Search the AEGIS samples index (BioSamples records).
+
+    Each sample is one physical specimen contributed to the AEGIS project, with
+    collection metadata (location, collector, organism part, sex, etc.). Filter
+    by:
+      - `taxId`: the species this sample belongs to (use after search_species)
+      - `country`, `organismPart`, `sex`, `collectingInstitution`: discrete filters
+      - `q`: free text
+
+    Returns up to `size` records (max 1000). For one specific sample, use
+    `get_sample` with its BioSamples accession.
+    """
+    params = SampleSearchParams(
+        q=q,
+        taxId=taxId,
+        country=country,
+        organismPart=organismPart,
+        sex=sex,
+        collectingInstitution=collectingInstitution,
+        start=start,
+        size=min(size, 1000),
+    )
+    result = await elastic_search(
+        es_client=_get_es(),
+        index_name=_SAMPLES_INDEX,
+        params=params,
+        data_class=SampleData,
+        aggregation_class=SampleAggregationResponse,
     )
     return result.model_dump()

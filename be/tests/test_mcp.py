@@ -111,3 +111,29 @@ async def test_get_species_returns_full_record():
     call = es.search.call_args
     assert call.kwargs["index"] == "2026-05-15_data_portal"
     assert call.kwargs["q"] == "_id:43171"
+
+
+@pytest.mark.anyio
+async def test_search_samples_queries_samples_index():
+    from mcp_server import search_samples, set_es_client
+
+    es = AsyncMock()
+    es.search.return_value = {
+        "hits": {"total": {"value": 0}, "hits": []},
+        "aggregations": {
+            "collectingInstitution": {"doc_count_error_upper_bound": 0, "sum_other_doc_count": 0, "buckets": []},
+            "country": {"doc_count_error_upper_bound": 0, "sum_other_doc_count": 0, "buckets": []},
+            "organismPart": {"doc_count_error_upper_bound": 0, "sum_other_doc_count": 0, "buckets": []},
+            "sex": {"doc_count_error_upper_bound": 0, "sum_other_doc_count": 0, "buckets": []},
+            "taxId": {"doc_count_error_upper_bound": 0, "sum_other_doc_count": 0, "buckets": []},
+        },
+    }
+    set_es_client(es)
+
+    result = await search_samples(taxId=6344, country="United Kingdom", size=5)
+    assert es.search.call_args.kwargs["index"] == "2026-05-15_samples"
+    body = es.search.call_args.kwargs["body"]
+    filters = body["query"]["bool"]["filter"]
+    assert {"terms": {"taxId": [6344]}} in filters
+    assert {"terms": {"country": ["United Kingdom"]}} in filters
+    assert result["total"] == 0

@@ -91,3 +91,58 @@ def test_build_plan_explicit_tax_id_empty_set_excludes_everything():
         explicit_tax_ids=set(),
     )
     assert plan.total_tasks == 0
+
+
+def test_build_plan_writes_per_species_metadata_json():
+    record = _load_record()
+    client = _client_with_record(record)
+    plan = build_plan(
+        client=client,
+        types={"raw-data"},
+        server_filters={},
+        explicit_tax_ids=None,
+    )
+    [metadata_write] = plan.metadata_writes
+    assert str(metadata_write.dest) == "by_species/43171_linaria_vulgaris/metadata.json"
+    assert json.loads(metadata_write.content)["taxId"] == 43171
+
+
+def test_build_plan_writes_samples_metadata_tsv_when_requested():
+    record = _load_record()
+    sample = {"accession": "SAMEA7522288", "taxId": 43171, "scientificName": "Linaria vulgaris"}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        url = str(request.url)
+        if "/samples" in url:
+            return httpx.Response(200, json={
+                "total": 1, "start": 0, "size": 1000, "results": [sample], "aggregations": {},
+            })
+        return httpx.Response(200, json={
+            "total": 1, "start": 0, "size": 100, "results": [record], "aggregations": {},
+        })
+
+    client = ApiClient("http://test", transport=make_mock_client_factory(handler))
+    plan = build_plan(
+        client=client,
+        types={"samples-metadata"},
+        server_filters={},
+        explicit_tax_ids=None,
+    )
+    samples_writes = [w for w in plan.metadata_writes if w.dest.name == "samples_metadata.tsv"]
+    assert len(samples_writes) == 1
+    content = samples_writes[0].content
+    header, *rows = content.strip().split("\n")
+    assert "accession" in header
+    assert "SAMEA7522288" in rows[0]
+
+
+def test_build_plan_skips_samples_when_not_in_types():
+    record = _load_record()
+    client = _client_with_record(record)
+    plan = build_plan(
+        client=client,
+        types={"raw-data"},
+        server_filters={},
+        explicit_tax_ids=None,
+    )
+    assert not any(w.dest.name == "samples_metadata.tsv" for w in plan.metadata_writes)

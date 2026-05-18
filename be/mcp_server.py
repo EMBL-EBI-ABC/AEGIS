@@ -315,3 +315,12 @@ def build_bulk_download_command(
     )
 
     return {"command": command, "explanation": explanation}
+
+
+from bulk_downloader_docs import README_TEXT
+
+
+@mcp.resource("bulk-downloader://readme")
+def bulk_downloader_readme() -> str:
+    """The full aegis-download CLI README, including flags, output layout, exit codes, and pagination notes."""
+    return README_TEXT

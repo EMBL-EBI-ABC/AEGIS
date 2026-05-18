@@ -217,3 +217,13 @@ def test_build_bulk_download_command_explains_filters():
     assert "--dry-run" in cmd["command"]
     assert "explanation" in cmd
     assert "Lepidoptera" in cmd["explanation"]
+
+
+def test_bulk_downloader_readme_resource_returns_full_text():
+    from mcp_server import bulk_downloader_readme
+    from bulk_downloader_docs import README_TEXT
+
+    content = bulk_downloader_readme()
+    assert content == README_TEXT
+    assert "aegis-download" in content
+    assert "## Flags" in content

@@ -4,9 +4,10 @@ from mcp.server.fastmcp import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
 from models import (
     DataPortalSearchParams, DataPortalAggregationResponse, DataPortalData,
+    GeoAggregationParams,
     SampleSearchParams, SampleAggregationResponse, SampleData,
 )
-from queries import data_portal_search_full, elastic_details, elastic_search
+from queries import data_portal_search_full, elastic_details, elastic_search, samples_geo_aggregation_query
 
 
 _DATA_PORTAL_INDEX = "2026-05-15_data_portal"
@@ -179,5 +180,49 @@ async def get_sample(accession: str) -> dict:
         index_name=_SAMPLES_INDEX,
         record_id=accession,
         data_class=SampleData,
+    )
+    return result.model_dump()
+
+
+@mcp.tool()
+async def aggregate_samples_by_location(
+    zoom: int,
+    top_left_lat: float | None = None,
+    top_left_lon: float | None = None,
+    bottom_right_lat: float | None = None,
+    bottom_right_lon: float | None = None,
+    tax_id: int | None = None,
+    tax_ids: str | None = None,
+    q: str | None = None,
+    country: str | None = None,
+    trackingSystem: str | None = None,
+) -> dict:
+    """Aggregate AEGIS samples into geographic clusters for a map view.
+
+    Uses an Elasticsearch geotile_grid; grid precision is derived from `zoom`
+    (0 = world, 20 = street level). Each returned cluster has `lat`, `lon`
+    (centroid), `count`, and an opaque grid `key`. Filters narrow the
+    underlying sample set before clustering. Pass bounding-box corners to
+    restrict to a viewport, or `tax_id`/`tax_ids` to a single species or set.
+
+    Use this to answer "where are samples concentrated for X species" or
+    "what does the world map look like inside this bounding box".
+    """
+    params = GeoAggregationParams(
+        zoom=zoom,
+        top_left_lat=top_left_lat,
+        top_left_lon=top_left_lon,
+        bottom_right_lat=bottom_right_lat,
+        bottom_right_lon=bottom_right_lon,
+        tax_id=tax_id,
+        tax_ids=tax_ids,
+        q=q,
+        country=country,
+        trackingSystem=trackingSystem,
+    )
+    result = await samples_geo_aggregation_query(
+        es_client=_get_es(),
+        params=params,
+        samples_index=_SAMPLES_INDEX,
     )
     return result.model_dump()

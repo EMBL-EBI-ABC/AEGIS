@@ -170,3 +170,20 @@ async def test_get_sample_returns_record_by_accession():
     assert result["results"][0]["accession"] == "SAMEA7522340"
     assert es.search.call_args.kwargs["index"] == "2026-05-15_samples"
     assert es.search.call_args.kwargs["q"] == "_id:SAMEA7522340"
+
+
+@pytest.mark.anyio
+async def test_aggregate_samples_by_location_returns_clusters():
+    from mcp_server import aggregate_samples_by_location, set_es_client
+
+    es = AsyncMock()
+    es.search.return_value = {"aggregations": {"grid": {"buckets": [
+        {"key": "5/16/10", "doc_count": 42, "centroid": {"location": {"lat": 51.5, "lon": -0.1}}},
+    ]}}}
+    set_es_client(es)
+
+    result = await aggregate_samples_by_location(zoom=5)
+    assert len(result["clusters"]) == 1
+    assert result["clusters"][0]["count"] == 42
+    assert result["clusters"][0]["lat"] == 51.5
+    assert es.search.call_args.kwargs["index"] == "2026-05-15_samples"

@@ -69,3 +69,36 @@ def test_iter_data_portal_raises_when_total_exceeds_max_result_window():
         list(client.iter_data_portal(filters={}, page_size=100))
     assert "10000" in str(exc.value)
     assert "10001" in str(exc.value)
+
+
+def test_get_data_portal_record_returns_first_result():
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert "/data_portal/43171" in str(request.url)
+        return httpx.Response(200, json={"results": [{"taxId": 43171, "scientificName": "Linaria vulgaris"}]})
+
+    client = ApiClient("http://test", transport=make_mock_client_factory(handler))
+    record = client.get_data_portal_record(43171)
+    assert record["taxId"] == 43171
+
+
+def test_get_data_portal_record_returns_none_when_empty():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"results": []})
+
+    client = ApiClient("http://test", transport=make_mock_client_factory(handler))
+    assert client.get_data_portal_record(999999) is None
+
+
+def test_iter_samples_paginates():
+    pages = {
+        0: {"total": 3, "start": 0, "size": 2, "results": [{"accession": "A"}, {"accession": "B"}], "aggregations": {}},
+        2: {"total": 3, "start": 2, "size": 2, "results": [{"accession": "C"}], "aggregations": {}},
+    }
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert "/samples" in str(request.url)
+        return httpx.Response(200, json=pages[int(request.url.params.get("start", "0"))])
+
+    client = ApiClient("http://test", transport=make_mock_client_factory(handler))
+    records = list(client.iter_samples(filters={"taxId": 43171}, page_size=2))
+    assert [r["accession"] for r in records] == ["A", "B", "C"]

@@ -32,6 +32,20 @@ class ApiClient:
     ) -> Iterator[dict]:
         return self._paginate("/data_portal", filters, page_size)
 
+    def get_data_portal_record(self, tax_id: int) -> dict | None:
+        response = self._client.get(f"{self._base}/data_portal/{tax_id}")
+        response.raise_for_status()
+        results = response.json().get("results", [])
+        return results[0] if results else None
+
+    def iter_samples(
+        self,
+        filters: dict[str, str | int | None],
+        *,
+        page_size: int = 1000,
+    ) -> Iterator[dict]:
+        return self._paginate("/samples", filters, page_size)
+
     def _paginate(
         self,
         path: str,

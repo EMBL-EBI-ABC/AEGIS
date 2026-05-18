@@ -137,3 +137,36 @@ async def test_search_samples_queries_samples_index():
     assert {"terms": {"taxId": [6344]}} in filters
     assert {"terms": {"country": ["United Kingdom"]}} in filters
     assert result["total"] == 0
+
+
+@pytest.mark.anyio
+async def test_get_sample_returns_record_by_accession():
+    from mcp_server import get_sample, set_es_client
+
+    es = AsyncMock()
+    es.search.return_value = {"hits": {"hits": [{"_source": {
+        "accession": "SAMEA7522340", "taxId": 6344, "scientificName": "Hirudo medicinalis",
+        "commonName": None, "trackingSystem": "COPO", "projectTag": None, "projectName": None,
+        "organismPart": None, "lifestage": None, "sex": None, "collectedBy": None,
+        "collectionDate": None, "collectionDateText": None, "locality": None,
+        "country": None, "habitat": None, "collectingInstitution": None,
+        "location": None, "elevation": None, "tolid": None, "specimenVoucher": None,
+        "derivedFrom": "SAMEA7522339", "sampleSymbiontOf": None, "symbiont": None,
+        "relationship": None, "sampleSameAs": None, "sampleCollectionMethod": None,
+        "identifiedBy": None, "identifierAffiliation": None, "sampleCoordinator": None,
+        "sampleCoordinatorAffiliation": None, "barcodingCenter": None, "gal": None,
+        "specimenId": None, "galSampleId": None, "proxyVoucher": None,
+        "proxyBiomaterial": None, "bioMaterial": None, "cultureOrStrainId": None,
+        "originalCollectionDate": None, "originalCollectionDateText": None,
+        "originalGeographicLocation": None, "originalLatitude": None,
+        "originalLongitude": None, "sraAccession": None, "insdcCenterName": None,
+        "insdcStatus": None, "insdcFirstPublic": None, "insdcLastUpdate": None,
+        "latitudeStart": None, "longitudeStart": None, "latitudeEnd": None,
+        "longitudeEnd": None, "depth": None, "customFields": None,
+    }}]}}
+    set_es_client(es)
+
+    result = await get_sample(accession="SAMEA7522340")
+    assert result["results"][0]["accession"] == "SAMEA7522340"
+    assert es.search.call_args.kwargs["index"] == "2026-05-15_samples"
+    assert es.search.call_args.kwargs["q"] == "_id:SAMEA7522340"

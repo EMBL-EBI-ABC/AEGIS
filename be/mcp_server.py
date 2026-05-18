@@ -164,3 +164,20 @@ async def search_samples(
         aggregation_class=SampleAggregationResponse,
     )
     return result.model_dump()
+
+
+@mcp.tool()
+async def get_sample(accession: str) -> dict:
+    """Fetch the full AEGIS sample record for one BioSamples accession.
+
+    Returns the complete record including ENA/INSDC provenance, collection
+    metadata, derivedFrom relationships, and any custom fields. Use after
+    `search_samples` to drill into one specimen.
+    """
+    result = await elastic_details(
+        es_client=_get_es(),
+        index_name=_SAMPLES_INDEX,
+        record_id=accession,
+        data_class=SampleData,
+    )
+    return result.model_dump()

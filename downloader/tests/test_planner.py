@@ -46,3 +46,48 @@ def test_build_plan_with_all_types_produces_tasks_for_each_extractor():
     assert data_types_seen == {"raw-data", "assemblies", "annotations"}
     # 2 raw fastq + 2 assemblies + 3 annotations
     assert plan.total_tasks == 7
+
+
+def test_build_plan_type_subset_excludes_other_extractors():
+    record = _load_record()
+    client = _client_with_record(record)
+    plan = build_plan(
+        client=client,
+        types={"assemblies"},
+        server_filters={},
+        explicit_tax_ids=None,
+    )
+    assert all(t.data_type == "assemblies" for t in plan.tasks)
+    assert plan.total_tasks == 2
+
+
+def test_build_plan_explicit_tax_id_filters_results():
+    record = _load_record()
+    other = {**record, "taxId": 99999, "scientificName": "Other species"}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={
+            "total": 2, "start": 0, "size": 100,
+            "results": [record, other], "aggregations": {},
+        })
+
+    client = ApiClient("http://test", transport=make_mock_client_factory(handler))
+    plan = build_plan(
+        client=client,
+        types={"raw-data"},
+        server_filters={},
+        explicit_tax_ids={43171},
+    )
+    assert {t.tax_id for t in plan.tasks} == {43171}
+
+
+def test_build_plan_explicit_tax_id_empty_set_excludes_everything():
+    record = _load_record()
+    client = _client_with_record(record)
+    plan = build_plan(
+        client=client,
+        types={"raw-data", "assemblies", "annotations"},
+        server_filters={},
+        explicit_tax_ids=set(),
+    )
+    assert plan.total_tasks == 0

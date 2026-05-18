@@ -51,3 +51,40 @@ async def test_mcp_endpoint_responds_to_initialize(mock_es_client):
             response = await ac.post("/api/mcp", json=body, headers=headers)
     assert response.status_code == 200
     assert "mcp-session-id" in {k.lower() for k in response.headers.keys()}
+
+
+@pytest.mark.anyio
+async def test_search_species_returns_results_and_calls_data_portal_index():
+    from mcp_server import search_species, set_es_client
+
+    es = AsyncMock()
+    es.search.return_value = {
+        "hits": {"total": {"value": 1}, "hits": [{"_source": {
+            "taxId": 6344, "scientificName": "Hirudo medicinalis",
+            "commonName": "medicinal leech", "phylogeny": None,
+            "currentStatus": "Annotation Complete", "currentStatusOrder": 5,
+            "bioSamplesStatus": "Done", "rawDataStatus": "Done",
+            "assembliesStatus": "Done", "annotationStatus": "Done",
+            "rawData": [], "assemblies": [], "annotations": None,
+            "sampleCount": 1, "locations": None, "countries": None,
+        }}]},
+        "aggregations": {
+            "bioSamplesStatus": {"doc_count_error_upper_bound": 0, "sum_other_doc_count": 0, "buckets": []},
+            "rawDataStatus": {"doc_count_error_upper_bound": 0, "sum_other_doc_count": 0, "buckets": []},
+            "assembliesStatus": {"doc_count_error_upper_bound": 0, "sum_other_doc_count": 0, "buckets": []},
+            "annotationStatus": {"doc_count_error_upper_bound": 0, "sum_other_doc_count": 0, "buckets": []},
+            "countries": {"doc_count_error_upper_bound": 0, "sum_other_doc_count": 0, "buckets": []},
+        },
+    }
+    set_es_client(es)
+
+    # FastMCP's @mcp.tool() decorator returns the original function unchanged,
+    # so search_species is the plain async coroutine — call it directly.
+    result = await search_species(kingdom="Animalia", size=10)
+
+    # The data_portal index should be the one queried.
+    indices_seen = [c.kwargs.get("index") for c in es.search.call_args_list]
+    assert "2026-05-15_data_portal" in indices_seen
+
+    assert result["total"] == 1
+    assert result["results"][0]["scientificName"] == "Hirudo medicinalis"

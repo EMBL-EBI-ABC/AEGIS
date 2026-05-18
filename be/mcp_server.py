@@ -2,6 +2,14 @@
 from elasticsearch import AsyncElasticsearch
 from mcp.server.fastmcp import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
+from models import (
+    DataPortalSearchParams, DataPortalAggregationResponse, DataPortalData,
+)
+from queries import data_portal_search_full
+
+
+_DATA_PORTAL_INDEX = "2026-05-15_data_portal"
+_SAMPLES_INDEX = "2026-05-15_samples"
 
 _es_client: AsyncElasticsearch | None = None
 
@@ -36,3 +44,57 @@ mcp = FastMCP(
 def build_mcp_app():
     """Return the Streamable HTTP ASGI app to mount on FastAPI."""
     return mcp.streamable_http_app()
+
+
+@mcp.tool()
+async def search_species(
+    q: str | None = None,
+    kingdom: str | None = None,
+    tax_order: str | None = None,
+    family: str | None = None,
+    countries: str | None = None,
+    bioSamplesStatus: str | None = None,
+    rawDataStatus: str | None = None,
+    assembliesStatus: str | None = None,
+    annotationStatus: str | None = None,
+    start: int = 0,
+    size: int = 10,
+) -> dict:
+    """Search the AEGIS data portal for biodiversity species records.
+
+    The data portal indexes species along with their genomic assets (raw reads,
+    assemblies, annotations) produced by the AEGIS pipeline. Use this to find
+    species matching:
+      - phylogeny: `kingdom`, `tax_order`, `family` (exact match on the
+        normalised taxonomy fields)
+      - pipeline progress: `bioSamplesStatus`, `rawDataStatus`,
+        `assembliesStatus`, `annotationStatus` (each typically "Done"/"Submitted"/etc.)
+      - geographic origin: `countries`
+      - free text: `q` (matches across all fields)
+
+    Pagination via `start`/`size` (size up to 1000). After finding interesting
+    tax_ids, call `get_species` for full details, or `build_bulk_download_command`
+    to produce a CLI command that downloads the matching assets.
+    """
+    params = DataPortalSearchParams(
+        q=q,
+        kingdom=kingdom,
+        tax_order=tax_order,
+        family=family,
+        countries=countries,
+        bioSamplesStatus=bioSamplesStatus,
+        rawDataStatus=rawDataStatus,
+        assembliesStatus=assembliesStatus,
+        annotationStatus=annotationStatus,
+        start=start,
+        size=min(size, 1000),
+    )
+    result = await data_portal_search_full(
+        es_client=_get_es(),
+        params=params,
+        samples_index=_SAMPLES_INDEX,
+        data_portal_index=_DATA_PORTAL_INDEX,
+        data_class=DataPortalData,
+        aggregation_class=DataPortalAggregationResponse,
+    )
+    return result.model_dump()

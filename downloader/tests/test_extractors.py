@@ -56,3 +56,36 @@ def test_extract_raw_data_skips_empty_url_fragments():
     }
     tasks = extract_raw_data(record)
     assert [t.url for t in tasks] == ["https://a/b/c.fastq.gz", "https://d/e/f.fastq.gz"]
+
+
+from aegis_downloader.extractors import extract_annotations
+
+
+def test_extract_annotations_pulls_all_three_file_types():
+    record = _load("data_portal_43171.json")
+    tasks = extract_annotations(record)
+    assert len(tasks) == 3
+    urls = sorted(t.url for t in tasks)
+    assert urls == [
+        "https://ftp.ebi.ac.uk/pub/ensemblorganisms/linaria_vulgaris/GCA_948329865.1/ensembl/geneset/2024_03/genes.gff3.gz",
+        "https://ftp.ebi.ac.uk/pub/ensemblorganisms/linaria_vulgaris/GCA_948329865.1/ensembl/genome/softmasked.fa.gz",
+        "https://ftp.ebi.ac.uk/pub/ensemblorganisms/linaria_vulgaris/GCA_948329865.1/ensembl/homology/2024_03/homology.tsv.gz",
+    ]
+    for task in tasks:
+        assert task.data_type == "annotations"
+        assert task.head_supported is True
+        assert task.dest.parts[:3] == ("by_species", "43171_linaria_vulgaris", "annotations")
+        assert task.dest.parts[3] == "daLinVulg1.1"
+
+
+def test_extract_annotations_handles_missing_annotations_field():
+    assert extract_annotations({"taxId": 1, "scientificName": "X", "annotations": None}) == []
+
+
+def test_extract_annotations_skips_empty_file_lists():
+    record = {
+        "taxId": 1,
+        "scientificName": "X",
+        "annotations": [{"assemblyName": "a1", "annotationFiles": [], "assemblyFiles": None, "homologyFiles": []}],
+    }
+    assert extract_annotations(record) == []

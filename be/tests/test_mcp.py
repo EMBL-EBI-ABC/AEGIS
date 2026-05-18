@@ -88,3 +88,26 @@ async def test_search_species_returns_results_and_calls_data_portal_index():
 
     assert result["total"] == 1
     assert result["results"][0]["scientificName"] == "Hirudo medicinalis"
+
+
+@pytest.mark.anyio
+async def test_get_species_returns_full_record():
+    from mcp_server import get_species, set_es_client
+
+    es = AsyncMock()
+    es.search.return_value = {"hits": {"hits": [{"_source": {
+        "taxId": 43171, "scientificName": "Linaria vulgaris", "commonName": None,
+        "phylogeny": None, "currentStatus": "Annotation Complete", "currentStatusOrder": 5,
+        "bioSamplesStatus": "Done", "rawDataStatus": "Done",
+        "assembliesStatus": "Done", "annotationStatus": "Done",
+        "rawData": [], "assemblies": [], "annotations": None,
+        "sampleCount": 1, "locations": None, "countries": None,
+    }}]}}
+    set_es_client(es)
+
+    result = await get_species(tax_id=43171)
+    assert len(result["results"]) == 1
+    assert result["results"][0]["taxId"] == 43171
+    call = es.search.call_args
+    assert call.kwargs["index"] == "2026-05-15_data_portal"
+    assert call.kwargs["q"] == "_id:43171"

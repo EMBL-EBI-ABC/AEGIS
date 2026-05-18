@@ -5,7 +5,7 @@ from mcp.server.transport_security import TransportSecuritySettings
 from models import (
     DataPortalSearchParams, DataPortalAggregationResponse, DataPortalData,
 )
-from queries import data_portal_search_full
+from queries import data_portal_search_full, elastic_details
 
 
 _DATA_PORTAL_INDEX = "2026-05-15_data_portal"
@@ -96,5 +96,27 @@ async def search_species(
         data_portal_index=_DATA_PORTAL_INDEX,
         data_class=DataPortalData,
         aggregation_class=DataPortalAggregationResponse,
+    )
+    return result.model_dump()
+
+
+@mcp.tool()
+async def get_species(tax_id: int) -> dict:
+    """Fetch the full AEGIS data portal record for one species by NCBI tax_id.
+
+    Returns the complete document including:
+      - `assemblies`: every genome assembly (accession, version) for this species
+      - `annotations`: Ensembl Rapid Release annotation bundles per assembly
+      - `rawData`: ENA sequencing run records with `fastq_ftp` paths
+      - `sampleCount`, `locations`, `countries`: aggregated sample provenance
+
+    Use after `search_species` to drill into one tax_id. To get all the
+    associated BioSamples, call `search_samples(taxId=tax_id)` instead.
+    """
+    result = await elastic_details(
+        es_client=_get_es(),
+        index_name=_DATA_PORTAL_INDEX,
+        record_id=str(tax_id),
+        data_class=DataPortalData,
     )
     return result.model_dump()

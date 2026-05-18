@@ -73,7 +73,7 @@ Adding a new filterable field on `data_portal` or `samples_source` is therefore 
 
 **Bounds/taxonomy filters are special.** They sit outside the auto-generated machinery and are handled explicitly in `data_portal_search` via `additional_filters` and `additional_aggs`. The taxonomy aggregations are nested fields (`phylogeny.kingdom.keyword`), and the geo filter does a *cross-index* query: it first hits the samples index with a `geo_bounding_box`, collects matching `taxId`s, then filters the data_portal query down to those tax IDs. The `/samples/geo_aggregation` endpoint uses Elasticsearch's `geotile_grid` with precision derived from the requested map zoom level.
 
-**Index names are date-prefixed and hardcoded.** Search for `2026-05-15_` in `be/main.py` — when the ES index is re-indexed, this prefix has to be updated in every endpoint (currently in three places).
+**Index names are date-prefixed and hardcoded.** This prefix lives in `be/queries.py` as `DATA_PORTAL_INDEX` and `SAMPLES_INDEX`. When the ES index is re-indexed, update both constants there.
 
 The FastAPI app mounts everything under `/api` (the proxy doesn't strip the prefix) and configures `docs_url="/api/docs"`. CORS is wide open.
 

@@ -15,14 +15,11 @@ from models import (
 )
 from queries import (
     QueryError,
+    DATA_PORTAL_INDEX, SAMPLES_INDEX,
     elastic_search, elastic_details,
     data_portal_search_full, samples_geo_aggregation_query,
 )
 from mcp_server import build_mcp_app, set_es_client
-
-
-DATA_PORTAL_INDEX = "2026-05-15_data_portal"
-SAMPLES_INDEX = "2026-05-15_samples"
 
 
 mcp_app = build_mcp_app()

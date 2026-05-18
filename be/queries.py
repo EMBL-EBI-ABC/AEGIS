@@ -10,6 +10,9 @@ from models import (
     GeoAggregationResponse,
 )
 
+DATA_PORTAL_INDEX = "2026-05-15_data_portal"
+SAMPLES_INDEX = "2026-05-15_samples"
+
 
 class QueryError(RuntimeError):
     """Raised when an Elasticsearch query fails. Transport-agnostic."""

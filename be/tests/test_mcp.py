@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import AsyncMock
+from mcp.shared.exceptions import McpError
 
 
 @pytest.mark.anyio
@@ -188,6 +189,21 @@ def test_build_bulk_download_command_explains_filters():
     assert "--dry-run" in cmd["command"]
     assert "explanation" in cmd
     assert "Lepidoptera" in cmd["explanation"]
+
+
+@pytest.mark.anyio
+async def test_search_species_raises_mcp_error_on_es_failure():
+    """When ES is unreachable, search_species should raise McpError (not QueryError)."""
+    from mcp_server import search_species, set_es_client
+
+    es = AsyncMock()
+    es.search.side_effect = Exception("ES down")
+    set_es_client(es)
+
+    with pytest.raises(McpError) as exc_info:
+        await search_species(kingdom="Animalia")
+
+    assert "ES down" in str(exc_info.value)
 
 
 def test_bulk_downloader_readme_resource_returns_full_text():

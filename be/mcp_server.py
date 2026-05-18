@@ -4,16 +4,18 @@ import shlex
 from elasticsearch import AsyncElasticsearch
 from mcp.server.fastmcp import FastMCP
 from mcp.server.transport_security import TransportSecuritySettings
+from mcp.shared.exceptions import McpError
+from mcp.types import ErrorData, INTERNAL_ERROR
 from models import (
     DataPortalSearchParams, DataPortalAggregationResponse, DataPortalData,
     GeoAggregationParams,
     SampleSearchParams, SampleAggregationResponse, SampleData,
 )
-from queries import data_portal_search_full, elastic_details, elastic_search, samples_geo_aggregation_query
-
-
-_DATA_PORTAL_INDEX = "2026-05-15_data_portal"
-_SAMPLES_INDEX = "2026-05-15_samples"
+from queries import (
+    QueryError,
+    DATA_PORTAL_INDEX, SAMPLES_INDEX,
+    data_portal_search_full, elastic_details, elastic_search, samples_geo_aggregation_query,
+)
 
 _es_client: AsyncElasticsearch | None = None
 
@@ -28,6 +30,11 @@ def _get_es() -> AsyncElasticsearch:
     if _es_client is None:
         raise RuntimeError("MCP server: ES client not initialised. Call set_es_client() during FastAPI lifespan startup.")
     return _es_client
+
+
+def _raise_mcp_error_from(exc: QueryError) -> None:
+    """Convert a QueryError into an McpError so the LLM sees a useful message."""
+    raise McpError(ErrorData(code=INTERNAL_ERROR, message=str(exc)))
 
 
 # streamable_http_path='/' so the endpoint lives at the Starlette app root;
@@ -102,15 +109,18 @@ async def search_species(
         start=start,
         size=min(size, 1000),
     )
-    result = await data_portal_search_full(
-        es_client=_get_es(),
-        params=params,
-        samples_index=_SAMPLES_INDEX,
-        data_portal_index=_DATA_PORTAL_INDEX,
-        data_class=DataPortalData,
-        aggregation_class=DataPortalAggregationResponse,
-    )
-    return result.model_dump()
+    try:
+        result = await data_portal_search_full(
+            es_client=_get_es(),
+            params=params,
+            samples_index=SAMPLES_INDEX,
+            data_portal_index=DATA_PORTAL_INDEX,
+            data_class=DataPortalData,
+            aggregation_class=DataPortalAggregationResponse,
+        )
+        return result.model_dump()
+    except QueryError as e:
+        _raise_mcp_error_from(e)
 
 
 @mcp.tool()
@@ -126,13 +136,16 @@ async def get_species(tax_id: int) -> dict:
     Use after `search_species` to drill into one tax_id. To get all the
     associated BioSamples, call `search_samples(taxId=tax_id)` instead.
     """
-    result = await elastic_details(
-        es_client=_get_es(),
-        index_name=_DATA_PORTAL_INDEX,
-        record_id=str(tax_id),
-        data_class=DataPortalData,
-    )
-    return result.model_dump()
+    try:
+        result = await elastic_details(
+            es_client=_get_es(),
+            index_name=DATA_PORTAL_INDEX,
+            record_id=str(tax_id),
+            data_class=DataPortalData,
+        )
+        return result.model_dump()
+    except QueryError as e:
+        _raise_mcp_error_from(e)
 
 
 @mcp.tool()
@@ -168,14 +181,17 @@ async def search_samples(
         start=start,
         size=min(size, 1000),
     )
-    result = await elastic_search(
-        es_client=_get_es(),
-        index_name=_SAMPLES_INDEX,
-        params=params,
-        data_class=SampleData,
-        aggregation_class=SampleAggregationResponse,
-    )
-    return result.model_dump()
+    try:
+        result = await elastic_search(
+            es_client=_get_es(),
+            index_name=SAMPLES_INDEX,
+            params=params,
+            data_class=SampleData,
+            aggregation_class=SampleAggregationResponse,
+        )
+        return result.model_dump()
+    except QueryError as e:
+        _raise_mcp_error_from(e)
 
 
 @mcp.tool()
@@ -186,13 +202,16 @@ async def get_sample(accession: str) -> dict:
     metadata, derivedFrom relationships, and any custom fields. Use after
     `search_samples` to drill into one specimen.
     """
-    result = await elastic_details(
-        es_client=_get_es(),
-        index_name=_SAMPLES_INDEX,
-        record_id=accession,
-        data_class=SampleData,
-    )
-    return result.model_dump()
+    try:
+        result = await elastic_details(
+            es_client=_get_es(),
+            index_name=SAMPLES_INDEX,
+            record_id=accession,
+            data_class=SampleData,
+        )
+        return result.model_dump()
+    except QueryError as e:
+        _raise_mcp_error_from(e)
 
 
 @mcp.tool()
@@ -231,12 +250,15 @@ async def aggregate_samples_by_location(
         country=country,
         trackingSystem=trackingSystem,
     )
-    result = await samples_geo_aggregation_query(
-        es_client=_get_es(),
-        params=params,
-        samples_index=_SAMPLES_INDEX,
-    )
-    return result.model_dump()
+    try:
+        result = await samples_geo_aggregation_query(
+            es_client=_get_es(),
+            params=params,
+            samples_index=SAMPLES_INDEX,
+        )
+        return result.model_dump()
+    except QueryError as e:
+        _raise_mcp_error_from(e)
 
 
 @mcp.tool()

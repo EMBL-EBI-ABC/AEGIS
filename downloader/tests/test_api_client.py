@@ -52,3 +52,20 @@ def test_iter_data_portal_sends_filter_params():
     list(client.iter_data_portal(filters={"kingdom": "Animalia", "tax_order": "Lepidoptera"}, page_size=100))
     assert captured[0].url.params["kingdom"] == "Animalia"
     assert captured[0].url.params["tax_order"] == "Lepidoptera"
+
+
+def test_iter_data_portal_raises_when_total_exceeds_max_result_window():
+    from aegis_downloader.api_client import PaginationCeilingError
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={
+            "total": 10001, "start": 0, "size": 100,
+            "results": [{"taxId": i} for i in range(100)],
+            "aggregations": {},
+        })
+
+    client = ApiClient("http://test", transport=make_mock_client_factory(handler))
+    with pytest.raises(PaginationCeilingError) as exc:
+        list(client.iter_data_portal(filters={}, page_size=100))
+    assert "10000" in str(exc.value)
+    assert "10001" in str(exc.value)

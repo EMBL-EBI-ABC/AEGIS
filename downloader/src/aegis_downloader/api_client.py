@@ -3,6 +3,13 @@ from collections.abc import Iterator
 import httpx
 
 
+MAX_RESULT_WINDOW = 10000
+
+
+class PaginationCeilingError(RuntimeError):
+    pass
+
+
 class ApiClient:
     def __init__(
         self,
@@ -38,8 +45,14 @@ class ApiClient:
             response = self._client.get(f"{self._base}{path}", params=params)
             response.raise_for_status()
             body = response.json()
+            total = body.get("total", 0)
+            if total > MAX_RESULT_WINDOW:
+                raise PaginationCeilingError(
+                    f"Filter matches {total} records; AEGIS BE caps pagination at "
+                    f"{MAX_RESULT_WINDOW} — narrow your filter."
+                )
             results = body.get("results", [])
             yield from results
             start += len(results)
-            if start >= body.get("total", 0) or not results:
+            if start >= total or not results:
                 return

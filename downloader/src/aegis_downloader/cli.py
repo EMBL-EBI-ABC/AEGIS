@@ -1,3 +1,3 @@
 def main() -> int:
-    """Placeholder; wired up in Task 21."""
+    """Placeholder; wired up in Task 19."""
     return 0

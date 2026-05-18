@@ -1,10 +1,11 @@
 import time
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
 
 import httpx
-from rich.progress import BarColumn, DownloadColumn, Progress, TaskProgressColumn, TextColumn, TimeRemainingColumn
+from rich.progress import BarColumn, DownloadColumn, Progress, TaskID, TextColumn, TimeRemainingColumn
 
 from aegis_downloader.manifest import Manifest
 from aegis_downloader.models import DownloadPlan, DownloadTask, FileResult
@@ -20,6 +21,8 @@ def _download_one(
     output_root: Path,
     resume: bool,
     max_retries: int,
+    on_total: Callable[[int | None], None] | None = None,
+    on_chunk: Callable[[int], None] | None = None,
 ) -> FileResult:
     dest = output_root / task.dest
 
@@ -31,6 +34,9 @@ def _download_one(
                 expected_size = int(head.headers["content-length"])
         except httpx.HTTPError:
             pass
+
+    if on_total is not None:
+        on_total(expected_size)
 
     if resume and dest.exists():
         on_disk = dest.stat().st_size
@@ -49,7 +55,10 @@ def _download_one(
                 with open(partial, "wb") as f:
                     for chunk in response.iter_bytes(_CHUNK_SIZE):
                         f.write(chunk)
-                        bytes_written += len(chunk)
+                        n = len(chunk)
+                        bytes_written += n
+                        if on_chunk is not None:
+                            on_chunk(n)
             partial.rename(dest)
             return FileResult(task=task, status="ok", bytes_downloaded=bytes_written, expected_size=expected_size)
         except (httpx.HTTPStatusError, httpx.TransportError) as e:
@@ -91,33 +100,59 @@ def execute_plan(
 
     ok = skipped = failed = 0
     with ThreadPoolExecutor(max_workers=workers) as pool, Progress(
-        TextColumn("[bold]Downloading[/bold]"),
+        TextColumn("[cyan]{task.description}[/]"),
         BarColumn(),
-        TaskProgressColumn(),
         DownloadColumn(),
         TimeRemainingColumn(),
     ) as bar:
-        bar_task = bar.add_task("files", total=len(plan.tasks))
-        futures = {
-            pool.submit(
+        bar_tasks: dict[str, TaskID] = {
+            str(task.dest): bar.add_task(task.dest.name, total=None, start=False)
+            for task in plan.tasks
+        }
+
+        def _callbacks_for(task: DownloadTask) -> tuple[Callable[[int | None], None], Callable[[int], None]]:
+            tid = bar_tasks[str(task.dest)]
+
+            def set_total(size: int | None) -> None:
+                # Start the task only when we have something to advance — otherwise
+                # ENA's no-Content-Length downloads would never show elapsed time.
+                bar.start_task(tid)
+                if size is not None:
+                    bar.update(tid, total=size)
+
+            def advance(n: int) -> None:
+                bar.advance(tid, n)
+
+            return set_total, advance
+
+        futures = {}
+        for task in plan.tasks:
+            set_total, advance = _callbacks_for(task)
+            futures[pool.submit(
                 _download_one,
                 task=task,
                 client=client,
                 output_root=output_root,
                 resume=resume,
                 max_retries=max_retries,
-            ): task
-            for task in plan.tasks
-        }
+                on_total=set_total,
+                on_chunk=advance,
+            )] = task
+
         for future in as_completed(futures):
             result = future.result()
             manifest.update(result)
-            bar.advance(bar_task)
-            if result.status == "ok":
-                ok += 1
-            elif result.status == "skipped":
+            tid = bar_tasks[str(result.task.dest)]
+            if result.status == "skipped":
+                bar.start_task(tid)
+                size = result.bytes_downloaded or 1
+                bar.update(tid, total=size, completed=size,
+                           description=f"[dim]{result.task.dest.name} (skipped)[/]")
                 skipped += 1
-            else:
+            elif result.status == "failed":
+                bar.update(tid, description=f"[red]{result.task.dest.name} (failed)[/]")
                 failed += 1
+            else:
+                ok += 1
 
     return ExecutionResult(ok_count=ok, skipped_count=skipped, failed_count=failed)

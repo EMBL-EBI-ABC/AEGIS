@@ -58,6 +58,11 @@ def _make_transport() -> httpx.BaseTransport | None:
 def run(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     logging.basicConfig(level=args.log_level.upper(), format="%(levelname)s %(message)s")
+    # httpx/httpcore log every request at INFO, which punches holes through the
+    # progress bar. Surface them only when the user explicitly asks for debug.
+    http_log_level = logging.DEBUG if args.log_level == "debug" else logging.WARNING
+    for name in ("httpx", "httpcore"):
+        logging.getLogger(name).setLevel(http_log_level)
 
     workers = max(1, min(32, args.workers))
     output_root = Path(args.output)

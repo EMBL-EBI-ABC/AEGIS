@@ -18,22 +18,32 @@ from queries import (
     elastic_search, elastic_details,
     data_portal_search_full, samples_geo_aggregation_query,
 )
+from mcp_server import build_mcp_app, set_es_client
 
 
 DATA_PORTAL_INDEX = "2026-05-15_data_portal"
 SAMPLES_INDEX = "2026-05-15_samples"
 
 
+mcp_app = build_mcp_app()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    es_client = AsyncElasticsearch(
-        [os.getenv("ES_URL")],
-        http_auth=(os.getenv("ES_USERNAME"), os.getenv("ES_PASSWORD")),
-        verify_certs=True,
-    )
-    app.state.es_client = es_client
-    yield
-    await es_client.close()
+    # FastMCP's Streamable HTTP app has its own session-manager lifespan.
+    # Nest it inside ours so both run at startup/shutdown.
+    async with mcp_app.router.lifespan_context(app):
+        es_client = AsyncElasticsearch(
+            [os.getenv("ES_URL")],
+            http_auth=(os.getenv("ES_USERNAME"), os.getenv("ES_PASSWORD")),
+            verify_certs=True,
+        )
+        app.state.es_client = es_client
+        set_es_client(es_client)
+        try:
+            yield
+        finally:
+            await es_client.close()
 
 
 # Initialize FastAPI with lifespan manager.
@@ -119,3 +129,4 @@ async def samples_details(
 
 
 app.include_router(api)
+app.mount("/api/mcp", mcp_app)

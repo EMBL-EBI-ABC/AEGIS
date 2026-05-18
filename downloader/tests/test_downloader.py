@@ -1,0 +1,45 @@
+from pathlib import Path
+
+import httpx
+import pytest
+
+from aegis_downloader.downloader import _download_one
+from aegis_downloader.models import DownloadTask
+
+
+def _task(url: str = "https://example.com/a.fq.gz", dest: str = "raw/a.fq.gz", head_supported: bool = True) -> DownloadTask:
+    return DownloadTask(
+        url=url,
+        dest=Path(dest),
+        data_type="raw-data",
+        tax_id=1,
+        scientific_name="X",
+        head_supported=head_supported,
+    )
+
+
+def _client_with(handler) -> httpx.Client:
+    return httpx.Client(transport=httpx.MockTransport(handler))
+
+
+def test_download_one_happy_path_writes_file_and_renames_partial(tmp_path):
+    payload = b"hello world" * 100  # 1100 bytes
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.method == "HEAD":
+            return httpx.Response(200, headers={"content-length": str(len(payload))})
+        return httpx.Response(200, content=payload)
+
+    task = _task()
+    result = _download_one(
+        task=task,
+        client=_client_with(handler),
+        output_root=tmp_path,
+        resume=True,
+        max_retries=3,
+    )
+    assert result.status == "ok"
+    assert result.bytes_downloaded == len(payload)
+    final = tmp_path / "raw/a.fq.gz"
+    assert final.read_bytes() == payload
+    assert not (tmp_path / "raw/a.fq.gz.partial").exists()

@@ -1,9 +1,13 @@
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass
 from pathlib import Path
 
 import httpx
+from rich.progress import BarColumn, DownloadColumn, Progress, TaskProgressColumn, TextColumn, TimeRemainingColumn
 
-from aegis_downloader.models import DownloadTask, FileResult
+from aegis_downloader.manifest import Manifest
+from aegis_downloader.models import DownloadPlan, DownloadTask, FileResult
 
 
 _CHUNK_SIZE = 1024 * 1024
@@ -53,3 +57,67 @@ def _download_one(
             if attempt < max_retries:
                 time.sleep(2 ** attempt)
     return FileResult(task=task, status="failed", bytes_downloaded=0, expected_size=expected_size, error=str(last_err))
+
+
+@dataclass
+class ExecutionResult:
+    ok_count: int
+    skipped_count: int
+    failed_count: int
+
+
+def execute_plan(
+    *,
+    plan: DownloadPlan,
+    output_root: Path,
+    manifest: Manifest,
+    client: httpx.Client,
+    workers: int,
+    max_retries: int,
+    resume: bool,
+    dry_run: bool,
+) -> ExecutionResult:
+    output_root.mkdir(parents=True, exist_ok=True)
+    manifest.write_initial(plan.tasks)
+
+    if dry_run:
+        # Dry-run = manifest only; no filesystem side effects beyond that.
+        return ExecutionResult(ok_count=0, skipped_count=0, failed_count=0)
+
+    for write in plan.metadata_writes:
+        dest = output_root / write.dest
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(write.content)
+
+    ok = skipped = failed = 0
+    with ThreadPoolExecutor(max_workers=workers) as pool, Progress(
+        TextColumn("[bold]Downloading[/bold]"),
+        BarColumn(),
+        TaskProgressColumn(),
+        DownloadColumn(),
+        TimeRemainingColumn(),
+    ) as bar:
+        bar_task = bar.add_task("files", total=len(plan.tasks))
+        futures = {
+            pool.submit(
+                _download_one,
+                task=task,
+                client=client,
+                output_root=output_root,
+                resume=resume,
+                max_retries=max_retries,
+            ): task
+            for task in plan.tasks
+        }
+        for future in as_completed(futures):
+            result = future.result()
+            manifest.update(result)
+            bar.advance(bar_task)
+            if result.status == "ok":
+                ok += 1
+            elif result.status == "skipped":
+                skipped += 1
+            else:
+                failed += 1
+
+    return ExecutionResult(ok_count=ok, skipped_count=skipped, failed_count=failed)

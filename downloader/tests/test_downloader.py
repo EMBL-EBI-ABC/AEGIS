@@ -153,3 +153,85 @@ def test_download_one_marks_failed_after_max_retries(tmp_path, monkeypatch):
     )
     assert result.status == "failed"
     assert "503" in result.error
+
+
+from aegis_downloader.downloader import execute_plan
+from aegis_downloader.manifest import Manifest
+from aegis_downloader.models import DownloadPlan, MetadataWrite
+
+
+def test_execute_plan_writes_metadata_and_downloads_all_tasks(tmp_path):
+    payload_a = b"AAAA"
+    payload_b = b"BBBBBB"
+    by_url = {
+        "https://example.com/a.fq.gz": payload_a,
+        "https://example.com/b.fq.gz": payload_b,
+    }
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.method == "HEAD":
+            return httpx.Response(200, headers={"content-length": str(len(by_url[str(request.url)]))})
+        return httpx.Response(200, content=by_url[str(request.url)])
+
+    plan = DownloadPlan(
+        tasks=[
+            _task("https://example.com/a.fq.gz", "by_species/1_x/raw_data/a.fq.gz"),
+            _task("https://example.com/b.fq.gz", "by_species/1_x/raw_data/b.fq.gz"),
+        ],
+        metadata_writes=[
+            MetadataWrite(
+                dest=Path("by_species/1_x/metadata.json"),
+                content='{"taxId": 1}',
+                description="metadata",
+            )
+        ],
+    )
+    manifest = Manifest(tmp_path / "manifest.tsv")
+
+    result = execute_plan(
+        plan=plan,
+        output_root=tmp_path,
+        manifest=manifest,
+        client=_client_with(handler),
+        workers=2,
+        max_retries=0,
+        resume=False,
+        dry_run=False,
+    )
+    assert result.ok_count == 2
+    assert result.failed_count == 0
+    assert (tmp_path / "by_species/1_x/metadata.json").read_text() == '{"taxId": 1}'
+    assert (tmp_path / "by_species/1_x/raw_data/a.fq.gz").read_bytes() == payload_a
+    assert (tmp_path / "by_species/1_x/raw_data/b.fq.gz").read_bytes() == payload_b
+
+
+def test_execute_plan_dry_run_writes_manifest_only(tmp_path):
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise AssertionError("no HTTP in dry-run")
+
+    plan = DownloadPlan(
+        tasks=[_task("https://example.com/a.fq.gz", "by_species/1_x/raw_data/a.fq.gz")],
+        metadata_writes=[
+            MetadataWrite(
+                dest=Path("by_species/1_x/metadata.json"),
+                content='{"taxId": 1}',
+                description="metadata",
+            )
+        ],
+    )
+    manifest = Manifest(tmp_path / "manifest.tsv")
+    result = execute_plan(
+        plan=plan,
+        output_root=tmp_path,
+        manifest=manifest,
+        client=_client_with(handler),
+        workers=2,
+        max_retries=0,
+        resume=False,
+        dry_run=True,
+    )
+    assert result.ok_count == 0
+    # Dry-run is informational: manifest yes, everything else no.
+    assert (tmp_path / "manifest.tsv").exists()
+    assert not (tmp_path / "by_species/1_x/metadata.json").exists()
+    assert not (tmp_path / "by_species/1_x/raw_data/a.fq.gz").exists()

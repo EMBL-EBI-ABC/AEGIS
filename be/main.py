@@ -2,7 +2,8 @@ import os
 from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import APIRouter, FastAPI, Query, Path
+from fastapi import APIRouter, FastAPI, Query, Path, Request
+from fastapi.responses import JSONResponse
 from elasticsearch import AsyncElasticsearch
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -13,6 +14,7 @@ from models import (
     GeoAggregationParams, GeoAggregationResponse,
 )
 from queries import (
+    QueryError,
     elastic_search, elastic_details,
     data_portal_search_full, samples_geo_aggregation_query,
 )
@@ -47,6 +49,11 @@ app = FastAPI(
 )
 api = APIRouter(prefix="/api")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
+
+@app.exception_handler(QueryError)
+async def query_error_handler(request: Request, exc: QueryError):
+    return JSONResponse(status_code=500, content={"detail": str(exc)})
 
 
 @api.get("/data_portal")

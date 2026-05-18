@@ -1,13 +1,19 @@
 # be/queries.py
 import urllib.parse
 from collections import defaultdict
-from fastapi import HTTPException
 
 from models import (
     get_list_of_aggregations,
     ElasticResponse,
     ElasticDetailsResponse,
+    GeoCluster,
+    GeoAggregationResponse,
 )
+
+
+class QueryError(RuntimeError):
+    """Raised when an Elasticsearch query fails. Transport-agnostic."""
+    pass
 
 
 async def elastic_search(
@@ -65,7 +71,7 @@ async def elastic_search(
             results=hits, aggregations=aggregations,
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Search error: {str(e)}")
+        raise QueryError(f"Search error: {str(e)}") from e
 
 
 async def elastic_details(*, es_client, index_name: str, record_id: str, data_class):
@@ -76,7 +82,7 @@ async def elastic_details(*, es_client, index_name: str, record_id: str, data_cl
         hits = [r["_source"] for r in response["hits"]["hits"]]
         return ElasticDetailsResponse[data_class](results=hits)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Search error: {str(e)}")
+        raise QueryError(f"Search error: {str(e)}") from e
 
 
 async def data_portal_search_full(*, es_client, params, samples_index: str, data_portal_index: str, data_class, aggregation_class):
@@ -119,8 +125,6 @@ async def data_portal_search_full(*, es_client, params, samples_index: str, data
 
 
 async def samples_geo_aggregation_query(*, es_client, params, samples_index: str):
-    from models import GeoCluster, GeoAggregationResponse
-
     precision = min(max(params.zoom + 2, 4), 12)
 
     filters = []
@@ -172,4 +176,4 @@ async def samples_geo_aggregation_query(*, es_client, params, samples_index: str
         ]
         return GeoAggregationResponse(clusters=clusters)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Geo aggregation error: {str(e)}")
+        raise QueryError(f"Geo aggregation error: {str(e)}") from e

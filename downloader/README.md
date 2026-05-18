@@ -47,6 +47,7 @@ aegis-download --type raw-data --kingdom Animalia --dry-run
 | `--manifest-format` | `tsv` | Or `json` |
 | `--no-resume` | resume on | Skip the resume check, redownload everything |
 | `--max-retries` | 3 | Per-file retries with exponential backoff |
+| `--log-level` | `info` | `debug` / `info` / `warning` / `error` |
 
 ## Data types
 

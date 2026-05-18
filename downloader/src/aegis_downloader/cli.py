@@ -85,33 +85,37 @@ def run(argv: list[str] | None = None) -> int:
     api_client = ApiClient(args.backend_url, transport=transport)
 
     try:
-        plan = build_plan(
-            client=api_client,
-            types=types,
-            server_filters=server_filters,
-            explicit_tax_ids=explicit_tax_ids,
+        try:
+            plan = build_plan(
+                client=api_client,
+                types=types,
+                server_filters=server_filters,
+                explicit_tax_ids=explicit_tax_ids,
+            )
+        except PaginationCeilingError as exc:
+            print(str(exc), file=sys.stderr)
+            return 3
+        except httpx.HTTPError as exc:
+            print(f"BE unreachable: {exc}", file=sys.stderr)
+            return 3
+
+        manifest = Manifest(manifest_path, format=args.manifest_format)
+        result = execute_plan(
+            plan=plan,
+            output_root=output_root,
+            manifest=manifest,
+            client=http_client,
+            workers=workers,
+            max_retries=args.max_retries,
+            resume=not args.no_resume,
+            dry_run=args.dry_run,
         )
-    except PaginationCeilingError as exc:
-        print(str(exc), file=sys.stderr)
-        return 3
-    except httpx.HTTPError as exc:
-        print(f"BE unreachable: {exc}", file=sys.stderr)
-        return 3
 
-    manifest = Manifest(manifest_path, format=args.manifest_format)
-    result = execute_plan(
-        plan=plan,
-        output_root=output_root,
-        manifest=manifest,
-        client=http_client,
-        workers=workers,
-        max_retries=args.max_retries,
-        resume=not args.no_resume,
-        dry_run=args.dry_run,
-    )
-
-    print(f"Done. ok={result.ok_count} skipped={result.skipped_count} failed={result.failed_count}")
-    return 1 if result.failed_count > 0 else 0
+        print(f"Done. ok={result.ok_count} skipped={result.skipped_count} failed={result.failed_count}")
+        return 1 if result.failed_count > 0 else 0
+    finally:
+        http_client.close()
+        api_client.close()
 
 
 def main() -> int:

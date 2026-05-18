@@ -47,15 +47,38 @@ def build_plan(
             plan.tasks.extend(extractor(record))
 
     if "samples-metadata" in types:
-        plan.metadata_writes.append(_collect_samples_metadata(client, records_for_samples))
+        plan.metadata_writes.append(
+            _collect_samples_metadata(client, records_for_samples, server_filters)
+        )
 
     return plan
 
 
-def _collect_samples_metadata(client: ApiClient, records: list[dict]) -> MetadataWrite:
+def _samples_filters_from(server_filters: dict[str, str | int | None]) -> dict[str, str | int | None]:
+    """Translate data-portal server filters to /samples parameters.
+
+    `countries` (data_portal, list field) → `country` (samples, scalar field).
+    `q` passes through unchanged. Phylogeny filters (`kingdom`, `tax_order`, `family`)
+    are species-level and implied by the taxId we send.
+    """
+    forwarded: dict[str, str | int | None] = {}
+    if server_filters.get("countries"):
+        forwarded["country"] = server_filters["countries"]
+    if server_filters.get("q"):
+        forwarded["q"] = server_filters["q"]
+    return forwarded
+
+
+def _collect_samples_metadata(
+    client: ApiClient,
+    records: list[dict],
+    server_filters: dict[str, str | int | None],
+) -> MetadataWrite:
+    extra = _samples_filters_from(server_filters)
     all_samples: list[dict] = []
     for record in records:
-        all_samples.extend(client.iter_samples(filters={"taxId": record["taxId"]}, page_size=1000))
+        filters = {"taxId": record["taxId"], **extra}
+        all_samples.extend(client.iter_samples(filters=filters, page_size=1000))
     return MetadataWrite(
         dest=Path("samples_metadata.tsv"),
         content=_samples_to_tsv(all_samples),

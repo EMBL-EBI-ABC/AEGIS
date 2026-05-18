@@ -47,6 +47,11 @@ app.layout = html.Div(
                                         className="nav-link",
                                     ),
                                     html.A(
+                                        "Bulk Download",
+                                        href=f"{dash.page_registry['pages.bulk_download']['path']}",
+                                        className="nav-link",
+                                    ),
+                                    html.A(
                                         "About",
                                         href=f"{dash.page_registry['pages.about']['path']}",
                                         className="nav-link",

@@ -101,6 +101,19 @@ body {
     min-height: 100vh;
 }
 
+/* Sticky-footer scaffold: root is a vertical flex column at least one viewport
+   tall, the <main> grows to fill remaining space, so the footer sits at the
+   bottom of short pages instead of leaving empty space underneath. */
+.page-shell {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.page-main {
+    flex: 1 0 auto;
+}
+
 /* --------------------------------------------------------------------------
    Typography
    -------------------------------------------------------------------------- */
@@ -210,6 +223,57 @@ a:hover {
 
 .navbar-toggler {
     border-color: var(--aegis-border-medium) !important;
+    padding: 0.35rem 0.55rem;
+    border-radius: var(--radius-md);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.navbar-toggler:focus {
+    outline: none;
+    box-shadow: var(--shadow-glow);
+    border-color: var(--aegis-accent-primary) !important;
+}
+
+/* Repaint Bootstrap's default toggler icon in the brand teal so it doesn't
+   sit on the page as a generic black hamburger. */
+.navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%234E6B66' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* Collapsed mobile menu: stack the nav links with breathing room and a soft
+   divider so they read as a dropdown panel rather than text crammed beneath
+   the brand. The .navbar-expand-lg breakpoint mirrors the Python config. */
+.navbar-expand-lg .navbar-collapse:not(.show) {
+    /* Bootstrap default — kept explicit so the rule below stays scoped. */
+}
+
+@media (max-width: 991.98px) {
+    .navbar-collapse {
+        margin-top: var(--space-sm);
+        padding-top: var(--space-sm);
+        border-top: 1px solid var(--aegis-border-subtle);
+    }
+
+    .navbar-collapse .navbar-nav {
+        gap: var(--space-xs);
+    }
+
+    .navbar-collapse .nav-link {
+        padding: var(--space-sm) var(--space-sm) !important;
+        border-radius: var(--radius-md);
+    }
+
+    .navbar-collapse .nav-link::after {
+        /* The underline animation reads as noise when the links are stacked
+           vertically; the .active background below carries the indicator. */
+        display: none;
+    }
+
+    .navbar-collapse .nav-link.active,
+    .navbar-collapse .nav-link:hover {
+        background: var(--aegis-bg-hover);
+        color: var(--aegis-accent-primary) !important;
+    }
 }
 
 /* --------------------------------------------------------------------------
@@ -714,11 +778,16 @@ iframe {
    Data Portal — Filters Sidebar
    -------------------------------------------------------------------------- */
 /* Sticky on the whole sidebar wrapper, not per-card — otherwise each card
-   independently pins at top:80px and they overlap on scroll. */
-#filters-card {
-    position: sticky;
-    top: 80px;
-    align-self: flex-start;
+   independently pins at top:80px and they overlap on scroll.
+   Only stick at md+: on mobile the column is full-width and stacking it above
+   the map/table means a sticky filter card overlaps the content that scrolls
+   underneath it. */
+@media (min-width: 768px) {
+    #filters-card {
+        position: sticky;
+        top: 80px;
+        align-self: flex-start;
+    }
 }
 
 /* --------------------------------------------------------------------------

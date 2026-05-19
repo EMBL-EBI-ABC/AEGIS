@@ -1,5 +1,5 @@
 import dash
-from dash import html
+from dash import html, dcc, callback, Input, Output, State, ctx
 import dash_bootstrap_components as dbc
 
 app = dash.Dash(
@@ -12,70 +12,59 @@ app = dash.Dash(
     suppress_callback_exceptions=True,
 )
 
+_NAV_ITEMS = [
+    ("Data Portal", "pages.data_portal"),
+    ("API", "pages.api"),
+    ("MCP", "pages.mcp"),
+    ("Bulk Download", "pages.bulk_download"),
+    ("About", "pages.about"),
+]
+
+navbar = dbc.Navbar(
+    dbc.Container(
+        [
+            html.A(
+                [
+                    html.Span("AEGIS", className="brand-text"),
+                    html.Img(
+                        src="/assets/aegis_logomark_RGB_black_01.png",
+                        height="28px",
+                        className="brand-logo",
+                    ),
+                ],
+                href=f"{dash.page_registry['pages.home']['path']}",
+                className="navbar-brand d-flex align-items-center",
+            ),
+            dbc.NavbarToggler(id="navbar-toggler", n_clicks=0),
+            dbc.Collapse(
+                dbc.Nav(
+                    [
+                        dbc.NavLink(
+                            label,
+                            href=f"{dash.page_registry[page_key]['path']}",
+                            active="exact",
+                        )
+                        for label, page_key in _NAV_ITEMS
+                    ],
+                    navbar=True,
+                    className="ms-auto",
+                ),
+                id="navbar-collapse",
+                is_open=False,
+                navbar=True,
+            ),
+        ],
+        fluid=True,
+    ),
+    expand="lg",
+    className="navbar",
+)
+
 app.layout = html.Div(
     [
-        html.Nav(
-            dbc.Container(
-                dbc.Row(
-                    [
-                        dbc.Col(
-                            html.A(
-                                [
-                                    html.Span("AEGIS", className="brand-text"),
-                                    html.Img(
-                                        src="/assets/aegis_logomark_RGB_black_01.png",
-                                        height="28px",
-                                        className="brand-logo",
-                                    ),
-                                ],
-                                href=f"{dash.page_registry['pages.home']['path']}",
-                                className="navbar-brand d-flex align-items-center",
-                            ),
-                            width="auto",
-                        ),
-                        dbc.Col(
-                            html.Div(
-                                [
-                                    html.A(
-                                        "Data Portal",
-                                        href=f"{dash.page_registry['pages.data_portal']['path']}",
-                                        className="nav-link",
-                                    ),
-                                    html.A(
-                                        "API",
-                                        href=f"{dash.page_registry['pages.api']['path']}",
-                                        className="nav-link",
-                                    ),
-                                    html.A(
-                                        "Bulk Download",
-                                        href=f"{dash.page_registry['pages.bulk_download']['path']}",
-                                        className="nav-link",
-                                    ),
-                                    html.A(
-                                        "MCP",
-                                        href=f"{dash.page_registry['pages.mcp']['path']}",
-                                        className="nav-link",
-                                    ),
-                                    html.A(
-                                        "About",
-                                        href=f"{dash.page_registry['pages.about']['path']}",
-                                        className="nav-link",
-                                    ),
-                                ],
-                                className="d-flex gap-2",
-                            ),
-                            width="auto",
-                            className="ms-auto",
-                        ),
-                    ],
-                    align="center",
-                    className="py-2",
-                ),
-                fluid=True,
-            ),
-            className="navbar",
-        ),
-        dash.page_container,
+        dcc.Location(id="url", refresh=False),
+        navbar,
+        html.Main(dash.page_container, className="page-main"),
         html.Footer(
             dbc.Container(
                 html.Div(
@@ -122,10 +111,27 @@ app.layout = html.Div(
                 "marginTop": "auto",
             },
         ),
-    ]
+    ],
+    className="page-shell",
 )
 
 server = app.server
+
+
+@callback(
+    Output("navbar-collapse", "is_open"),
+    Input("navbar-toggler", "n_clicks"),
+    Input("url", "pathname"),
+    State("navbar-collapse", "is_open"),
+    prevent_initial_call=True,
+)
+def _toggle_navbar(_n_clicks, _pathname, is_open):
+    # Toggler click flips state; route changes always close the menu so a tap
+    # on a nav link doesn't leave the dropdown hanging open behind the new page.
+    if ctx.triggered_id == "navbar-toggler":
+        return not is_open
+    return False
+
 
 if __name__ == "__main__":
     app.run(debug=True)

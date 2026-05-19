@@ -52,6 +52,11 @@ app.layout = html.Div(
                                         className="nav-link",
                                     ),
                                     html.A(
+                                        "MCP",
+                                        href=f"{dash.page_registry['pages.mcp']['path']}",
+                                        className="nav-link",
+                                    ),
+                                    html.A(
                                         "About",
                                         href=f"{dash.page_registry['pages.about']['path']}",
                                         className="nav-link",

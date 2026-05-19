@@ -211,8 +211,12 @@ layout = dbc.Container(
                                         ),
                                     ],
                                     style={
+                                        # auto-fit + minmax keeps three columns on
+                                        # wide viewports and falls back to two or
+                                        # one column on phones, instead of forcing
+                                        # three fixed columns that overflow.
                                         "display": "grid",
-                                        "gridTemplateColumns": "repeat(3, 1fr)",
+                                        "gridTemplateColumns": "repeat(auto-fit, minmax(160px, 1fr))",
                                         "background": "var(--aegis-bg-elevated)",
                                         "borderRadius": "var(--radius-md)",
                                         "marginBottom": "2rem",

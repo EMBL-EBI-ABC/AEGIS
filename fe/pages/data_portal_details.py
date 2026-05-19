@@ -542,15 +542,21 @@ def build_sample_hierarchy(samples, tax_id):
         for part in detail_parts:
             left.append(html.Span(" \u00b7 ", style={"color": "var(--aegis-text-muted)", "fontSize": "0.8rem"}))
             left.append(html.Span(part, style={"color": "var(--aegis-text-muted)", "fontSize": "0.8rem"}))
+        right = (
+            return_badge_status(s.get("trackingSystem", ""))
+            if s.get("trackingSystem")
+            else html.Span()
+        )
+        # flexWrap + marginLeft:auto on the right wrapper lets the status badge
+        # sit at the right edge inline when there's room, and wrap onto its own
+        # right-aligned line on narrow viewports — otherwise it gets clipped.
         return html.Div(
-            [
-                html.Div(left),
-                return_badge_status(s.get("trackingSystem", "")) if s.get("trackingSystem") else html.Span(),
-            ],
+            [html.Div(left), html.Div(right, style={"marginLeft": "auto"})],
             style={
                 "display": "flex",
-                "justifyContent": "space-between",
+                "flexWrap": "wrap",
                 "alignItems": "center",
+                "gap": "0.4rem",
                 "padding": "0.4rem 0.5rem",
                 "borderBottom": "1px solid rgba(255,255,255,0.03)",
             },
@@ -612,12 +618,22 @@ def build_sample_hierarchy(samples, tax_id):
         root_row = html.Div(
             [
                 html.Div(left_items),
-                html.Div(right_items, style={"display": "flex", "alignItems": "center"}),
+                html.Div(
+                    right_items,
+                    style={
+                        "display": "flex",
+                        "flexWrap": "wrap",
+                        "alignItems": "center",
+                        "gap": "0.4rem",
+                        "marginLeft": "auto",
+                    },
+                ),
             ],
             style={
                 "display": "flex",
-                "justifyContent": "space-between",
+                "flexWrap": "wrap",
                 "alignItems": "center",
+                "gap": "0.4rem",
                 "padding": "0.5rem",
                 "background": "var(--aegis-bg-elevated)",
                 "borderRadius": "4px",

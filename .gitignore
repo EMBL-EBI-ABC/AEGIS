@@ -173,3 +173,4 @@ cython_debug/
 # Local-only workspace assets (not part of the project)
 /docs/
 .playwright-mcp/
+/CLAUDE.md

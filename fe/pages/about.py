@@ -29,7 +29,7 @@ def _partner_card(name: str, subtitle: str, href: str) -> html.Div:
                 },
             ),
         ],
-        style={"textAlign": "center", "padding": "1rem"},
+        style={"padding": "1rem 0"},
     )
 
 
@@ -51,430 +51,318 @@ _PARTNERS = [
     ("MARUM, University of Bremen", "Germany", "https://www.marum.de/en/"),
 ]
 
-layout = dbc.Container(
-    [
-        # Page Header
-        dbc.Row(
-            dbc.Col(
-                html.Div(
-                    [
-                        html.H1(
-                            "About AEGIS",
-                            style={
-                                "fontFamily": "var(--font-display)",
-                                "fontSize": "2.5rem",
-                                "color": "var(--aegis-text-primary)",
-                                "marginBottom": "0.5rem",
-                            },
-                        ),
-                        html.P(
-                            "Ancient Environmental Genomics Initiative for Sustainability",
-                            style={
-                                "color": "var(--aegis-accent-primary)",
-                                "fontSize": "1.1rem",
-                                "fontStyle": "italic",
-                            },
-                        ),
-                    ],
-                    className="pt-4 pb-3",
-                ),
-                md={"width": 10, "offset": 1},
+
+# Per-point styling: each chapter (01–04) gets its own colour-blocked panel,
+# alternating sand / cream / moss / sand so the page reads as a series of
+# editorial chapters rather than a stack of identical cards.
+_KEY_POINTS = [
+    {
+        "number": "01",
+        "title": "Lost Genetic Diversity",
+        "body": (
+            "Centuries of domestication have left today's crops with only a fraction of "
+            "the genetic diversity present in their wild ancestors. Combined with reliance "
+            "on uniform genetics and heavy inputs, this limits our ability to breed crops "
+            "resilient to heat, drought, pests, and extreme weather."
+        ),
+        "variant": "sand",
+    },
+    {
+        "number": "02",
+        "title": "Ancient eDNA: A Window to the Past",
+        "body": (
+            "Environmental DNA preserved in soils, sediments, ice, and ocean cores can be "
+            "thousands to millions of years old. By sequencing these fragments and comparing "
+            "them to modern reference genomes, we identify genetic variants and beneficial "
+            "species interactions that helped past ecosystems adapt to climate shifts."
+        ),
+        "variant": "cream",
+    },
+    {
+        "number": "03",
+        "title": "Ecosystem Modelling",
+        "body": (
+            "Beyond individual species, AEGIS uses ecosystem modelling to understand how "
+            "combinations of species, including crops, microbiomes, and wild plants, created "
+            "sustainable systems in the past. These insights inform modern agricultural "
+            "practices."
+        ),
+        "variant": "moss",
+    },
+    {
+        "number": "04",
+        "title": "Open Data & Tools",
+        "body": (
+            "All genomic data is stored in the European Nucleotide Archive (ENA) and made "
+            "publicly available through this portal. We're also developing new metadata "
+            "checklists and bioinformatics tools for crop breeders, ecologists, and "
+            "conservation biologists worldwide."
+        ),
+        "variant": "sand",
+    },
+]
+
+
+_STATS = [
+    ("18", "Institutions Worldwide"),
+    ("Ancient eDNA", "Research Focus"),
+    ("Open Access", "Data Policy"),
+]
+
+
+def _key_point(number: str, title: str, body: str, variant: str) -> html.Div:
+    """One editorial 'chapter' panel — big serif number, sans heading, body copy."""
+    return html.Div(
+        [
+            html.Div(
+                number,
+                style={
+                    "fontFamily": "var(--font-display)",
+                    "fontSize": "clamp(2.5rem, 5vw, 3.5rem)",
+                    "fontWeight": "400",
+                    "lineHeight": "1",
+                    "marginBottom": "1rem",
+                    "opacity": "0.9",
+                },
             ),
-        ),
-        # Main Content Card
-        dbc.Row(
-            dbc.Col(
-                dbc.Card(
-                    [
-                        # Hero Image
-                        html.Div(
-                            html.Img(
-                                src="https://www.embl.org/news/wp-content/uploads/2024/06/2024-NNF-grant-ancient-plant-DNA-1000x600-1.jpg",
-                                style={
-                                    "width": "100%",
-                                    "height": "300px",
-                                    "objectFit": "cover",
-                                    "opacity": "0.9",
-                                },
-                            ),
-                            style={
-                                "overflow": "hidden",
-                                "borderRadius": "var(--radius-lg) var(--radius-lg) 0 0",
-                            },
-                        ),
-                        dbc.CardBody(
-                            [
-                                # Mission Statement
-                                html.Div(
-                                    [
-                                        html.H2(
-                                            "The past is a road map to a sustainable future",
-                                            style={
-                                                "fontFamily": "var(--font-display)",
-                                                "fontSize": "1.75rem",
-                                                "color": "var(--aegis-text-primary)",
-                                                "marginBottom": "1rem",
-                                                "lineHeight": "1.3",
-                                            },
-                                        ),
-                                        html.P(
-                                            "AEGIS is a global consortium directed by Professor Eske Willerslev at the Globe Institute, University of Copenhagen, supported by the Novo Nordisk Foundation and the Wellcome Trust. By analysing ancient environmental DNA from soils, sediments, ice, and oceans alongside modern reference genomes, we uncover how past ecosystems adapted to climate change - to inform the development of climate-resilient crops and stronger biodiversity conservation.",
-                                            style={
-                                                "fontSize": "1.05rem",
-                                                "color": "var(--aegis-text-secondary)",
-                                                "lineHeight": "1.7",
-                                                "marginBottom": "2rem",
-                                            },
-                                        ),
-                                    ]
-                                ),
-                                # Headline stats
-                                html.Div(
-                                    [
-                                        html.Div(
-                                            [
-                                                html.Div(
-                                                    "18",
-                                                    style={
-                                                        "fontFamily": "var(--font-display)",
-                                                        "fontSize": "1.75rem",
-                                                        "fontWeight": "600",
-                                                        "color": "var(--aegis-accent-primary)",
-                                                    },
-                                                ),
-                                                html.Div(
-                                                    "Institutions Worldwide",
-                                                    style={
-                                                        "fontSize": "0.8rem",
-                                                        "color": "var(--aegis-text-muted)",
-                                                        "textTransform": "uppercase",
-                                                        "letterSpacing": "0.05em",
-                                                    },
-                                                ),
-                                            ],
-                                            style={
-                                                "textAlign": "center",
-                                                "padding": "1rem",
-                                            },
-                                        ),
-                                        html.Div(
-                                            [
-                                                html.Div(
-                                                    "Ancient eDNA",
-                                                    style={
-                                                        "fontFamily": "var(--font-display)",
-                                                        "fontSize": "1.75rem",
-                                                        "fontWeight": "600",
-                                                        "color": "var(--aegis-earth-sage)",
-                                                    },
-                                                ),
-                                                html.Div(
-                                                    "Research Focus",
-                                                    style={
-                                                        "fontSize": "0.8rem",
-                                                        "color": "var(--aegis-text-muted)",
-                                                        "textTransform": "uppercase",
-                                                        "letterSpacing": "0.05em",
-                                                    },
-                                                ),
-                                            ],
-                                            style={
-                                                "textAlign": "center",
-                                                "padding": "1rem",
-                                            },
-                                        ),
-                                        html.Div(
-                                            [
-                                                html.Div(
-                                                    "Open Access",
-                                                    style={
-                                                        "fontFamily": "var(--font-display)",
-                                                        "fontSize": "1.75rem",
-                                                        "fontWeight": "600",
-                                                        "color": "var(--aegis-earth-terracotta)",
-                                                    },
-                                                ),
-                                                html.Div(
-                                                    "Data Policy",
-                                                    style={
-                                                        "fontSize": "0.8rem",
-                                                        "color": "var(--aegis-text-muted)",
-                                                        "textTransform": "uppercase",
-                                                        "letterSpacing": "0.05em",
-                                                    },
-                                                ),
-                                            ],
-                                            style={
-                                                "textAlign": "center",
-                                                "padding": "1rem",
-                                            },
-                                        ),
-                                    ],
-                                    style={
-                                        # auto-fit + minmax keeps three columns on
-                                        # wide viewports and falls back to two or
-                                        # one column on phones, instead of forcing
-                                        # three fixed columns that overflow.
-                                        "display": "grid",
-                                        "gridTemplateColumns": "repeat(auto-fit, minmax(160px, 1fr))",
-                                        "background": "var(--aegis-bg-elevated)",
-                                        "borderRadius": "var(--radius-md)",
-                                        "marginBottom": "2rem",
-                                    },
-                                ),
-                                # Key Points
-                                html.Div(
-                                    [
-                                        # Point 1
-                                        html.Div(
-                                            [
-                                                html.Div(
-                                                    "01",
-                                                    style={
-                                                        "fontFamily": "var(--font-display)",
-                                                        "fontSize": "2rem",
-                                                        "fontWeight": "600",
-                                                        "color": "var(--aegis-accent-primary)",
-                                                        "marginBottom": "0.5rem",
-                                                    },
-                                                ),
-                                                html.H4(
-                                                    "Lost Genetic Diversity",
-                                                    style={
-                                                        "fontFamily": "var(--font-display)",
-                                                        "color": "var(--aegis-text-primary)",
-                                                        "marginBottom": "0.75rem",
-                                                    },
-                                                ),
-                                                html.P(
-                                                    "Centuries of domestication have left today's crops with only a fraction of the genetic diversity present in their wild ancestors. Combined with reliance on uniform genetics and heavy inputs, this limits our ability to breed crops resilient to heat, drought, pests, and extreme weather.",
-                                                    style={
-                                                        "color": "var(--aegis-text-secondary)",
-                                                        "lineHeight": "1.7",
-                                                    },
-                                                ),
-                                            ],
-                                            style={
-                                                "padding": "1.5rem",
-                                                "background": "var(--aegis-bg-elevated)",
-                                                "borderRadius": "var(--radius-md)",
-                                                "borderLeft": "3px solid var(--aegis-accent-primary)",
-                                            },
-                                        ),
-                                        # Point 2
-                                        html.Div(
-                                            [
-                                                html.Div(
-                                                    "02",
-                                                    style={
-                                                        "fontFamily": "var(--font-display)",
-                                                        "fontSize": "2rem",
-                                                        "fontWeight": "600",
-                                                        "color": "var(--aegis-earth-sage)",
-                                                        "marginBottom": "0.5rem",
-                                                    },
-                                                ),
-                                                html.H4(
-                                                    "Ancient eDNA: A Window to the Past",
-                                                    style={
-                                                        "fontFamily": "var(--font-display)",
-                                                        "color": "var(--aegis-text-primary)",
-                                                        "marginBottom": "0.75rem",
-                                                    },
-                                                ),
-                                                html.P(
-                                                    "Environmental DNA preserved in soils, sediments, ice, and ocean cores can be thousands to millions of years old. By sequencing these fragments and comparing them to modern reference genomes, we identify genetic variants and beneficial species interactions that helped past ecosystems adapt to climate shifts.",
-                                                    style={
-                                                        "color": "var(--aegis-text-secondary)",
-                                                        "lineHeight": "1.7",
-                                                    },
-                                                ),
-                                            ],
-                                            style={
-                                                "padding": "1.5rem",
-                                                "background": "var(--aegis-bg-elevated)",
-                                                "borderRadius": "var(--radius-md)",
-                                                "borderLeft": "3px solid var(--aegis-earth-sage)",
-                                            },
-                                        ),
-                                        # Point 3
-                                        html.Div(
-                                            [
-                                                html.Div(
-                                                    "03",
-                                                    style={
-                                                        "fontFamily": "var(--font-display)",
-                                                        "fontSize": "2rem",
-                                                        "fontWeight": "600",
-                                                        "color": "var(--aegis-earth-terracotta)",
-                                                        "marginBottom": "0.5rem",
-                                                    },
-                                                ),
-                                                html.H4(
-                                                    "Ecosystem Modelling",
-                                                    style={
-                                                        "fontFamily": "var(--font-display)",
-                                                        "color": "var(--aegis-text-primary)",
-                                                        "marginBottom": "0.75rem",
-                                                    },
-                                                ),
-                                                html.P(
-                                                    "Beyond individual species, AEGIS uses ecosystem modelling to understand how combinations of species, including crops, microbiomes, and wild plants, created sustainable systems in the past. These insights inform modern agricultural practices.",
-                                                    style={
-                                                        "color": "var(--aegis-text-secondary)",
-                                                        "lineHeight": "1.7",
-                                                    },
-                                                ),
-                                            ],
-                                            style={
-                                                "padding": "1.5rem",
-                                                "background": "var(--aegis-bg-elevated)",
-                                                "borderRadius": "var(--radius-md)",
-                                                "borderLeft": "3px solid var(--aegis-earth-terracotta)",
-                                            },
-                                        ),
-                                        # Point 4
-                                        html.Div(
-                                            [
-                                                html.Div(
-                                                    "04",
-                                                    style={
-                                                        "fontFamily": "var(--font-display)",
-                                                        "fontSize": "2rem",
-                                                        "fontWeight": "600",
-                                                        "color": "var(--aegis-earth-slate)",
-                                                        "marginBottom": "0.5rem",
-                                                    },
-                                                ),
-                                                html.H4(
-                                                    "Open Data & Tools",
-                                                    style={
-                                                        "fontFamily": "var(--font-display)",
-                                                        "color": "var(--aegis-text-primary)",
-                                                        "marginBottom": "0.75rem",
-                                                    },
-                                                ),
-                                                html.P(
-                                                    "All genomic data is stored in the European Nucleotide Archive (ENA) and made publicly available through this portal. We're also developing new metadata checklists and bioinformatics tools for crop breeders, ecologists, and conservation biologists worldwide.",
-                                                    style={
-                                                        "color": "var(--aegis-text-secondary)",
-                                                        "lineHeight": "1.7",
-                                                    },
-                                                ),
-                                            ],
-                                            style={
-                                                "padding": "1.5rem",
-                                                "background": "var(--aegis-bg-elevated)",
-                                                "borderRadius": "var(--radius-md)",
-                                                "borderLeft": "3px solid var(--aegis-earth-slate)",
-                                            },
-                                        ),
-                                    ],
-                                    style={
-                                        "display": "flex",
-                                        "flexDirection": "column",
-                                        "gap": "1rem",
-                                    },
-                                ),
-                            ],
-                            style={"padding": "2rem"},
-                        ),
-                    ],
-                    style={
-                        "background": "var(--aegis-bg-card)",
-                        "border": "1px solid var(--aegis-border-subtle)",
-                        "overflow": "hidden",
-                    },
+            html.H3(
+                title,
+                style={
+                    "fontSize": "clamp(1.25rem, 2vw, 1.5rem)",
+                    "marginBottom": "0.75rem",
+                },
+            ),
+            html.P(
+                body,
+                style={
+                    "lineHeight": "1.7",
+                    "marginBottom": "0",
+                },
+            ),
+        ],
+        className=f"feature-card feature-card--{variant}",
+    )
+
+
+def _stat_block(value: str, label: str) -> html.Div:
+    return html.Div(
+        [
+            html.Div(
+                value,
+                style={
+                    "fontFamily": "var(--font-body)",
+                    "fontSize": "clamp(1.5rem, 3vw, 2rem)",
+                    "fontWeight": "500",
+                    "letterSpacing": "-0.01em",
+                    "color": "var(--aegis-accent-primary)",
+                    "marginBottom": "0.5rem",
+                },
+            ),
+            html.Div(
+                label,
+                style={
+                    "fontSize": "0.8rem",
+                    "color": "var(--aegis-text-muted)",
+                    "textTransform": "uppercase",
+                    "letterSpacing": "0.08em",
+                },
+            ),
+        ],
+        style={"padding": "1.5rem"},
+    )
+
+
+# Header band — eyebrow + display-serif H2, matches the home page treatment.
+_header = html.Section(
+    dbc.Container(
+        html.Div(
+            [
+                html.Span("Our Mission", className="eyebrow"),
+                html.H1(
+                    "The past is a road map to a sustainable future",
+                    className="display-serif",
+                    style={"marginBottom": "1.5rem", "maxWidth": "920px"},
                 ),
-                md={"width": 10, "offset": 1},
-                style={"marginBottom": "2rem"},
-            )
-        ),
-        # Partners Section
-        dbc.Row(
-            dbc.Col(
-                dbc.Card(
-                    dbc.CardBody(
-                        [
-                            html.H3(
-                                "Collaborating Institutions",
-                                style={
-                                    "fontFamily": "var(--font-display)",
-                                    "color": "var(--aegis-text-primary)",
-                                    "marginBottom": "1.5rem",
-                                    "textAlign": "center",
-                                },
-                            ),
-                            html.Div(
-                                [_partner_card(name, subtitle, href) for name, subtitle, href in _PARTNERS],
-                                style={
-                                    "display": "grid",
-                                    "gridTemplateColumns": "repeat(auto-fit, minmax(220px, 1fr))",
-                                    "gap": "1rem",
-                                },
-                            ),
-                        ]
+                html.P(
+                    (
+                        "AEGIS is a global consortium directed by Professor Eske Willerslev at the "
+                        "Globe Institute, University of Copenhagen, supported by the Novo Nordisk "
+                        "Foundation and the Wellcome Trust. By analysing ancient environmental DNA "
+                        "from soils, sediments, ice, and oceans alongside modern reference genomes, "
+                        "we uncover how past ecosystems adapted to climate change — to inform the "
+                        "development of climate-resilient crops and stronger biodiversity conservation."
                     ),
                     style={
-                        "background": "var(--aegis-bg-card)",
-                        "border": "1px solid var(--aegis-border-subtle)",
+                        "fontSize": "1.0625rem",
+                        "color": "var(--aegis-text-secondary)",
+                        "lineHeight": "1.7",
+                        "maxWidth": "780px",
+                        "marginBottom": "0",
                     },
                 ),
-                md={"width": 10, "offset": 1},
-                style={"marginBottom": "2rem"},
-            )
+            ],
+            className="py-5",
         ),
-        # Funders Section
-        dbc.Row(
-            dbc.Col(
+    ),
+    style={
+        "background": "var(--aegis-bg-deep)",
+        "borderBottom": "1px solid var(--aegis-border-subtle)",
+    },
+)
+
+
+_hero_image = html.Section(
+    html.Img(
+        src="https://www.embl.org/news/wp-content/uploads/2024/06/2024-NNF-grant-ancient-plant-DNA-1000x600-1.jpg",
+        style={
+            "width": "100%",
+            "maxHeight": "420px",
+            "objectFit": "cover",
+            "display": "block",
+        },
+        alt="Ancient plant DNA research",
+    ),
+)
+
+
+_stats_section = html.Section(
+    dbc.Container(
+        html.Div(
+            [_stat_block(value, label) for value, label in _STATS],
+            style={
+                "display": "grid",
+                "gridTemplateColumns": "repeat(auto-fit, minmax(180px, 1fr))",
+                "background": "var(--aegis-bg-sand)",
+                "padding": "1rem",
+            },
+        ),
+        className="py-5",
+    ),
+)
+
+
+_key_points_section = html.Section(
+    dbc.Container(
+        [
+            html.Div(
+                [
+                    html.Span("How We Work", className="eyebrow"),
+                    html.H2(
+                        "Four threads of inquiry",
+                        className="display-serif",
+                        style={
+                            "fontSize": "clamp(1.75rem, 3.5vw, 2.75rem)",
+                            "marginBottom": "0",
+                            "maxWidth": "780px",
+                        },
+                    ),
+                ],
+                className="mb-5",
+            ),
+            html.Div(
+                [
+                    _key_point(p["number"], p["title"], p["body"], p["variant"])
+                    for p in _KEY_POINTS
+                ],
+                style={
+                    "display": "grid",
+                    "gridTemplateColumns": "repeat(auto-fit, minmax(280px, 1fr))",
+                    "gap": "1.5rem",
+                },
+            ),
+        ],
+        className="py-5",
+    ),
+    style={"background": "var(--aegis-bg-elevated)"},
+)
+
+
+_partners_section = html.Section(
+    dbc.Container(
+        [
+            html.Div(
+                [
+                    html.Span("Consortium", className="eyebrow"),
+                    html.H2(
+                        "Collaborating institutions",
+                        className="display-serif",
+                        style={
+                            "fontSize": "clamp(1.75rem, 3.5vw, 2.75rem)",
+                            "marginBottom": "0",
+                        },
+                    ),
+                ],
+                className="mb-5",
+            ),
+            html.Div(
+                [_partner_card(name, subtitle, href) for name, subtitle, href in _PARTNERS],
+                style={
+                    "display": "grid",
+                    "gridTemplateColumns": "repeat(auto-fit, minmax(240px, 1fr))",
+                    "columnGap": "2rem",
+                    "rowGap": "0",
+                    "borderTop": "1px solid var(--aegis-border-subtle)",
+                },
+            ),
+        ],
+        className="py-5",
+    ),
+)
+
+
+_funders_section = html.Section(
+    dbc.Container(
+        html.Div(
+            [
+                html.Span("Funded by", className="eyebrow"),
                 html.Div(
                     [
-                        html.P(
-                            "Funded by",
+                        html.A(
+                            "Novo Nordisk Foundation",
+                            href="https://novonordiskfonden.dk/en/",
+                            target="_blank",
                             style={
-                                "color": "var(--aegis-text-muted)",
-                                "marginBottom": "0.75rem",
-                                "fontSize": "0.85rem",
-                                "textTransform": "uppercase",
-                                "letterSpacing": "0.05em",
+                                "color": "var(--aegis-accent-primary)",
+                                "fontSize": "1.25rem",
+                                "fontFamily": "var(--font-display)",
+                                "fontWeight": "400",
                             },
                         ),
-                        html.Div(
-                            [
-                                html.A(
-                                    "Novo Nordisk Foundation",
-                                    href="https://novonordiskfonden.dk/en/",
-                                    target="_blank",
-                                    style={
-                                        "color": "var(--aegis-accent-primary)",
-                                        "fontSize": "1.1rem",
-                                        "fontFamily": "var(--font-display)",
-                                        "fontWeight": "500",
-                                    },
-                                ),
-                                html.Span(
-                                    "  &  ",
-                                    style={"color": "var(--aegis-text-muted)"},
-                                ),
-                                html.A(
-                                    "Wellcome",
-                                    href="https://wellcome.org/",
-                                    target="_blank",
-                                    style={
-                                        "color": "var(--aegis-accent-primary)",
-                                        "fontSize": "1.1rem",
-                                        "fontFamily": "var(--font-display)",
-                                        "fontWeight": "500",
-                                    },
-                                ),
-                            ],
+                        html.Span(
+                            "  &  ",
+                            style={"color": "var(--aegis-text-muted)"},
+                        ),
+                        html.A(
+                            "Wellcome",
+                            href="https://wellcome.org/",
+                            target="_blank",
+                            style={
+                                "color": "var(--aegis-accent-primary)",
+                                "fontSize": "1.25rem",
+                                "fontFamily": "var(--font-display)",
+                                "fontWeight": "400",
+                            },
                         ),
                     ],
-                    className="text-center py-4",
                 ),
-                md={"width": 10, "offset": 1},
-            )
+            ],
+            className="py-4",
         ),
-    ],
-    className="pb-5",
+    ),
+    style={
+        "background": "var(--aegis-bg-deep)",
+        "borderTop": "1px solid var(--aegis-border-subtle)",
+    },
+)
+
+
+layout = html.Div(
+    [
+        _header,
+        _hero_image,
+        _stats_section,
+        _key_points_section,
+        _partners_section,
+        _funders_section,
+    ]
 )

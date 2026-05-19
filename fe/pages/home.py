@@ -5,8 +5,14 @@ from dash import html
 dash.register_page(__name__, title="AEGIS - Ancient Environmental Genomics", path="/")
 
 
-def feature_card(icon: str, title: str, description: str, button_text: str, href: str):
-    """Create a feature card with icon, title, description and CTA button."""
+def feature_card(icon: str, title: str, description: str, button_text: str, href: str, variant: str = ""):
+    """Create a feature card with icon, title, description and CTA button.
+
+    `variant` picks one of the colour-blocked treatments inspired by
+    aegisearth.bio (OUR VISION / OUR TEAM / OUR MISSION): "sand", "cream",
+    "moss". An empty variant keeps the default white card.
+    """
+    modifier = f" feature-card--{variant}" if variant else ""
     return html.Div(
         [
             html.Div(icon, className="feature-icon"),
@@ -19,7 +25,7 @@ def feature_card(icon: str, title: str, description: str, button_text: str, href
                 className="mt-auto",
             ),
         ],
-        className="feature-card",
+        className=f"feature-card{modifier}",
     )
 
 
@@ -28,12 +34,85 @@ def hero_section():
     return html.Section(
         [
             html.Img(
-                src="/assets/aegis_logo-byline_RGB_black_01.png",
+                src="/assets/aegis_logo_RGB_moss-charcoal_01.svg",
                 className="hero-logo",
-                alt="AEGIS - Ancient Environmental Genomics Initiative for Sustainability",
+                alt="AEGIS",
+            ),
+            # The new brand logo does not bake in the byline; surface it as a
+            # standalone caption so the hero still reads as the full identity.
+            html.P(
+                "Ancient Environmental Genomics Initiative for Sustainability",
+                className="hero-byline",
             ),
         ],
         className="hero-banner",
+    )
+
+
+# Row 1: the three primary entry points.
+_PRIMARY_FEATURES = [
+    {
+        "icon": "/assets/icons/data-portal.svg",
+        "title": "Data Portal",
+        "description": "Browse genomic data contributed by the AEGIS consortium. Filter by taxonomy, processing status, and more.",
+        "button_text": "Explore Data",
+        "href": "/data-portal",
+        "variant": "sand",
+    },
+    {
+        "icon": "/assets/icons/api-access.svg",
+        "title": "API",
+        "description": "Integrate AEGIS data into your bioinformatics pipelines. Raw sequences, assemblies, and metadata over REST.",
+        "button_text": "View Documentation",
+        "href": "/api",
+        "variant": "cream",
+    },
+    {
+        "icon": "/assets/icons/about-aegis.svg",
+        "title": "About AEGIS",
+        "description": "A global consortium directed from the Globe Institute, University of Copenhagen, working to unlock ancient genetic diversity for climate-resilient crops.",
+        "button_text": "Learn More",
+        "href": "/about",
+        "variant": "moss",
+    },
+]
+
+# Row 2: the two specialised programmatic clients, presented as a secondary tier.
+_SECONDARY_FEATURES = [
+    {
+        "icon": "/assets/icons/mcp.svg",
+        "title": "MCP Server",
+        "description": "Connect any MCP-aware LLM client to search species, retrieve samples, and build downloads from a chat.",
+        "button_text": "Open MCP Guide",
+        "href": "/mcp",
+        "variant": "sand",
+    },
+    {
+        "icon": "/assets/icons/bulk-download.svg",
+        "title": "Bulk Download",
+        "description": "Use the aegis-download CLI to fetch raw reads, assemblies, annotations, and samples metadata in one go.",
+        "button_text": "View CLI Docs",
+        "href": "/bulk-download",
+        "variant": "cream",
+    },
+]
+
+
+def _feature_col(f, md=4):
+    return dbc.Col(
+        feature_card(
+            icon=html.Img(
+                src=f["icon"],
+                style={"width": "2.25rem", "height": "2.25rem", "opacity": "0.85"},
+            ),
+            title=f["title"],
+            description=f["description"],
+            button_text=f["button_text"],
+            href=f["href"],
+            variant=f["variant"],
+        ),
+        md=md,
+        className="mb-4",
     )
 
 
@@ -48,16 +127,14 @@ def features_section():
                             [
                                 html.H2(
                                     "The past is a road map to a sustainable future",
-                                    style={
-                                        "fontFamily": "var(--font-display)",
-                                        "color": "var(--aegis-text-primary)",
-                                        "marginBottom": "0.5rem",
-                                    },
+                                    className="display-serif",
+                                    style={"marginBottom": "1rem"},
                                 ),
                                 html.P(
                                     "AEGIS analyses ancient environmental DNA from soils, sediments, ice, and oceans alongside modern reference genomes to uncover how past ecosystems adapted to climate change - informing climate-resilient crops and biodiversity conservation.",
                                     style={
-                                        "color": "var(--aegis-text-muted)",
+                                        "color": "var(--aegis-text-secondary)",
+                                        "fontSize": "1.0625rem",
                                         "maxWidth": "720px",
                                         "margin": "0 auto",
                                     },
@@ -69,50 +146,18 @@ def features_section():
                     ),
                 ],
             ),
+            # Three primary entry points on the first row.
+            dbc.Row(
+                [_feature_col(f) for f in _PRIMARY_FEATURES],
+                className="g-4",
+            ),
+            # Two secondary tools on the second row, centred via an offset on
+            # the first column so they sit beneath the middle of row 1 rather
+            # than left-aligning into an unbalanced layout.
             dbc.Row(
                 [
-                    dbc.Col(
-                        feature_card(
-                            icon=html.Img(
-                                src="/assets/icons/data-portal.svg",
-                                style={"width": "2.5rem", "height": "2.5rem", "opacity": "0.85"},
-                            ),
-                            title="Data Portal",
-                            description="Browse genomic data contributed by the AEGIS consortium. Filter by taxonomy, processing status, and more.",
-                            button_text="Explore Data",
-                            href="/data-portal",
-                        ),
-                        md=4,
-                        className="mb-4",
-                    ),
-                    dbc.Col(
-                        feature_card(
-                            icon=html.Img(
-                                src="/assets/icons/api-access.svg",
-                                style={"width": "2.5rem", "height": "2.5rem", "opacity": "0.85"},
-                            ),
-                            title="API Access",
-                            description="Integrate AEGIS data into your bioinformatics pipelines. Access raw sequences, assemblies, and metadata programmatically.",
-                            button_text="View Documentation",
-                            href="/api",
-                        ),
-                        md=4,
-                        className="mb-4",
-                    ),
-                    dbc.Col(
-                        feature_card(
-                            icon=html.Img(
-                                src="/assets/icons/about-aegis.svg",
-                                style={"width": "2.5rem", "height": "2.5rem", "opacity": "0.85"},
-                            ),
-                            title="About AEGIS",
-                            description="A global consortium directed from the Globe Institute, University of Copenhagen, supported by the Novo Nordisk Foundation and the Wellcome Trust, working to unlock ancient genetic diversity for climate-resilient crops.",
-                            button_text="Learn More",
-                            href="/about",
-                        ),
-                        md=4,
-                        className="mb-4",
-                    ),
+                    _feature_col(_SECONDARY_FEATURES[0], md={"size": 4, "offset": 2}),
+                    _feature_col(_SECONDARY_FEATURES[1]),
                 ],
                 className="g-4",
             ),
@@ -139,9 +184,10 @@ def stats_section():
                                 html.Div(
                                     stat["value"],
                                     style={
-                                        "fontFamily": "var(--font-display)",
-                                        "fontSize": "1.5rem",
+                                        "fontFamily": "var(--font-body)",
+                                        "fontSize": "1.25rem",
                                         "fontWeight": "500",
+                                        "letterSpacing": "-0.01em",
                                         "color": "var(--aegis-accent-primary)",
                                     },
                                 ),

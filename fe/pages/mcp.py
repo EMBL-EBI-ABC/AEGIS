@@ -20,7 +20,6 @@ def _section_heading(text: str) -> html.H2:
     return html.H2(
         text,
         style={
-            "fontFamily": "var(--font-display)",
             "fontSize": "1.5rem",
             "color": "var(--aegis-text-primary)",
             "marginTop": "2.5rem",
@@ -36,7 +35,7 @@ def _code_block(text: str) -> html.Pre:
             "background": "var(--aegis-bg-elevated)",
             "color": "var(--aegis-text-primary)",
             "border": "1px solid var(--aegis-border-subtle)",
-            "borderRadius": "var(--radius-md)",
+            "borderRadius": "0",
             "padding": "1rem 1.25rem",
             "fontFamily": "var(--font-mono)",
             "fontSize": "0.85rem",
@@ -95,9 +94,8 @@ def _info_card(label: str, value, link: str | None = None) -> html.Div:
             value_el,
         ],
         style={
-            "padding": "1rem",
+            "padding": "1.25rem",
             "background": "var(--aegis-bg-card)",
-            "borderRadius": "var(--radius-md)",
             "border": "1px solid var(--aegis-border-subtle)",
             "textAlign": "center",
         },
@@ -189,14 +187,10 @@ layout = html.Div(
                 dbc.Col(
                     html.Div(
                         [
+                            html.Span("Agents", className="eyebrow"),
                             html.H1(
                                 "MCP Server",
-                                style={
-                                    "fontFamily": "var(--font-display)",
-                                    "fontSize": "2.5rem",
-                                    "color": "var(--aegis-text-primary)",
-                                    "marginBottom": "0.5rem",
-                                },
+                                style={"marginBottom": "0.75rem"},
                             ),
                             html.P(
                                 [
@@ -215,8 +209,9 @@ layout = html.Div(
                                     " (MCP) server, so any MCP-aware LLM client can search species, retrieve samples, and generate bulk-download commands directly from a chat.",
                                 ],
                                 style={
-                                    "color": "var(--aegis-text-muted)",
+                                    "color": "var(--aegis-text-secondary)",
                                     "marginBottom": "0",
+                                    "maxWidth": "720px",
                                 },
                             ),
                         ],
@@ -297,7 +292,6 @@ layout = html.Div(
                     ),
                     style={
                         "background": "var(--aegis-bg-elevated)",
-                        "borderRadius": "var(--radius-md)",
                         "border": "1px solid var(--aegis-border-subtle)",
                         "overflow": "hidden",
                     },
@@ -329,7 +323,6 @@ layout = html.Div(
                     ),
                     style={
                         "background": "var(--aegis-bg-elevated)",
-                        "borderRadius": "var(--radius-md)",
                         "border": "1px solid var(--aegis-border-subtle)",
                         "overflow": "hidden",
                     },
@@ -344,7 +337,6 @@ layout = html.Div(
                 html.H3(
                     "Native Streamable HTTP",
                     style={
-                        "fontFamily": "var(--font-display)",
                         "fontSize": "1.15rem",
                         "color": "var(--aegis-text-primary)",
                         "marginTop": "1.5rem",
@@ -372,7 +364,6 @@ layout = html.Div(
                 html.H3(
                     "stdio bridge via mcp-remote",
                     style={
-                        "fontFamily": "var(--font-display)",
                         "fontSize": "1.15rem",
                         "color": "var(--aegis-text-primary)",
                         "marginTop": "1.5rem",

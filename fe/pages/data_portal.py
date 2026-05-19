@@ -23,10 +23,12 @@ def _filter_card(title, checklist):
                 html.Div(
                     title,
                     style={
-                        "fontSize": "0.8rem",
+                        "fontSize": "0.72rem",
                         "fontWeight": "600",
-                        "color": "var(--aegis-text-secondary)",
-                        "marginBottom": "0.5rem",
+                        "color": "var(--aegis-accent-primary)",
+                        "textTransform": "uppercase",
+                        "letterSpacing": "0.08em",
+                        "marginBottom": "0.75rem",
                     },
                 ),
                 html.Div(
@@ -37,7 +39,7 @@ def _filter_card(title, checklist):
                     },
                 ),
             ],
-            style={"padding": "0.75rem"},
+            style={"padding": "1rem"},
         ),
     )
 
@@ -68,15 +70,15 @@ layout = dbc.Container(
                     [
                         html.H1(
                             "Data Portal",
-                            style={
-                                "fontFamily": "var(--font-display)",
-                                "fontSize": "2.5rem",
-                                "marginBottom": "0.5rem",
-                            },
+                            style={"marginBottom": "0.75rem"},
                         ),
                         html.P(
-                            "Browse genomic data contributed by the AEGIS consortium.",
-                            style={"color": "var(--aegis-text-muted)"},
+                            "Genomic data contributed by the AEGIS consortium. Filter by taxonomy, processing status, country, or map region.",
+                            style={
+                                "color": "var(--aegis-text-secondary)",
+                                "maxWidth": "640px",
+                                "marginBottom": "0",
+                            },
                         ),
                     ],
                     className="mb-4 pt-4",
@@ -111,13 +113,10 @@ layout = dbc.Container(
                                 html.Div(
                                     dbc.Input(
                                         id="input",
-                                        placeholder="Search by species name, taxonomy, or keywords...",
+                                        placeholder="Search by species name, taxonomy, or keywords…",
                                         type="text",
                                         debounce=True,
                                         style={
-                                            "background": "var(--aegis-bg-elevated)",
-                                            "border": "1px solid var(--aegis-border-medium)",
-                                            "color": "var(--aegis-text-primary)",
                                             "padding": "0.75rem 1rem",
                                             "fontSize": "0.95rem",
                                         },
@@ -139,7 +138,6 @@ layout = dbc.Container(
                                         zoom=2,
                                         style={
                                             "height": "400px",
-                                            "borderRadius": "var(--radius-md)",
                                             "border": "1px solid var(--aegis-border-subtle)",
                                             "marginBottom": "1rem",
                                         },
@@ -306,7 +304,6 @@ def create_update_data_table(
                 html.H4(
                     "No results found",
                     style={
-                        "fontFamily": "var(--font-display)",
                         "color": "var(--aegis-text-secondary)",
                     },
                 ),
@@ -351,7 +348,6 @@ def create_update_data_table(
         table,
         style={
             "background": "var(--aegis-bg-card)",
-            "borderRadius": "var(--radius-md)",
             "border": "1px solid var(--aegis-border-subtle)",
             "overflow": "hidden",
         },

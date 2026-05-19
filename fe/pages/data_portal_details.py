@@ -67,7 +67,7 @@ def layout(tax_id=None, **kwargs):
                                                 zoom=5,
                                                 style={
                                                     "height": "250px",
-                                                    "borderRadius": "var(--radius-md)",
+                                                    "borderRadius": "0",
                                                     "border": "1px solid var(--aegis-border-subtle)",
                                                 },
                                             ),
@@ -153,7 +153,7 @@ def layout(tax_id=None, **kwargs):
                                             "marginBottom": "1.5rem",
                                             "padding": "0.75rem 1rem",
                                             "background": "var(--aegis-bg-elevated)",
-                                            "borderRadius": "var(--radius-md)",
+                                            "borderRadius": "0",
                                             "display": "flex",
                                             "flexWrap": "wrap",
                                             "alignItems": "center",
@@ -296,7 +296,7 @@ def return_table(
         table,
         style={
             "background": "var(--aegis-bg-elevated)",
-            "borderRadius": "var(--radius-md)",
+            "borderRadius": "0",
             "border": "1px solid var(--aegis-border-subtle)",
             "overflow": "hidden",
         },
@@ -353,7 +353,7 @@ def _annotation_file_section(title: str, files: list[dict]) -> html.Div | None:
         style={
             "padding": "1rem",
             "background": "var(--aegis-bg-elevated)",
-            "borderRadius": "var(--radius-md)",
+            "borderRadius": "0",
             "border": "1px solid var(--aegis-border-subtle)",
         },
     )
@@ -449,7 +449,7 @@ def _annotation_card(annotation: dict, sample_accessions: set, tax_id) -> html.D
             "padding": "1.25rem",
             "background": "var(--aegis-bg-card)",
             "border": "1px solid var(--aegis-border-subtle)",
-            "borderRadius": "var(--radius-md)",
+            "borderRadius": "0",
             "marginBottom": "1rem",
         },
     )
@@ -778,7 +778,7 @@ def create_data_portal_record(tax_id):
                 style={
                     "padding": "1rem",
                     "background": "var(--aegis-bg-elevated)",
-                    "borderRadius": "var(--radius-md)",
+                    "borderRadius": "0",
                 },
             )
             for label, value in info_items
@@ -874,7 +874,7 @@ def create_data_portal_record(tax_id):
         style={
             "padding": "1rem",
             "background": "var(--aegis-bg-elevated)",
-            "borderRadius": "var(--radius-md)",
+            "borderRadius": "0",
         },
     )
     # taxonomy_path rendered in taxonomy-row (full width, outside the md=7 column)

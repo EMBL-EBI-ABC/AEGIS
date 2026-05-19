@@ -5,18 +5,23 @@
 
 /* --------------------------------------------------------------------------
    Google Fonts Import
+
+   Hanken Grotesk is the closest free analogue to aegisearth.bio's bespoke
+   PPFraktionSans (humanist grotesque). Fraunces stands in for MessinaModern
+   on display serif headlines. JetBrains Mono carries code/IDs.
    -------------------------------------------------------------------------- */
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Hanken+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 /* --------------------------------------------------------------------------
    CSS Custom Properties (Design Tokens)
    -------------------------------------------------------------------------- */
 :root {
-    /* Surfaces — light, paper-like */
-    --aegis-bg-deep:     #F2F0EA;   /* deepest tint, used for hero / contrast bands */
+    /* Surfaces — light, paper-like; tones lifted directly from aegisearth.bio */
+    --aegis-bg-deep:     #F4F2EB;   /* warm cream — header/hero band (matches site) */
     --aegis-bg-primary:  #FFFFFF;   /* page background */
     --aegis-bg-elevated: #FAFAF7;   /* section background */
     --aegis-bg-card:     #FFFFFF;   /* card background */
+    --aegis-bg-sand:     #E5DECC;   /* warm parchment — colour-blocked panels */
     --aegis-bg-hover:    #F2F0EA;   /* hover surface */
 
     /* Brand — mossy teal-green (matches aegisearth.bio #4E6B66) */
@@ -47,7 +52,7 @@
 
     /* Typography */
     --font-display: 'Fraunces', Georgia, serif;
-    --font-body:    'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-body:    'Hanken Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono:    'JetBrains Mono', 'Fira Code', monospace;
 
     /* Spacing Scale */
@@ -116,22 +121,51 @@ body {
 
 /* --------------------------------------------------------------------------
    Typography
+
+   aegisearth.bio reserves serif (MessinaModern → Fraunces) for big editorial
+   display moments and runs sans (PPFraktion → Hanken Grotesk) everywhere else.
+   We follow the same pattern: sans is the heading default; opt-in to the
+   serif via `.display-serif` (or h2.display) for hero/section showstoppers.
    -------------------------------------------------------------------------- */
 h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-display);
-    font-weight: 400;
-    line-height: 1.1;
+    font-family: var(--font-body);
+    font-weight: 500;
+    line-height: 1.2;
     color: var(--aegis-text-primary);
     margin-top: 0;
     letter-spacing: -0.02em;
 }
 
-h1 { font-size: clamp(2.5rem, 5vw, 4rem); }
-h2 { font-size: clamp(1.875rem, 3.5vw, 2.75rem); }
-h3 { font-size: clamp(1.5rem, 2.5vw, 2rem); }
-h4 { font-size: 1.375rem; }
-h5 { font-size: 1.125rem; }
-h6 { font-size: 1rem; }
+h1 { font-size: clamp(2rem, 4vw, 2.75rem); font-weight: 400; }
+h2 { font-size: clamp(1.5rem, 3vw, 2.25rem); }
+h3 { font-size: clamp(1.25rem, 2vw, 1.5rem); }
+h4 { font-size: 1.25rem; }
+h5 { font-size: 1.0625rem; }
+h6 { font-size: 0.9375rem; }
+
+/* Display serif — for the one big editorial headline per page.
+   Match the site's H2 treatment: huge Fraunces with negative tracking. */
+.display-serif,
+h2.display {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(2.25rem, 5vw, 4rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+}
+
+/* Eyebrow — the small moss-coloured section label that sits above big H2s
+   on aegisearth.bio. Sentence-case input, uppercased via CSS. */
+.eyebrow {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--aegis-accent-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: var(--space-md);
+    display: block;
+}
 
 p {
     margin-top: 0;
@@ -155,8 +189,8 @@ a:hover {
    Navigation Bar
    -------------------------------------------------------------------------- */
 .navbar {
-    background: var(--aegis-bg-primary) !important;
-    border-bottom: 1px solid var(--aegis-border-subtle);
+    background: var(--aegis-bg-deep) !important;
+    border-bottom: 1px solid var(--aegis-accent-primary);
     padding: var(--space-md) var(--space-xl);
     position: sticky;
     top: 0;
@@ -200,16 +234,23 @@ a:hover {
     transition: color var(--transition-fast);
 }
 
-.nav-link::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: var(--space-md);
-    right: var(--space-md);
-    height: 2px;
-    background: var(--aegis-accent-primary);
-    transform: scaleX(0);
-    transition: transform var(--transition-base);
+/* Arrow prefix on nav links, mirroring the marketing site's "→ Read more"
+   CTA pattern. Reserves room for the glyph so the label doesn't shift on
+   hover, and fades the arrow in on hover/active for a subtle reveal. */
+.navbar-collapse .nav-link::before {
+    content: '→';
+    display: inline-block;
+    margin-right: 0.4rem;
+    color: var(--aegis-accent-primary);
+    opacity: 0;
+    transform: translateX(-0.25rem);
+    transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.navbar-collapse .nav-link:hover::before,
+.navbar-collapse .nav-link.active::before {
+    opacity: 1;
+    transform: translateX(0);
 }
 
 .nav-link:hover {
@@ -217,8 +258,8 @@ a:hover {
     text-decoration: none !important;
 }
 
-.nav-link:hover::after {
-    transform: scaleX(1);
+.nav-link.active {
+    color: var(--aegis-accent-primary) !important;
 }
 
 .navbar-toggler {
@@ -292,19 +333,22 @@ a:hover {
 
 /* --------------------------------------------------------------------------
    Cards — Hairline Editorial Style
+
+   aegisearth.bio cards have sharp 90° corners, no shadow, and lean on solid
+   background colours (cream / sand / moss) for distinction rather than
+   elevation. We follow the same pattern: corners squared, shadows dropped,
+   hover swaps the border tone instead of lifting the card.
    -------------------------------------------------------------------------- */
 .card {
     background: var(--aegis-bg-card);
     border: 1px solid var(--aegis-border-subtle);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
-    transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
+    border-radius: 0;
+    box-shadow: none;
+    transition: border-color var(--transition-base), background var(--transition-base);
     overflow: hidden;
 }
 
 .card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
     border-color: var(--aegis-border-medium);
 }
 
@@ -353,19 +397,21 @@ a:hover {
 
 /* --------------------------------------------------------------------------
    Buttons — Solid Brand, Editorial Outline
+
+   Flat, sharp-cornered, no hover lift — matches the moss-teal "Learn more"
+   CTAs on aegisearth.bio.
    -------------------------------------------------------------------------- */
 .btn {
     font-family: var(--font-body);
-    font-size: 0.875rem;
+    font-size: 0.9375rem;
     font-weight: 500;
-    letter-spacing: 0.01em;
+    letter-spacing: 0;
     padding: var(--space-sm) var(--space-lg);
-    border-radius: var(--radius-md);
+    border-radius: 0;
     border: 1px solid transparent;
     cursor: pointer;
-    transition: all var(--transition-base);
+    transition: background var(--transition-base), border-color var(--transition-base), color var(--transition-base);
     position: relative;
-    overflow: hidden;
 }
 
 .btn-dark, .btn-primary {
@@ -378,8 +424,6 @@ a:hover {
     background: var(--aegis-accent-secondary);
     border-color: var(--aegis-accent-secondary);
     color: var(--aegis-text-inverse);
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
 }
 
 .btn-secondary {
@@ -474,7 +518,7 @@ a:hover {
     font-size: 0.95rem;
     background: var(--aegis-bg-primary);
     border: 1px solid var(--aegis-border-medium);
-    border-radius: var(--radius-md);
+    border-radius: 2px;
     color: var(--aegis-text-primary);
     padding: var(--space-sm) var(--space-md);
     transition: all var(--transition-fast);
@@ -577,7 +621,7 @@ a:hover {
 }
 
 .table-responsive {
-    border-radius: var(--radius-md);
+    border-radius: 0;
     border: 1px solid var(--aegis-border-subtle);
 }
 
@@ -596,7 +640,7 @@ a:hover {
     border: 1px solid var(--aegis-border-subtle);
     color: var(--aegis-text-secondary);
     padding: var(--space-sm) var(--space-md);
-    border-radius: var(--radius-md) !important;
+    border-radius: 0 !important;
     transition: all var(--transition-fast);
 }
 
@@ -671,9 +715,9 @@ a:hover {
    -------------------------------------------------------------------------- */
 iframe {
     background: white;
-    border-radius: var(--radius-lg);
+    border-radius: 0;
     border: 1px solid var(--aegis-border-subtle);
-    box-shadow: var(--shadow-sm);
+    box-shadow: none;
 }
 
 /* --------------------------------------------------------------------------
@@ -684,6 +728,7 @@ iframe {
     width: 100%;
     min-height: 480px;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     overflow: hidden;
@@ -697,6 +742,22 @@ iframe {
     max-width: 600px;
     width: 80%;
     animation: fadeInUp 1s ease-out;
+}
+
+.hero-byline {
+    position: relative;
+    z-index: 1;
+    margin-top: var(--space-lg);
+    margin-bottom: 0;
+    font-family: var(--font-body);
+    font-size: clamp(0.95rem, 1.4vw, 1.125rem);
+    font-weight: 400;
+    letter-spacing: 0;
+    color: var(--aegis-text-secondary);
+    text-align: center;
+    max-width: 600px;
+    width: 80%;
+    animation: fadeInUp 1s ease-out 0.15s both;
 }
 
 @keyframes fadeInUp {
@@ -716,37 +777,65 @@ iframe {
 .feature-card {
     background: var(--aegis-bg-card);
     border: 1px solid var(--aegis-border-subtle);
-    border-radius: var(--radius-lg);
+    border-radius: 0;
     padding: var(--space-xl);
     height: 100%;
     display: flex;
     flex-direction: column;
-    transition: all var(--transition-base);
+    transition: border-color var(--transition-base);
     position: relative;
-    overflow: hidden;
-}
-
-.feature-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: var(--aegis-accent-primary);
-    transform: scaleX(0);
-    transform-origin: left;
-    transition: transform var(--transition-base);
-}
-
-.feature-card:hover::before {
-    transform: scaleX(1);
 }
 
 .feature-card:hover {
-    border-color: var(--aegis-border-medium);
-    box-shadow: var(--shadow-md);
-    transform: translateY(-3px);
+    border-color: var(--aegis-accent-primary);
+}
+
+/* Colour-blocked feature cards — the OUR VISION / OUR TEAM / OUR MISSION
+   treatment from aegisearth.bio. Drop the hairline border on the moss/sand
+   variants since the background already does the separation. */
+.feature-card.feature-card--sand {
+    background: var(--aegis-bg-sand);
+    border-color: transparent;
+}
+
+.feature-card.feature-card--cream {
+    background: var(--aegis-bg-deep);
+    border-color: transparent;
+}
+
+.feature-card.feature-card--moss {
+    background: var(--aegis-accent-primary);
+    border-color: transparent;
+    color: var(--aegis-text-inverse);
+}
+
+.feature-card.feature-card--moss h1,
+.feature-card.feature-card--moss h2,
+.feature-card.feature-card--moss h3,
+.feature-card.feature-card--moss h4,
+.feature-card.feature-card--moss h5,
+.feature-card.feature-card--moss h6,
+.feature-card.feature-card--moss p {
+    color: var(--aegis-text-inverse);
+}
+
+.feature-card.feature-card--moss .feature-icon {
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--aegis-text-inverse);
+}
+
+/* On the moss-bg card the default moss button would vanish — invert it to
+   a white-on-transparent outline that flips on hover. */
+.feature-card.feature-card--moss .btn-primary {
+    background: transparent;
+    color: var(--aegis-text-inverse);
+    border-color: var(--aegis-text-inverse);
+}
+
+.feature-card.feature-card--moss .btn-primary:hover {
+    background: var(--aegis-text-inverse);
+    color: var(--aegis-accent-primary);
+    border-color: var(--aegis-text-inverse);
 }
 
 .feature-icon {
@@ -756,14 +845,14 @@ iframe {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: var(--radius-md);
+    border-radius: 0;
     background: var(--aegis-accent-soft);
     color: var(--aegis-accent-primary);
     font-size: 1.5rem;
 }
 
 .feature-card h4 {
-    font-family: var(--font-display);
+    font-family: var(--font-body);
     font-size: 1.375rem;
     font-weight: 500;
     margin-bottom: var(--space-sm);
@@ -800,7 +889,7 @@ iframe {
     gap: var(--space-sm);
     padding: var(--space-md);
     background: var(--aegis-bg-elevated);
-    border-radius: var(--radius-md);
+    border-radius: 0;
     border: 1px solid var(--aegis-border-subtle);
     margin-bottom: var(--space-lg);
 }

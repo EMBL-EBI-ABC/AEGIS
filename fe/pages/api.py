@@ -15,20 +15,17 @@ layout = html.Div(
                 dbc.Col(
                     html.Div(
                         [
+                            html.Span("Integrate", className="eyebrow"),
                             html.H1(
                                 "API Documentation",
-                                style={
-                                    "fontFamily": "var(--font-display)",
-                                    "fontSize": "2.5rem",
-                                    "color": "var(--aegis-text-primary)",
-                                    "marginBottom": "0.5rem",
-                                },
+                                style={"marginBottom": "0.75rem"},
                             ),
                             html.P(
-                                "Programmatic access to AEGIS genomic data, assemblies, and sample metadata",
+                                "Programmatic access to AEGIS genomic data, assemblies, and sample metadata.",
                                 style={
-                                    "color": "var(--aegis-text-muted)",
+                                    "color": "var(--aegis-text-secondary)",
                                     "marginBottom": "0",
+                                    "maxWidth": "640px",
                                 },
                             ),
                         ],
@@ -72,9 +69,8 @@ layout = html.Div(
                                 ),
                             ],
                             style={
-                                "padding": "1rem",
+                                "padding": "1.25rem",
                                 "background": "var(--aegis-bg-card)",
-                                "borderRadius": "var(--radius-md)",
                                 "border": "1px solid var(--aegis-border-subtle)",
                                 "textAlign": "center",
                             },
@@ -113,9 +109,8 @@ layout = html.Div(
                                 ),
                             ],
                             style={
-                                "padding": "1rem",
+                                "padding": "1.25rem",
                                 "background": "var(--aegis-bg-card)",
-                                "borderRadius": "var(--radius-md)",
                                 "border": "1px solid var(--aegis-border-subtle)",
                                 "textAlign": "center",
                             },
@@ -154,9 +149,8 @@ layout = html.Div(
                                 ),
                             ],
                             style={
-                                "padding": "1rem",
+                                "padding": "1.25rem",
                                 "background": "var(--aegis-bg-card)",
-                                "borderRadius": "var(--radius-md)",
                                 "border": "1px solid var(--aegis-border-subtle)",
                                 "textAlign": "center",
                             },
@@ -177,10 +171,10 @@ layout = html.Div(
                     "height": "calc(100vh - 250px)",
                     "minHeight": "600px",
                     "width": "100%",
-                    "border": "none",
+                    "border": "1px solid var(--aegis-border-subtle)",
                     "overflow": "auto",
-                    "borderRadius": "var(--radius-lg)",
-                    "boxShadow": "var(--shadow-lg)",
+                    "borderRadius": "0",
+                    "boxShadow": "none",
                 },
             ),
             style={

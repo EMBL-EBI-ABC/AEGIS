@@ -24,14 +24,12 @@ navbar = dbc.Navbar(
     dbc.Container(
         [
             html.A(
-                [
-                    html.Span("AEGIS", className="brand-text"),
-                    html.Img(
-                        src="/assets/aegis_logomark_RGB_black_01.png",
-                        height="28px",
-                        className="brand-logo",
-                    ),
-                ],
+                html.Img(
+                    src="/assets/aegis_logo_RGB_moss-charcoal_01.svg",
+                    alt="AEGIS",
+                    height="32px",
+                    className="brand-logo",
+                ),
                 href=f"{dash.page_registry['pages.home']['path']}",
                 className="navbar-brand d-flex align-items-center",
             ),
@@ -72,18 +70,23 @@ app.layout = html.Div(
                         html.P(
                             [
                                 "AEGIS - Ancient Environmental Genomics Initiative for Sustainability",
-                                html.Span(" | ", style={"color": "var(--aegis-text-muted)"}),
+                                html.Span(" | ", style={"opacity": "0.5"}),
                                 html.A(
                                     "Visit aegisearth.bio ↗",
                                     href="https://aegisearth.bio/en",
                                     target="_blank",
-                                    style={"color": "var(--aegis-accent-primary)"},
+                                    style={
+                                        "color": "var(--aegis-text-inverse)",
+                                        "textDecoration": "underline",
+                                        "textUnderlineOffset": "3px",
+                                    },
                                 ),
                             ],
                             style={
-                                "color": "var(--aegis-text-muted)",
+                                "color": "var(--aegis-text-inverse)",
                                 "marginBottom": "0.5rem",
                                 "fontSize": "0.9rem",
+                                "opacity": "0.92",
                             },
                         ),
                         html.P(
@@ -93,13 +96,18 @@ app.layout = html.Div(
                                     "EMBL-EBI",
                                     href="https://www.ebi.ac.uk/",
                                     target="_blank",
-                                    style={"color": "var(--aegis-accent-primary)"},
+                                    style={
+                                        "color": "var(--aegis-text-inverse)",
+                                        "textDecoration": "underline",
+                                        "textUnderlineOffset": "3px",
+                                    },
                                 ),
                             ],
                             style={
-                                "color": "var(--aegis-text-muted)",
+                                "color": "var(--aegis-text-inverse)",
                                 "fontSize": "0.8rem",
                                 "marginBottom": "0",
+                                "opacity": "0.7",
                             },
                         ),
                     ],
@@ -107,7 +115,7 @@ app.layout = html.Div(
                 ),
             ),
             style={
-                "borderTop": "1px solid var(--aegis-border-subtle)",
+                "background": "var(--aegis-accent-primary)",
                 "marginTop": "auto",
             },
         ),

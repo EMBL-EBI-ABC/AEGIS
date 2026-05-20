@@ -33,6 +33,7 @@ def hero_section():
     """Create the hero banner section with animated background."""
     return html.Section(
         [
+            html.Div(className="hero-network", **{"aria-hidden": "true"}),
             html.Img(
                 src="/assets/aegis_logo_RGB_moss-charcoal_01.svg",
                 className="hero-logo",

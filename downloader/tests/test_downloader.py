@@ -204,6 +204,29 @@ def test_download_one_marks_failed_after_max_retries(tmp_path, monkeypatch):
     assert "503" in result.error
 
 
+def test_download_one_refuses_path_traversal_and_writes_nothing_outside_root(tmp_path):
+    output_root = tmp_path / "out"
+    output_root.mkdir()
+    sentinel = tmp_path / "victim.txt"
+    sentinel.write_text("original")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, content=b"PWNED")
+
+    # Enough ".." to climb out of output_root and reach the sentinel one level up.
+    task = _task(dest="by_species/1_x/annotations/asm/../../../../../victim.txt", head_supported=False)
+    result = _download_one(
+        task=task,
+        client=_client_with(handler),
+        output_root=output_root,
+        resume=False,
+        max_retries=0,
+    )
+    assert result.status == "failed"
+    assert "outside output dir" in result.error
+    assert sentinel.read_text() == "original"  # untouched
+
+
 from aegis_downloader.downloader import execute_plan
 from aegis_downloader.manifest import Manifest
 from aegis_downloader.models import DownloadPlan, MetadataWrite

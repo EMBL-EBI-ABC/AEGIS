@@ -55,7 +55,11 @@ app = FastAPI(
     license_info={"name": "Apache 2.0", "url": "https://www.apache.org/licenses/LICENSE-2.0.html"},
 )
 api = APIRouter(prefix="/api")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+# Public, unauthenticated, read-only API: allow any origin but NOT credentials.
+# "*" + allow_credentials=True is the dangerous combo (Starlette reflects the
+# Origin and returns Access-Control-Allow-Credentials: true). There is no cookie
+# or auth state to share cross-origin, so credentials must stay off.
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=False, allow_methods=["*"], allow_headers=["*"])
 
 
 @app.exception_handler(QueryError)

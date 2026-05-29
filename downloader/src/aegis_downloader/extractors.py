@@ -13,19 +13,33 @@ def slugify(name: str) -> str:
     return _SLUG_RE.sub("_", name).strip("_").lower()
 
 
+def safe_component(value: str, fallback: str = "unknown") -> str:
+    """Reduce a server-supplied string to a single safe path component.
+
+    Server-controlled fields (assembly names, annotation file names, FTP
+    basenames) are interpolated into download destinations. ``Path(value).name``
+    drops any directory parts, so embedded ``/`` or ``..`` traversal sequences
+    cannot widen the path. Empty/dot-only results fall back to a constant.
+    """
+    name = Path(str(value)).name
+    if name in ("", ".", ".."):
+        return fallback
+    return name
+
+
 def extract_annotations(record: dict) -> list[DownloadTask]:
     tax_id = record["taxId"]
     scientific_name = record["scientificName"]
     slug = slugify(scientific_name)
     tasks: list[DownloadTask] = []
     for annotation in record.get("annotations") or []:
-        assembly_name = annotation.get("assemblyName") or "unknown"
+        assembly_name = safe_component(annotation.get("assemblyName") or "unknown")
         for file_key in ("annotationFiles", "assemblyFiles", "homologyFiles"):
             for entry in annotation.get(file_key) or []:
                 path = entry.get("path")
                 if not path:
                     continue
-                filename = entry.get("name") or path.rsplit("/", 1)[-1]
+                filename = safe_component(entry.get("name") or path.rsplit("/", 1)[-1])
                 tasks.append(
                     DownloadTask(
                         url=f"{ENSEMBL_RAPID_RELEASE_BASE}/{path}",
@@ -54,7 +68,7 @@ def extract_assemblies(record: dict) -> list[DownloadTask]:
         version = entry.get("version")
         ref = f"{accession}.{version}" if version else accession
         url = f"{ENA_BROWSER_FASTA_BASE}/{ref}?download=true&gzip=true"
-        filename = f"{ref}.fasta.gz"
+        filename = safe_component(f"{ref}.fasta.gz")
         tasks.append(
             DownloadTask(
                 url=url,
@@ -78,7 +92,7 @@ def extract_raw_data(record: dict) -> list[DownloadTask]:
             path = path.strip()
             if not path:
                 continue
-            filename = path.rsplit("/", 1)[-1]
+            filename = safe_component(path.rsplit("/", 1)[-1])
             tasks.append(
                 DownloadTask(
                     url=f"https://{path}",

@@ -14,6 +14,21 @@ from aegis_downloader.models import DownloadPlan, DownloadTask, FileResult
 _CHUNK_SIZE = 1024 * 1024
 
 
+def _resolve_within(output_root: Path, dest: Path) -> Path:
+    """Resolve ``dest`` under ``output_root`` and refuse anything that escapes it.
+
+    ``dest`` is built from server-supplied strings (assembly names, file names,
+    FTP basenames). ``pathlib`` does not collapse ``..`` on join, so without this
+    check a record containing traversal segments could write outside the output
+    directory (CWE-22). Fail closed instead.
+    """
+    base = output_root.resolve()
+    full = (base / dest).resolve()
+    if base != full and not full.is_relative_to(base):
+        raise ValueError(f"refusing to write outside output dir: {dest}")
+    return full
+
+
 def _download_one(
     *,
     task: DownloadTask,
@@ -24,7 +39,10 @@ def _download_one(
     on_total: Callable[[int | None], None] | None = None,
     on_chunk: Callable[[int], None] | None = None,
 ) -> FileResult:
-    dest = output_root / task.dest
+    try:
+        dest = _resolve_within(output_root, task.dest)
+    except ValueError as e:
+        return FileResult(task=task, status="failed", bytes_downloaded=0, error=str(e))
 
     expected_size: int | None = None
     if task.head_supported:
@@ -94,7 +112,7 @@ def execute_plan(
         return ExecutionResult(ok_count=0, skipped_count=0, failed_count=0)
 
     for write in plan.metadata_writes:
-        dest = output_root / write.dest
+        dest = _resolve_within(output_root, write.dest)
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(write.content)
 

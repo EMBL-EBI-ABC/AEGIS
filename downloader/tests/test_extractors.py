@@ -78,6 +78,30 @@ def test_extract_annotations_pulls_all_three_file_types():
         assert task.dest.parts[3] == "daLinVulg1.1"
 
 
+def test_extract_annotations_neutralizes_traversal_in_assembly_name_and_filename():
+    record = {
+        "taxId": 1,
+        "scientificName": "X",
+        "annotations": [
+            {
+                "assemblyName": "../../../../etc",
+                "annotationFiles": [
+                    {"path": "ok/genes.gff3.gz", "name": "../../../../../../tmp/evil.sh"},
+                ],
+            }
+        ],
+    }
+    tasks = extract_annotations(record)
+    assert len(tasks) == 1
+    # No path component may be a traversal sequence; the dest stays under the species dir.
+    assert ".." not in tasks[0].dest.parts
+    assert tasks[0].dest.parts[:3] == ("by_species", "1_x", "annotations")
+    assert tasks[0].dest.parts[3] == "etc"
+    assert tasks[0].dest.name == "evil.sh"
+    # The download URL still uses the original server path.
+    assert tasks[0].url.endswith("/ok/genes.gff3.gz")
+
+
 def test_extract_annotations_handles_missing_annotations_field():
     assert extract_annotations({"taxId": 1, "scientificName": "X", "annotations": None}) == []
 

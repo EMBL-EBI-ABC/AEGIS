@@ -1,3 +1,5 @@
+import os
+
 import dash
 from dash import html, dcc, callback, Input, Output, State, ctx
 import dash_bootstrap_components as dbc
@@ -11,6 +13,46 @@ app = dash.Dash(
     use_pages=True,
     suppress_callback_exceptions=True,
 )
+
+# Google Analytics (GA4). Defaults to the production property so deployments
+# track without extra config; set GA_MEASUREMENT_ID="" to disable locally.
+# In-app route changes are captured by GA4 Enhanced measurement ("page changes
+# based on browser history events"), so no per-page tracking code is needed.
+GA_MEASUREMENT_ID = os.getenv("GA_MEASUREMENT_ID", "G-0SGH92GYJE")
+
+_GA_SNIPPET = (
+    f"""
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id={GA_MEASUREMENT_ID}"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){{dataLayer.push(arguments);}}
+      gtag('js', new Date());
+      gtag('config', '{GA_MEASUREMENT_ID}');
+    </script>
+    """
+    if GA_MEASUREMENT_ID
+    else ""
+)
+
+app.index_string = f"""<!DOCTYPE html>
+<html>
+    <head>
+        {{%metas%}}
+        <title>{{%title%}}</title>
+        {{%favicon%}}
+        {{%css%}}
+        {_GA_SNIPPET}
+    </head>
+    <body>
+        {{%app_entry%}}
+        <footer>
+            {{%config%}}
+            {{%scripts%}}
+            {{%renderer%}}
+        </footer>
+    </body>
+</html>"""
 
 _NAV_ITEMS = [
     ("Data Portal", "pages.data_portal"),

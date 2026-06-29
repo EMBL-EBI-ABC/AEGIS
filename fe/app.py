@@ -20,6 +20,12 @@ app = dash.Dash(
 # based on browser history events"), so no per-page tracking code is needed.
 GA_MEASUREMENT_ID = os.getenv("GA_MEASUREMENT_ID", "G-0SGH92GYJE")
 
+# Consent Mode v2: analytics cookies are gated behind the cookie-consent banner
+# (assets/cookie-consent.js). Consent defaults to "denied" so gtag.js loads but
+# writes no analytics cookies until the visitor accepts. Returning visitors who
+# previously accepted are upgraded synchronously here — before gtag('config') —
+# so they are tracked from first paint with no flicker and no lost events. The
+# privacy notice requires this gate prior to production release.
 _GA_SNIPPET = (
     f"""
     <!-- Google tag (gtag.js) -->
@@ -28,6 +34,17 @@ _GA_SNIPPET = (
       window.dataLayer = window.dataLayer || [];
       function gtag(){{dataLayer.push(arguments);}}
       gtag('js', new Date());
+      gtag('consent', 'default', {{
+        'analytics_storage': 'denied',
+        'ad_storage': 'denied',
+        'ad_user_data': 'denied',
+        'ad_personalization': 'denied'
+      }});
+      try {{
+        if (localStorage.getItem('aegis-cookie-consent') === 'granted') {{
+          gtag('consent', 'update', {{ 'analytics_storage': 'granted' }});
+        }}
+      }} catch (e) {{}}
       gtag('config', '{GA_MEASUREMENT_ID}');
     </script>
     """
@@ -138,6 +155,20 @@ app.layout = html.Div(
                                     "EMBL-EBI",
                                     href="https://www.ebi.ac.uk/",
                                     target="_blank",
+                                    style={
+                                        "color": "var(--aegis-text-inverse)",
+                                        "textDecoration": "underline",
+                                        "textUnderlineOffset": "3px",
+                                    },
+                                ),
+                                html.Span(" | ", style={"opacity": "0.5"}),
+                                # Re-opens the consent banner so visitors can change
+                                # or withdraw their analytics-cookie choice. Handled
+                                # by assets/cookie-consent.js via this id.
+                                html.A(
+                                    "Cookie preferences",
+                                    id="cookie-preferences-link",
+                                    href="#",
                                     style={
                                         "color": "var(--aegis-text-inverse)",
                                         "textDecoration": "underline",

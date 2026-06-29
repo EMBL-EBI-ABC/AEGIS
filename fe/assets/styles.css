@@ -1080,3 +1080,101 @@ iframe {
     background: var(--aegis-accent-primary);
     color: var(--aegis-text-inverse);
 }
+
+/* --------------------------------------------------------------------------
+   Cookie-consent banner (assets/cookie-consent.js)
+
+   Slim fixed bottom bar. Gates GA4 analytics cookies behind explicit consent.
+   Styled with the editorial design tokens so it reads as part of the portal.
+   -------------------------------------------------------------------------- */
+#aegis-cookie-banner {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1100; /* above navbar (1050) and offcanvas backdrops */
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md) var(--space-xl);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--aegis-bg-card);
+    border-top: 1px solid var(--aegis-border-medium);
+    box-shadow: var(--shadow-lg);
+    font-family: var(--font-body);
+    animation: aegis-cookie-rise var(--transition-base);
+}
+
+@keyframes aegis-cookie-rise {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+}
+
+#aegis-cookie-banner .aegis-cookie-text {
+    margin: 0;
+    flex: 1 1 360px;
+    max-width: 64ch;
+    color: var(--aegis-text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+#aegis-cookie-banner .aegis-cookie-link {
+    color: var(--aegis-text-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    white-space: nowrap;
+}
+
+#aegis-cookie-banner .aegis-cookie-link:hover {
+    color: var(--aegis-accent-secondary);
+}
+
+#aegis-cookie-banner .aegis-cookie-actions {
+    display: flex;
+    gap: var(--space-sm);
+    flex: 0 0 auto;
+}
+
+#aegis-cookie-banner .aegis-cookie-btn {
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 0.5rem 1.25rem;
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background var(--transition-fast), color var(--transition-fast),
+        border-color var(--transition-fast);
+}
+
+#aegis-cookie-banner .aegis-cookie-btn--accept {
+    background: var(--aegis-accent-primary);
+    color: var(--aegis-text-inverse);
+}
+
+#aegis-cookie-banner .aegis-cookie-btn--accept:hover {
+    background: var(--aegis-accent-secondary);
+}
+
+#aegis-cookie-banner .aegis-cookie-btn--reject {
+    background: transparent;
+    color: var(--aegis-text-secondary);
+    border-color: var(--aegis-border-medium);
+}
+
+#aegis-cookie-banner .aegis-cookie-btn--reject:hover {
+    background: var(--aegis-bg-hover);
+    color: var(--aegis-text-primary);
+}
+
+@media (max-width: 575px) {
+    #aegis-cookie-banner {
+        gap: var(--space-sm);
+    }
+    #aegis-cookie-banner .aegis-cookie-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}

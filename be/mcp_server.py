@@ -129,7 +129,9 @@ async def get_species(tax_id: int) -> dict:
 
     Returns the complete document including:
       - `assemblies`: every genome assembly (accession, version) for this species
-      - `annotations`: Ensembl Rapid Release annotation bundles per assembly
+      - `annotations`: Ensembl annotation records per assembly accession
+        (GTF/GFF3, protein/transcript/softmasked/repeat-library FASTA URLs,
+        FTP dump link, browser link, annotation method, BUSCO score/lineage)
       - `rawData`: ENA sequencing run records with `fastq_ftp` paths
       - `sampleCount`, `locations`, `countries`: aggregated sample provenance
 

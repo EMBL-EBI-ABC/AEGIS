@@ -3,9 +3,6 @@ from pathlib import Path
 
 from aegis_downloader.models import DownloadTask
 
-ENSEMBL_RAPID_RELEASE_BASE = "https://ftp.ebi.ac.uk/pub/ensemblorganisms"
-
-
 _SLUG_RE = re.compile(r"[^a-zA-Z0-9]+")
 
 
@@ -33,23 +30,33 @@ def extract_annotations(record: dict) -> list[DownloadTask]:
     slug = slugify(scientific_name)
     tasks: list[DownloadTask] = []
     for annotation in record.get("annotations") or []:
-        assembly_name = safe_component(annotation.get("assemblyName") or "unknown")
-        for file_key in ("annotationFiles", "assemblyFiles", "homologyFiles"):
-            for entry in annotation.get(file_key) or []:
-                path = entry.get("path")
-                if not path:
-                    continue
-                filename = safe_component(entry.get("name") or path.rsplit("/", 1)[-1])
-                tasks.append(
-                    DownloadTask(
-                        url=f"{ENSEMBL_RAPID_RELEASE_BASE}/{path}",
-                        dest=Path(f"by_species/{tax_id}_{slug}/annotations/{assembly_name}/{filename}"),
-                        data_type="annotations",
-                        tax_id=tax_id,
-                        scientific_name=scientific_name,
-                        head_supported=True,
-                    )
+        accession = safe_component(annotation.get("accession") or "unknown")
+        # Each annotation record carries absolute file URLs grouped by kind.
+        # other_data.ftp_dumps / view_in_browser are browse links, not files, so
+        # they are intentionally skipped here. repeat_library may be null.
+        ann = annotation.get("annotation") or {}
+        file_urls = [
+            ann.get("GTF"),
+            ann.get("GFF3"),
+            (annotation.get("proteins") or {}).get("FASTA"),
+            (annotation.get("transcripts") or {}).get("FASTA"),
+            (annotation.get("softmasked_genome") or {}).get("FASTA"),
+            (annotation.get("repeat_library") or {}).get("FASTA"),
+        ]
+        for url in file_urls:
+            if not url:
+                continue
+            filename = safe_component(url.rsplit("/", 1)[-1])
+            tasks.append(
+                DownloadTask(
+                    url=url,
+                    dest=Path(f"by_species/{tax_id}_{slug}/annotations/{accession}/{filename}"),
+                    data_type="annotations",
+                    tax_id=tax_id,
+                    scientific_name=scientific_name,
+                    head_supported=True,
                 )
+            )
     return tasks
 
 

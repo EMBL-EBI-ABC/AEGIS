@@ -409,11 +409,15 @@ def create_update_data_table(
     if family_values:
         active["family"] = family_values[0] if isinstance(family_values, list) else family_values
     if filter_values:
+        # Maps a species-level data_portal status filter to the sample-level
+        # `trackingSystem` value used to filter map markers. annotationStatus is
+        # intentionally absent: the pipeline no longer promotes samples to
+        # "Annotation Complete", so mapping it would filter every marker out.
+        # (The species-level annotationStatus=Done filter on the table still works.)
         status_to_tracking = {
             "bioSamplesStatus": "Submitted to BioSamples",
             "rawDataStatus": "Raw Data - Submitted",
             "assembliesStatus": "Assemblies - Submitted",
-            "annotationStatus": "Annotation Complete",
         }
         for fv in filter_values:
             if fv in status_to_tracking:

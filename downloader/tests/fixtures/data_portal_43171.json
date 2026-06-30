@@ -16,18 +16,22 @@
   ],
   "annotations": [
     {
-      "assemblyName": "daLinVulg1.1",
-      "assemblyAccession": "GCA_948329865.1",
-      "provider": "Ensembl Rapid Release",
-      "annotationFiles": [
-        {"name": "genes.gff3.gz", "path": "linaria_vulgaris/GCA_948329865.1/ensembl/geneset/2024_03/genes.gff3.gz", "category": "geneset"}
-      ],
-      "assemblyFiles": [
-        {"name": "softmasked.fa.gz", "path": "linaria_vulgaris/GCA_948329865.1/ensembl/genome/softmasked.fa.gz", "category": "genome"}
-      ],
-      "homologyFiles": [
-        {"name": "homology.tsv.gz", "path": "linaria_vulgaris/GCA_948329865.1/ensembl/homology/2024_03/homology.tsv.gz", "category": "homology"}
-      ]
+      "species": "Linaria vulgaris",
+      "accession": "GCA_948329865.1",
+      "tax_id": "43171",
+      "annotation": {
+        "GTF": "https://ftp.ebi.ac.uk/pub/ensemblorganisms/Linaria_vulgaris/GCA_948329865.1/ensembl/geneset/2024_03/genes.gtf.gz",
+        "GFF3": "https://ftp.ebi.ac.uk/pub/ensemblorganisms/Linaria_vulgaris/GCA_948329865.1/ensembl/geneset/2024_03/genes.gff3.gz"
+      },
+      "proteins": {"FASTA": "https://ftp.ebi.ac.uk/pub/ensemblorganisms/Linaria_vulgaris/GCA_948329865.1/ensembl/geneset/2024_03/pep.fa.gz"},
+      "transcripts": {"FASTA": "https://ftp.ebi.ac.uk/pub/ensemblorganisms/Linaria_vulgaris/GCA_948329865.1/ensembl/geneset/2024_03/cdna.fa.gz"},
+      "softmasked_genome": {"FASTA": "https://ftp.ebi.ac.uk/pub/ensemblorganisms/Linaria_vulgaris/GCA_948329865.1/genome/softmasked.fa.gz"},
+      "repeat_library": null,
+      "other_data": {"ftp_dumps": "https://ftp.ebi.ac.uk/pub/ensemblorganisms/Linaria_vulgaris/GCA_948329865.1/"},
+      "view_in_browser": "https://beta.ensembl.org/species/abc123",
+      "annotation_method": "Ensembl Genebuild",
+      "busco_score": "C:94.5%[S:87.7%,D:6.8%],F:3.0%,M:2.5%,n:2805",
+      "busco_lineage": "eudicotyledons_odb12"
     }
   ]
 }

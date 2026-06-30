@@ -10,8 +10,10 @@ from models import (
     GeoAggregationResponse,
 )
 
-DATA_PORTAL_INDEX = "2026-05-15_data_portal"
-SAMPLES_INDEX = "2026-05-15_samples"
+# Point at stable aliases rather than a dated index. Reindexing now == repoint
+# the alias on the ES side; no code change/redeploy needed here.
+DATA_PORTAL_INDEX = "data_portal"
+SAMPLES_INDEX = "samples"
 
 
 class QueryError(RuntimeError):

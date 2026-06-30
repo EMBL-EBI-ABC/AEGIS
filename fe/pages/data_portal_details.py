@@ -11,7 +11,6 @@ import dash_bootstrap_components as dbc
 PAGE_SIZE = 10
 import os
 BACKEND_URL = os.getenv("BACKEND_URL", "https://portal.aegisearth.bio/api")
-ENSEMBL_RAPID_RELEASE_BASE = "https://ftp.ebi.ac.uk/pub/ensemblorganisms"
 
 from .utils import return_badge_status
 
@@ -303,53 +302,58 @@ def return_table(
     )
 
 
-def _annotation_file_section(title: str, files: list[dict]) -> html.Div | None:
-    """Render one of the three file lists on an annotation card. Returns None if empty."""
-    if not files:
-        return None
-    by_category: dict[str, list[dict]] = {}
-    for f in files:
-        by_category.setdefault(f.get("category") or "files", []).append(f)
+_ANNOTATION_LABEL_STYLE = {
+    "fontSize": "0.8rem",
+    "color": "var(--aegis-text-muted)",
+    "minWidth": "180px",
+    "flexShrink": "0",
+}
 
-    blocks = [
-        html.Div(
-            title,
-            style={
-                "fontSize": "0.75rem",
-                "fontWeight": "600",
-                "color": "var(--aegis-text-secondary)",
-                "textTransform": "uppercase",
-                "letterSpacing": "0.05em",
-                "marginBottom": "0.5rem",
-            },
-        ),
-    ]
-    for category, entries in by_category.items():
-        blocks.append(
+
+def _annotation_link_row(label: str, url: str | None, link_text: str | None = None) -> html.Div | None:
+    """A labelled external-link row. Returns None when the URL is absent."""
+    if not url:
+        return None
+    text = link_text or url.rstrip("/").rsplit("/", 1)[-1] or url
+    return html.Div(
+        [
+            html.Span(label, style=_ANNOTATION_LABEL_STYLE),
+            _external_anchor(text, url, font_size="0.85rem"),
+        ],
+        style={"display": "flex", "gap": "0.5rem", "alignItems": "baseline", "marginBottom": "0.3rem"},
+    )
+
+
+def _annotation_text_row(label: str, value: str | None) -> html.Div | None:
+    """A labelled plain-text row. Returns None when the value is absent."""
+    if not value:
+        return None
+    return html.Div(
+        [
+            html.Span(label, style=_ANNOTATION_LABEL_STYLE),
+            html.Span(value, style={"color": "var(--aegis-text-primary)", "fontSize": "0.85rem"}),
+        ],
+        style={"display": "flex", "gap": "0.5rem", "alignItems": "baseline", "marginBottom": "0.3rem"},
+    )
+
+
+def _annotation_subsection(title: str, rows: list) -> html.Div:
+    """Render a titled block (Downloads / Details) on an annotation card."""
+    return html.Div(
+        [
             html.Div(
-                category,
+                title,
                 style={
-                    "fontSize": "0.7rem",
-                    "color": "var(--aegis-text-muted)",
+                    "fontSize": "0.75rem",
+                    "fontWeight": "600",
+                    "color": "var(--aegis-text-secondary)",
                     "textTransform": "uppercase",
                     "letterSpacing": "0.05em",
-                    "marginTop": "0.5rem",
-                    "marginBottom": "0.25rem",
+                    "marginBottom": "0.5rem",
                 },
-            )
-        )
-        for entry in entries:
-            name = entry.get("name") or entry.get("path", "").split("/")[-1]
-            path = entry.get("path", "")
-            blocks.append(
-                html.Div(
-                    _external_anchor(name, f"{ENSEMBL_RAPID_RELEASE_BASE}/{path}", font_size="0.85rem"),
-                    style={"marginLeft": "0.75rem", "marginBottom": "0.25rem"},
-                )
-            )
-
-    return html.Div(
-        blocks,
+            ),
+            *rows,
+        ],
         style={
             "padding": "1rem",
             "background": "var(--aegis-bg-elevated)",
@@ -359,89 +363,73 @@ def _annotation_file_section(title: str, files: list[dict]) -> html.Div | None:
     )
 
 
-def _reference_specimen_link(biosample_id: str, sample_accessions: set, tax_id) -> html.A:
-    """Internal portal link when the biosample is in our index, BioSamples fallback otherwise."""
-    if biosample_id in sample_accessions:
-        return html.A(
-            biosample_id,
-            href=f"/data-portal/{tax_id}/samples/{biosample_id}",
-            style={
-                "color": "var(--aegis-accent-primary)",
-                "fontFamily": "var(--font-mono)",
-                "fontSize": "0.9rem",
-                "textDecoration": "underline",
-                "textUnderlineOffset": "3px",
-            },
-        )
-    return return_biosamples_accession_link(biosample_id)
+def _annotation_card(annotation: dict) -> html.Div:
+    """Render one per-assembly annotation record (Ensembl pipeline shape).
 
-
-def _annotation_card(annotation: dict, sample_accessions: set, tax_id) -> html.Div:
-    """Render one annotation entry as a card with header, reference specimen, and file lists."""
-    assembly_name = annotation.get("assemblyName") or "—"
-    assembly_accession = annotation.get("assemblyAccession") or "—"
-    provider = annotation.get("provider") or "—"
-    release = annotation.get("release") or ""
-    strain = annotation.get("strain")
-    biosample = annotation.get("biosampleId")
+    Every value may be null/absent; rows are omitted rather than rendered empty.
+    """
+    accession = annotation.get("accession") or "—"
+    species = annotation.get("species") or ""
 
     header_parts = [
-        html.Span(
-            assembly_name,
-            style={"fontFamily": "var(--font-mono)", "fontWeight": "600"},
-        ),
-        html.Span(f" ({assembly_accession})", style={"color": "var(--aegis-text-muted)"}),
-        html.Span(" — "),
-        html.Span(provider, style={"color": "var(--aegis-accent-primary)", "fontWeight": "500"}),
-        html.Span(f" {release}".rstrip(), style={"color": "var(--aegis-text-secondary)"}),
+        html.Span(accession, style={"fontFamily": "var(--font-mono)", "fontWeight": "600"}),
     ]
+    if species:
+        header_parts.append(
+            html.Span(
+                f"  {species}",
+                style={"color": "var(--aegis-text-muted)", "fontStyle": "italic"},
+            )
+        )
+
+    ann = annotation.get("annotation") or {}
+    proteins = annotation.get("proteins") or {}
+    transcripts = annotation.get("transcripts") or {}
+    softmasked = annotation.get("softmasked_genome") or {}
+    repeat_library = annotation.get("repeat_library") or {}
+    other_data = annotation.get("other_data") or {}
+    view_in_browser = annotation.get("view_in_browser")
+
+    download_rows = [
+        _annotation_link_row("Gene set (GTF)", ann.get("GTF")),
+        _annotation_link_row("Gene set (GFF3)", ann.get("GFF3")),
+        _annotation_link_row("Proteins (FASTA)", proteins.get("FASTA")),
+        _annotation_link_row("Transcripts (FASTA)", transcripts.get("FASTA")),
+        _annotation_link_row("Softmasked genome (FASTA)", softmasked.get("FASTA")),
+        _annotation_link_row("Repeat library (FASTA)", repeat_library.get("FASTA")),
+        _annotation_link_row("FTP dump", other_data.get("ftp_dumps"), link_text="Browse directory"),
+    ]
+    download_rows = [r for r in download_rows if r is not None]
 
     meta_rows = []
-    if biosample:
+    # Render the browser link only when it's a real URL; otherwise show the text
+    # (e.g. the literal "Coming soon!") so the state is still visible.
+    if isinstance(view_in_browser, str) and view_in_browser.startswith("http"):
         meta_rows.append(
-            html.Div(
-                [
-                    html.Span(
-                        "Reference specimen: ",
-                        style={"color": "var(--aegis-text-muted)", "fontSize": "0.85rem"},
-                    ),
-                    _reference_specimen_link(biosample, sample_accessions, tax_id),
-                ],
-                style={"marginBottom": "0.4rem"},
-            )
+            _annotation_link_row("Browser", view_in_browser, link_text="View in genome browser")
         )
-    if strain and strain != "reference":
-        meta_rows.append(
-            html.Div(
-                [
-                    html.Span(
-                        "Strain: ",
-                        style={"color": "var(--aegis-text-muted)", "fontSize": "0.85rem"},
-                    ),
-                    html.Span(strain, style={"color": "var(--aegis-text-primary)", "fontSize": "0.85rem"}),
-                ],
-                style={"marginBottom": "0.4rem"},
-            )
-        )
+    elif view_in_browser:
+        meta_rows.append(_annotation_text_row("Browser", view_in_browser))
+    meta_rows.append(_annotation_text_row("Annotation method", annotation.get("annotation_method")))
+    meta_rows.append(_annotation_text_row("BUSCO score", annotation.get("busco_score")))
+    meta_rows.append(_annotation_text_row("BUSCO lineage", annotation.get("busco_lineage")))
+    meta_rows = [r for r in meta_rows if r is not None]
 
-    sections = [
-        _annotation_file_section("Annotation files", annotation.get("annotationFiles") or []),
-        _annotation_file_section("Genome / assembly files", annotation.get("assemblyFiles") or []),
-        _annotation_file_section("Homology files", annotation.get("homologyFiles") or []),
-    ]
-    sections = [s for s in sections if s is not None]
+    sections = []
+    if download_rows:
+        sections.append(_annotation_subsection("Downloads", download_rows))
+    if meta_rows:
+        sections.append(_annotation_subsection("Details", meta_rows))
 
     return html.Div(
         [
             html.Div(header_parts, style={"fontSize": "1rem", "marginBottom": "0.75rem"}),
-            *meta_rows,
             html.Div(
                 sections,
                 style={
                     "display": "grid",
-                    "gridTemplateColumns": "repeat(auto-fit, minmax(260px, 1fr))",
+                    "gridTemplateColumns": "repeat(auto-fit, minmax(280px, 1fr))",
                     "gap": "0.75rem",
-                    "marginTop": "0.75rem",
                 },
             ),
         ],
@@ -1075,8 +1063,6 @@ def create_tabs(active_tab, agg_data, metadata_page, raw_data_page, assemblies_p
 
     else:  # annotations_tab
         annotations = agg_data.get("annotations") or []
-        tax_id = agg_data.get("tax_id")
-        sample_accessions = {s["accession"] for s in agg_data.get("samples", []) if s.get("accession")}
 
         if not annotations:
             return (
@@ -1105,5 +1091,5 @@ def create_tabs(active_tab, agg_data, metadata_page, raw_data_page, assemblies_p
                 hidden_pagination,
             )
 
-        cards = [_annotation_card(a, sample_accessions, tax_id) for a in annotations]
+        cards = [_annotation_card(a) for a in annotations]
         return html.Div(cards), 1, hidden_pagination, 1, hidden_pagination, 1, hidden_pagination

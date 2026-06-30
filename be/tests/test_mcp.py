@@ -56,7 +56,7 @@ async def test_search_species_returns_results_and_calls_data_portal_index():
 
     # The data_portal index should be the one queried.
     indices_seen = [c.kwargs.get("index") for c in es.search.call_args_list]
-    assert "2026-05-15_data_portal" in indices_seen
+    assert "data_portal" in indices_seen
 
     assert result["total"] == 1
     assert result["results"][0]["scientificName"] == "Hirudo medicinalis"
@@ -81,7 +81,7 @@ async def test_get_species_returns_full_record():
     assert len(result["results"]) == 1
     assert result["results"][0]["taxId"] == 43171
     call = es.search.call_args
-    assert call.kwargs["index"] == "2026-05-15_data_portal"
+    assert call.kwargs["index"] == "data_portal"
     assert call.kwargs["q"] == "_id:43171"
 
 
@@ -103,7 +103,7 @@ async def test_search_samples_queries_samples_index():
     set_es_client(es)
 
     result = await search_samples(taxId=6344, country="United Kingdom", size=5)
-    assert es.search.call_args.kwargs["index"] == "2026-05-15_samples"
+    assert es.search.call_args.kwargs["index"] == "samples"
     body = es.search.call_args.kwargs["body"]
     filters = body["query"]["bool"]["filter"]
     assert {"terms": {"taxId": [6344]}} in filters
@@ -140,7 +140,7 @@ async def test_get_sample_returns_record_by_accession():
 
     result = await get_sample(accession="SAMEA7522340")
     assert result["results"][0]["accession"] == "SAMEA7522340"
-    assert es.search.call_args.kwargs["index"] == "2026-05-15_samples"
+    assert es.search.call_args.kwargs["index"] == "samples"
     assert es.search.call_args.kwargs["q"] == "_id:SAMEA7522340"
 
 
@@ -158,7 +158,7 @@ async def test_aggregate_samples_by_location_returns_clusters():
     assert len(result["clusters"]) == 1
     assert result["clusters"][0]["count"] == 42
     assert result["clusters"][0]["lat"] == 51.5
-    assert es.search.call_args.kwargs["index"] == "2026-05-15_samples"
+    assert es.search.call_args.kwargs["index"] == "samples"
 
 
 def test_build_bulk_download_command_basic():

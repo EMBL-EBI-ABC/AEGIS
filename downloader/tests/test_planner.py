@@ -44,8 +44,8 @@ def test_build_plan_with_all_types_produces_tasks_for_each_extractor():
     )
     data_types_seen = {t.data_type for t in plan.tasks}
     assert data_types_seen == {"raw-data", "assemblies", "annotations"}
-    # 2 raw fastq + 2 assemblies + 3 annotations
-    assert plan.total_tasks == 7
+    # 2 raw fastq + 2 assemblies + 5 annotations
+    assert plan.total_tasks == 9
 
 
 def test_build_plan_type_subset_excludes_other_extractors():

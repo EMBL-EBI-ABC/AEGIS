@@ -56,7 +56,7 @@ aegis-download --type raw-data --kingdom Animalia --dry-run
 
 - **`raw-data`** — gzipped FASTQ run files from ENA (paired-end split by `;` in `fastq_ftp`).
 - **`assemblies`** — gzipped FASTA of every sequence per assembly, fetched from ENA's browser API (`https://www.ebi.ac.uk/ena/browser/api/fasta/<acc>.<ver>?download=true&gzip=true`). One file per assembly entry on the species record.
-- **`annotations`** — Ensembl Rapid Release annotation bundles (annotation files, reference assembly FASTA, homology files), grouped by assembly name.
+- **`annotations`** — Ensembl annotation files (GTF, GFF3, and protein / transcript / softmasked-genome / repeat-library FASTA) grouped by assembly accession.
 - **`samples-metadata`** — TSV dump of BioSamples records associated with the selected species.
 
 ## Output layout
@@ -75,7 +75,7 @@ aegis-download --type raw-data --kingdom Animalia --dry-run
         GCA_948329855.1.fasta.gz
         GCA_948329865.1.fasta.gz
       annotations/
-        daLinVulg1.1/
+        GCA_948329865.1/
           <annotation files>
 ```
 

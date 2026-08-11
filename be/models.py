@@ -150,7 +150,7 @@ data_portal = DataSource(
     name="DataPortal",
     fields=[
         FieldDefinition(name="taxId", type=int),
-        FieldDefinition(name="scientificName", type=str),
+        FieldDefinition(name="scientificName", type=str | None),
         FieldDefinition(name="commonName", type=str | None),
         FieldDefinition(name="phylogeny", type=dict[str, str] | None),
         FieldDefinition(name="currentStatus", type=str),

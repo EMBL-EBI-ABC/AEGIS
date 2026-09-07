@@ -92,7 +92,8 @@ layout = dbc.Container(
                 dbc.Col(
                     dbc.Stack(
                         [
-                            _filter_card("Data Status - Genome Assemblies", dbc.Checklist(id="checklist_input")),
+                            _filter_card("Data Status - Genome Assemblies", dbc.Checklist(id="genome_status")),
+                            _filter_card("Data Status - Environmental DNA", dbc.Checklist(id="edna_status")),
                             _filter_card("Kingdom", dbc.Checklist(id="kingdom_filter")),
                             _filter_card("Order", dbc.Checklist(id="order_filter")),
                             _filter_card("Family", dbc.Checklist(id="family_filter")),
@@ -200,14 +201,16 @@ from .utils import return_badge_status  # noqa: E402
 
 @callback(
     Output("data_table", "children"),
-    Output("checklist_input", "options"),
+    Output("genome_status", "options"),
+    Output("edna_status", "options"),
     Output("pagination", "max_value"),
     Output("kingdom_filter", "options"),
     Output("order_filter", "options"),
     Output("family_filter", "options"),
     Output("country_filter", "options"),
     Output("active-filters", "data"),
-    Input("checklist_input", "value"),
+    Input("genome_status", "value"),
+    Input("edna_status", "value"),
     Input("input", "value"),
     Input("pagination", "active_page"),
     Input("kingdom_filter", "value"),
@@ -222,23 +225,32 @@ from .utils import return_badge_status  # noqa: E402
     ],
 )
 def create_update_data_table(
-    filter_values, input_value, active_page,
+    genome_values, edna_values, input_value, active_page,
     kingdom_values, order_values, family_values, country_values, map_bounds,
 ):
     """Update the data table based on filters and search input."""
-    # Build filters
-    statuses = {
+    # Labels shared by both Data Status boxes.
+    STATUS_LABELS = {
         "bioSamplesStatus": "Submitted to BioSamples",
         "rawDataStatus": "Raw Data submitted to ENA",
         "assembliesStatus": "Assemblies submitted to ENA",
         "annotationStatus": "Annotation Complete",
     }
+    GENOME_STATUSES = ["bioSamplesStatus", "rawDataStatus", "assembliesStatus", "annotationStatus"]
+    EDNA_STATUSES = ["bioSamplesStatus", "rawDataStatus"]
+
     params = {}
-    try:
-        for value in filter_values:
-            params[value] = "Done"
-    except TypeError:
-        pass
+    selected = list(genome_values or []) + list(edna_values or [])
+    for value in selected:
+        params[value] = "Done"
+    # Scope the table to whichever track(s) the boxes have a selection in.
+    tracks = []
+    if genome_values:
+        tracks.append("genome_assembly")
+    if edna_values:
+        tracks.append("environmental_dna")
+    if tracks:
+        params["dataType"] = tracks if len(tracks) > 1 else tracks[0]
     if input_value:
         params["q"] = input_value
 
@@ -274,6 +286,29 @@ def create_update_data_table(
         params=params,
         timeout=30,
     ).json()
+
+    # Per-track status counts for the two Data Status boxes. Each box's counts
+    # come from a dataType-scoped query, so the two tracks never mix.
+    def _status_options(data_type, keys):
+        try:
+            agg = requests.get(
+                f"{BACKEND_URL}/data_portal",
+                params={"dataType": data_type, "size": 1},
+                timeout=30,
+            ).json().get("aggregations", {})
+        except Exception:
+            agg = {}
+        opts = []
+        for key in keys:
+            done = 0
+            for bucket in agg.get(key, {}).get("buckets", []):
+                if bucket.get("key") == "Done":
+                    done = bucket.get("doc_count", 0)
+            opts.append({"label": f"{STATUS_LABELS[key]} ({done})", "value": key})
+        return opts
+
+    genome_options = _status_options("genome_assembly", GENOME_STATUSES)
+    edna_options = _status_options("environmental_dna", EDNA_STATUSES)
 
     # Table
     table_header = [
@@ -314,7 +349,7 @@ def create_update_data_table(
             ],
             className="text-center py-5",
         )
-        return empty_state, [], 1, [], [], [], [], {}
+        return empty_state, genome_options, edna_options, 1, [], [], [], [], {}
 
     table_body = [
         html.Tbody(
@@ -352,20 +387,6 @@ def create_update_data_table(
             "overflow": "hidden",
         },
     )
-
-    # Checklist options from aggregations
-    options = []
-    for status_key, status_name in statuses.items():
-        for bucket in (
-            response.get("aggregations", {}).get(status_key, {}).get("buckets", [])
-        ):
-            if bucket.get("key") == "Done":
-                options.append(
-                    {
-                        "label": f"{status_name} ({bucket.get('doc_count', 0)})",
-                        "value": status_key,
-                    }
-                )
 
     # Taxonomy / country checklist options from aggregations
     aggregations = response.get("aggregations", {})
@@ -408,7 +429,7 @@ def create_update_data_table(
         active["tax_order"] = order_values[0] if isinstance(order_values, list) else order_values
     if family_values:
         active["family"] = family_values[0] if isinstance(family_values, list) else family_values
-    if filter_values:
+    if selected:
         # Maps a species-level data_portal status filter to the sample-level
         # `trackingSystem` value used to filter map markers. annotationStatus is
         # intentionally absent: the pipeline no longer promotes samples to
@@ -419,13 +440,13 @@ def create_update_data_table(
             "rawDataStatus": "Raw Data - Submitted",
             "assembliesStatus": "Assemblies - Submitted",
         }
-        for fv in filter_values:
+        for fv in selected:
             if fv in status_to_tracking:
                 active["trackingSystem"] = status_to_tracking[fv]
                 break
 
     return (
-        table_container, options, max_pages,
+        table_container, genome_options, edna_options, max_pages,
         kingdom_options, order_options, family_options, country_options,
         active,
     )

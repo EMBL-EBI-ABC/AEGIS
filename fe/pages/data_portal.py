@@ -92,7 +92,7 @@ layout = dbc.Container(
                 dbc.Col(
                     dbc.Stack(
                         [
-                            _filter_card("Data Status", dbc.Checklist(id="checklist_input")),
+                            _filter_card("Data Status - Genome Assemblies", dbc.Checklist(id="checklist_input")),
                             _filter_card("Kingdom", dbc.Checklist(id="kingdom_filter")),
                             _filter_card("Order", dbc.Checklist(id="order_filter")),
                             _filter_card("Family", dbc.Checklist(id="family_filter")),

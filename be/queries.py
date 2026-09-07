@@ -1,4 +1,5 @@
 # be/queries.py
+import os
 import urllib.parse
 from collections import defaultdict
 
@@ -12,8 +13,11 @@ from models import (
 
 # Point at stable aliases rather than a dated index. Reindexing now == repoint
 # the alias on the ES side; no code change/redeploy needed here.
-DATA_PORTAL_INDEX = "data_portal"
-SAMPLES_INDEX = "samples"
+# Overridable by env var so a local/dev backend can point at the isolated
+# prototype indices (e.g. DATA_PORTAL_INDEX=aegis_test_data_portal) without
+# touching the production defaults.
+DATA_PORTAL_INDEX = os.getenv("DATA_PORTAL_INDEX", "data_portal")
+SAMPLES_INDEX = os.getenv("SAMPLES_INDEX", "samples")
 
 
 class QueryError(RuntimeError):

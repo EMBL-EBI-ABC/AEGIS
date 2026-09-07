@@ -73,6 +73,7 @@ app.index_string = f"""<!DOCTYPE html>
 
 _NAV_ITEMS = [
     ("Data Portal", "pages.data_portal"),
+    ("Environmental DNA", "pages.edna_explorer"),
     ("API", "pages.api"),
     ("MCP", "pages.mcp"),
     ("Bulk Download", "pages.bulk_download"),

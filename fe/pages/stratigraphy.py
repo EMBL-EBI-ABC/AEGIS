@@ -23,7 +23,7 @@ from plotly.subplots import make_subplots
 BACKEND_URL = os.getenv("BACKEND_URL", "http://0.0.0.0:8080/api")
 ACCENT = "#4E6B66"
 
-dash.register_page(__name__, path="/data-portal/stratigraphy", title="Stratigraphy - AEGIS", order=2)
+dash.register_page(__name__, path="/environmental-dna/stratigraphy", title="Stratigraphy - AEGIS", order=2)
 
 _TOP_N = 12
 
@@ -49,7 +49,7 @@ def _diagram(taxa):
     n = len(taxa)
     titles = [f"{t.get('scientificName','?')}  ·  peak {max((p.get('prop',0) for p in t['abundance']), default=0):.1f}%"
               for t in taxa]
-    fig = make_subplots(rows=n, cols=1, shared_xaxes=True, vertical_spacing=0.012,
+    fig = make_subplots(rows=n, cols=1, shared_xaxes=True, vertical_spacing=0.045,
                         subplot_titles=titles)
     for i, t in enumerate(taxa, start=1):
         ab = sorted(t["abundance"], key=lambda p: p.get("age", 0))
@@ -66,19 +66,21 @@ def _diagram(taxa):
             ),
             row=i, col=1,
         )
-        fig.update_yaxes(range=[0, peak * 1.05], showticklabels=False,
+        fig.update_yaxes(range=[0, peak * 1.3], showticklabels=False,
                          showgrid=False, zeroline=False, row=i, col=1)
         fig.update_xaxes(showgrid=False, zeroline=False, row=i, col=1)
     fig.update_xaxes(title_text="Year (CE) — older ← → recent", row=n, col=1)
     fig.update_layout(
-        height=max(360, 82 * n), showlegend=False,
+        height=max(420, 94 * n), showlegend=False,
         margin={"l": 20, "r": 20, "t": 26, "b": 45},
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
         font={"color": "#6b7772", "size": 11},
         hoverlabel={"bgcolor": "#19211d", "font": {"color": "#f0f3ef"}},
     )
     for ann in fig.layout.annotations:  # subplot titles: left-align, italic, smaller
-        ann.update(x=0, xanchor="left", font={"size": 12, "color": "#3c4a44"})
+        ann.update(x=0.004, xanchor="left", yanchor="bottom",
+                   font={"size": 12, "color": "#2b3733"},
+                   bgcolor="rgba(255,255,255,0.8)", borderpad=3)
     return fig
 
 
@@ -121,7 +123,7 @@ def layout(**kwargs):
 
     return dbc.Container([
         dbc.Row(dbc.Col(html.Div([
-            html.A(["← ", "Back to Data Portal"], href="/data-portal",
+            html.A(["← ", "Back to Environmental DNA"], href="/environmental-dna",
                    style={"color": "var(--aegis-text-muted)", "textDecoration": "underline",
                           "textUnderlineOffset": "3px", "fontSize": "0.9rem"}),
             html.H1("Tjörnin core — stratigraphic view", style={"marginTop": "0.75rem", "marginBottom": "0.4rem"}),

@@ -13,7 +13,7 @@ PAGE_SIZE = 10
 import os
 BACKEND_URL = os.getenv("BACKEND_URL", "https://portal.aegisearth.bio/api")
 
-from .utils import return_badge_status
+from .utils import return_badge_status, basemap_props
 
 # Tjörnin (Reykjavík) — the single site for the environmental-DNA project.
 TJORNIN_LATLON = [64.145, -21.942]
@@ -87,10 +87,7 @@ def layout(tax_id=None, **kwargs):
                                         dbc.Col(
                                             dl.Map(
                                                 [
-                                                    dl.TileLayer(
-                                                        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-                                                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-                                                    ),
+                                                    dl.TileLayer(**basemap_props()),
                                                     dl.LayerGroup(id="species-map-markers"),
                                                 ],
                                                 id="species-map",

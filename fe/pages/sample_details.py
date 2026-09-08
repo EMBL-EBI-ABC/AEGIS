@@ -4,7 +4,7 @@ import dash_leaflet as dl
 import requests
 from dash import html, dcc, callback, Output, Input
 
-from .utils import return_badge_status
+from .utils import return_badge_status, basemap_props
 
 dash.register_page(
     __name__,
@@ -567,10 +567,7 @@ def render_sample_detail(accession, tax_id):
         lon = float(location["lon"])
         map_component = dl.Map(
             [
-                dl.TileLayer(
-                    url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-                ),
+                dl.TileLayer(**basemap_props()),
                 dl.Marker(position=[lat, lon]),
             ],
             center=[lat, lon],

@@ -3,6 +3,7 @@ import dash
 from dash import callback, Output, Input, html, dcc
 import dash_bootstrap_components as dbc
 import dash_leaflet as dl
+from .utils import basemap_props  # used in module-level layout below
 import requests
 
 PAGE_SIZE = 10
@@ -128,10 +129,7 @@ layout = dbc.Container(
                                 html.Div(
                                     dl.Map(
                                         [
-                                            dl.TileLayer(
-                                                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-                                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-                                            ),
+                                            dl.TileLayer(**basemap_props()),
                                             dl.LayerGroup(id="map-markers"),
                                         ],
                                         id="sample-map",
@@ -176,14 +174,29 @@ layout = dbc.Container(
 )
 
 
-def return_tax_id_link(scientific_name: str, tax_id: str) -> html.A:
-    """Create a link to the species detail page.
+_RANK_PILL_STYLE = {
+    "marginLeft": "0.4rem", "fontSize": "0.62rem", "fontWeight": "600",
+    "textTransform": "uppercase", "letterSpacing": "0.03em",
+    "color": "var(--aegis-accent-primary)", "background": "rgba(78,107,102,0.10)",
+    "border": "1px solid rgba(78,107,102,0.25)", "borderRadius": "10px",
+    "padding": "0.05rem 0.4rem", "verticalAlign": "middle", "whiteSpace": "nowrap",
+    "fontStyle": "normal", "textDecoration": "none",
+}
+
+
+def return_tax_id_link(scientific_name: str, tax_id: str, data_type: str = None):
+    """Create a link to the taxon detail page.
 
     Underlined so the affordance reads as clickable even within a table
     of styled scientific names (italic + teal already differentiates them
     from plain data, but doesn't on its own signal 'link').
+
+    Environmental-DNA taxa are identified only to genus, so the name is a
+    single-word genus name, not a species binomial. A small muted "genus"
+    pill marks that rank so a bare name like "Acer" reads as a deliberate
+    genus-level ID rather than an incomplete species name.
     """
-    return html.A(
+    link = html.A(
         scientific_name,
         href=f"/data-portal/{tax_id}",
         style={
@@ -194,9 +207,12 @@ def return_tax_id_link(scientific_name: str, tax_id: str) -> html.A:
             "textDecorationThickness": "1px",
         },
     )
+    if data_type == "environmental_dna":
+        return html.Span([link, html.Span("genus", style=_RANK_PILL_STYLE)])
+    return link
 
 
-from .utils import return_badge_status  # noqa: E402
+from .utils import return_badge_status, basemap_props
 
 
 @callback(
@@ -356,7 +372,12 @@ def create_update_data_table(
             [
                 html.Tr(
                     [
-                        html.Td(return_tax_id_link(row["scientificName"], row["taxId"])),
+                        html.Td(
+                            return_tax_id_link(row["scientificName"], row["taxId"], row.get("dataType")),
+                            style={"borderLeft": "3px solid var(--aegis-accent-primary)"}
+                            if row.get("dataType") == "environmental_dna"
+                            else {"borderLeft": "3px solid transparent"},
+                        ),
                         html.Td(
                             row.get("commonName") or "—",
                             style={"color": "var(--aegis-text-secondary)"},

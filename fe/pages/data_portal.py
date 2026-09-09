@@ -97,7 +97,6 @@ layout = dbc.Container(
                                 "Reset filters",
                                 id="reset-filters",
                                 color="secondary",
-                                outline=True,
                                 size="sm",
                                 className="w-100",
                             ),
@@ -492,24 +491,21 @@ def create_update_data_table(
 
 @callback(
     Output("map-markers", "children"),
-    Input("sample-map", "viewport"),
+    Input("sample-map", "zoom"),
+    Input("sample-map", "bounds"),
     Input("active-filters", "data"),
 )
-def update_map_clusters(viewport, active_filters):
-    """Fetch geo clusters filtered by active search/filters."""
-    zoom = 2
-    params = {"zoom": zoom}
+def update_map_clusters(zoom, bounds, active_filters):
+    z = int(zoom) if zoom is not None else 2
+    params = {"zoom": z}
 
-    if viewport and viewport.get("bounds"):
-        bounds = viewport["bounds"]
-        zoom = viewport.get("zoom", 2)
-        params = {
-            "zoom": zoom,
+    if bounds and len(bounds) == 2:
+        params.update({
             "top_left_lat": bounds[1][0],
             "top_left_lon": bounds[0][1],
             "bottom_right_lat": bounds[0][0],
             "bottom_right_lon": bounds[1][1],
-        }
+        })
 
     # Pass active filters to geo_aggregation
     if active_filters:
@@ -633,8 +629,9 @@ def on_cluster_click(n_clicks):
     Output("family_filter", "value"),
     Output("country_filter", "value"),
     Output("input", "value"),
+    Output("sample-map", "viewport", allow_duplicate=True),
     Input("reset-filters", "n_clicks"),
     prevent_initial_call=True,
 )
 def reset_all_filters(n_clicks):
-    return [], [], [], [], [], [], ""
+    return [], [], [], [], [], [], "", {"center": [30, 0], "zoom": 2, "transition": "setView"}

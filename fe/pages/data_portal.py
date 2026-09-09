@@ -93,6 +93,14 @@ layout = dbc.Container(
                 dbc.Col(
                     dbc.Stack(
                         [
+                            dbc.Button(
+                                "Reset filters",
+                                id="reset-filters",
+                                color="secondary",
+                                outline=True,
+                                size="sm",
+                                className="w-100",
+                            ),
                             _filter_card("Data Status - Genome Assemblies", dbc.Checklist(id="genome_status")),
                             _filter_card("Data Status - Environmental DNA", dbc.Checklist(id="edna_status")),
                             _filter_card("Kingdom", dbc.Checklist(id="kingdom_filter")),
@@ -326,6 +334,11 @@ def create_update_data_table(
     genome_options = _status_options("genome_assembly", GENOME_STATUSES)
     edna_options = _status_options("environmental_dna", EDNA_STATUSES)
 
+    if edna_values:
+        genome_options = [{**o, "disabled": True} for o in genome_options]
+    if genome_values:
+        edna_options = [{**o, "disabled": True} for o in edna_options]
+
     # Table
     table_header = [
         html.Thead(
@@ -440,6 +453,10 @@ def create_update_data_table(
     # (response.total may be > PAGE_SIZE, but we have the current page's taxIds
     # plus we pass the filter params so the map can query independently)
     active = {}
+    if genome_values and not edna_values:
+        active["dataType"] = "genome_assembly"
+    elif edna_values and not genome_values:
+        active["dataType"] = "environmental_dna"
     if input_value:
         active["q"] = input_value
     if country_values:
@@ -496,27 +513,37 @@ def update_map_clusters(viewport, active_filters):
 
     # Pass active filters to geo_aggregation
     if active_filters:
-        for key in ("q", "country", "trackingSystem"):
-            if active_filters.get(key):
-                params[key] = active_filters[key]
+        data_type = active_filters.get("dataType")
+        if data_type:
+            params["dataType"] = data_type
 
-        # Taxonomy filters (kingdom, order, family) live on data_portal, not samples.
-        # If any are set, fetch matching taxIds from data_portal and pass to geo_aggregation.
-        has_taxonomy = any(active_filters.get(k) for k in ("kingdom", "tax_order", "family"))
-        if has_taxonomy:
-            dp_params = {"size": 10000, "start": 0}
-            for k in ("kingdom", "tax_order", "family"):
-                if active_filters.get(k):
-                    dp_params[k] = active_filters[k]
-            try:
-                dp_resp = requests.get(f"{BACKEND_URL}/data_portal", params=dp_params, timeout=15).json()
-                tax_ids = [str(r["taxId"]) for r in dp_resp.get("results", [])]
-                if tax_ids:
-                    params["tax_ids"] = ",".join(tax_ids)
-                else:
-                    return []  # No matching species, no markers
-            except Exception:
-                pass
+        if data_type == "environmental_dna":
+            if active_filters.get("country"):
+                params["country"] = active_filters["country"]
+        else:
+            for key in ("q", "country", "trackingSystem"):
+                if active_filters.get(key):
+                    params[key] = active_filters[key]
+
+            # Taxonomy filters (kingdom, order, family) live on data_portal, not samples.
+            # If any are set, fetch matching taxIds from data_portal and pass to geo_aggregation.
+            has_taxonomy = any(active_filters.get(k) for k in ("kingdom", "tax_order", "family"))
+            if has_taxonomy:
+                dp_params = {"size": 10000, "start": 0}
+                if data_type:
+                    dp_params["dataType"] = data_type
+                for k in ("kingdom", "tax_order", "family"):
+                    if active_filters.get(k):
+                        dp_params[k] = active_filters[k]
+                try:
+                    dp_resp = requests.get(f"{BACKEND_URL}/data_portal", params=dp_params, timeout=15).json()
+                    tax_ids = [str(r["taxId"]) for r in dp_resp.get("results", [])]
+                    if tax_ids:
+                        params["tax_ids"] = ",".join(tax_ids)
+                    else:
+                        return []  # No matching species, no markers
+                except Exception:
+                    pass
 
     try:
         response = requests.get(
@@ -532,12 +559,13 @@ def update_map_clusters(viewport, active_filters):
         markers.append(
             dl.CircleMarker(
                 center=[c["lat"], c["lon"]],
-                radius=max(8, min(30, c["count"] / 2)),
+                radius=max(3, min(7, 2 + math.sqrt(c["count"]))),
                 children=dl.Tooltip(f"{c['count']} samples"),
                 id={"type": "map-cluster", "key": c["key"]},
                 color="#4E6B66",
                 fillColor="#4E6B66",
                 fillOpacity=0.7,
+                weight=1,
             )
         )
     return markers
@@ -595,3 +623,18 @@ def on_cluster_click(n_clicks):
     new_viewport = {"center": [center_lat, center_lon], "zoom": z + 2}
 
     return bounds_data, new_viewport
+
+
+@callback(
+    Output("genome_status", "value"),
+    Output("edna_status", "value"),
+    Output("kingdom_filter", "value"),
+    Output("order_filter", "value"),
+    Output("family_filter", "value"),
+    Output("country_filter", "value"),
+    Output("input", "value"),
+    Input("reset-filters", "n_clicks"),
+    prevent_initial_call=True,
+)
+def reset_all_filters(n_clicks):
+    return [], [], [], [], [], [], ""

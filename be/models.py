@@ -280,6 +280,7 @@ class GeoAggregationParams(BaseModel):
     q: str | None = Field(None, description="Full text search query")
     country: str | None = Field(None, description="Filter by country")
     trackingSystem: str | None = Field(None, description="Filter by tracking status")
+    dataType: str | None = Field(None, description="Filter by data track (genome_assembly | environmental_dna)")
 
     def has_bounds(self) -> bool:
         return all(

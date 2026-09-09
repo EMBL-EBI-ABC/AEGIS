@@ -153,6 +153,8 @@ async def samples_geo_aggregation_query(*, es_client, params, samples_index: str
         filters.append({"term": {"country": params.country}})
     if params.trackingSystem:
         filters.append({"term": {"trackingSystem": params.trackingSystem}})
+    if params.dataType:
+        filters.append({"term": {"dataType": params.dataType}})
     if params.q:
         must.append({"multi_match": {"query": params.q, "fields": ["*"]}})
 

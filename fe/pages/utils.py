@@ -30,9 +30,6 @@ def return_badge_status(badge_text: str, color: str = None) -> dbc.Badge:
     return dbc.Badge(badge_text, pill=True, color=color)
 
 
-
-
-
 def basemap_props() -> dict:
     key = os.getenv("CARTO_API_KEY", "").strip()
     if key:

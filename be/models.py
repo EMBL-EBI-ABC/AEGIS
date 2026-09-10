@@ -165,10 +165,9 @@ data_portal = DataSource(
         FieldDefinition(name="sampleCount", type=int | None),
         FieldDefinition(name="locations", type=list[dict[str, float]] | None),
         FieldDefinition(name="countries", type=list[str] | None, filterable=True),
-        # Data-track discriminator: "genome_assembly" or "environmental_dna".
-        # Filterable so each Data Status box can scope to its own track.
         FieldDefinition(name="dataType", type=str | None, filterable=True),
-        # Environmental-DNA (Iceland) extras — present only on eDNA taxa.
+
+        # Environmental-DNA (Iceland)
         FieldDefinition(name="readTotal", type=int | None),
         FieldDefinition(name="ageOldest", type=int | None),
         FieldDefinition(name="ageYoungest", type=int | None),
@@ -294,6 +293,7 @@ class GeoCluster(BaseModel):
     lon: float
     count: int
     key: str
+    dataType: str | None = None
 
 
 class GeoAggregationResponse(BaseModel):

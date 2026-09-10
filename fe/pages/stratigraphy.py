@@ -1,14 +1,6 @@
 """
-Stratigraphic diagram for the environmental-DNA (Iceland) data.
-
-A pollen-diagram-style view of the Tjörnin lake core: the most abundant taxa
-shown side by side as silhouettes of DNA share against calibrated age, each
-scaled to its own peak so the *timing* of change is comparable across taxa even
-when the amounts differ hugely.
-
-Also hosts the two data-quality panels that are awaiting Carl's data (DNA-damage
-authenticity, and contamination flags from the blank controls) — built as
-labelled placeholders rather than fabricated numbers.
+most abundant taxa shown side by side as silhouettes of DNA share against calibrated age, each
+scaled to its own peak.
 """
 
 import os
@@ -42,7 +34,6 @@ def _fetch_top_taxa():
 
 
 def _diagram(taxa):
-    """A stacked set of per-taxon abundance silhouettes against age."""
     taxa = [t for t in taxa if t.get("abundance")]
     if not taxa:
         return None

@@ -171,20 +171,23 @@ async def samples_geo_aggregation_query(*, es_client, params, samples_index: str
         "size": 0,
         "query": query,
         "aggs": {"grid": {"geotile_grid": {"field": "location", "precision": precision},
-                          "aggs": {"centroid": {"geo_centroid": {"field": "location"}}}}},
+                          "aggs": {"centroid": {"geo_centroid": {"field": "location"}},
+                                   "dt": {"terms": {"field": "dataType", "size": 5}}}}},
     }
 
     try:
         response = await es_client.search(index=samples_index, body=search_body)
-        clusters = [
-            GeoCluster(
+        clusters = []
+        for b in response["aggregations"]["grid"]["buckets"]:
+            dt_buckets = b.get("dt", {}).get("buckets", [])
+            data_type = dt_buckets[0]["key"] if dt_buckets else None
+            clusters.append(GeoCluster(
                 lat=b["centroid"]["location"]["lat"],
                 lon=b["centroid"]["location"]["lon"],
                 count=b["doc_count"],
                 key=b["key"],
-            )
-            for b in response["aggregations"]["grid"]["buckets"]
-        ]
+                dataType=data_type,
+            ))
         return GeoAggregationResponse(clusters=clusters)
     except Exception as e:
         raise QueryError(f"Geo aggregation error: {str(e)}") from e

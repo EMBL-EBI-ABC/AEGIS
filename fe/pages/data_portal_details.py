@@ -15,12 +15,10 @@ BACKEND_URL = os.getenv("BACKEND_URL", "https://portal.aegisearth.bio/api")
 
 from .utils import return_badge_status, basemap_props
 
-# Tjörnin (Reykjavík) — the single site for the environmental-DNA project.
 TJORNIN_LATLON = [64.145, -21.942]
 
 
 def _abundance_figure(abundance, name):
-    """Plotly area chart of a taxon's DNA share through the sediment core."""
     ab = sorted(abundance, key=lambda p: p.get("age", 0))
     xs = [p.get("age") for p in ab]
     ys = [p.get("prop", 0) for p in ab]
@@ -754,9 +752,7 @@ def create_data_portal_record(tax_id):
         ),
     ]
 
-    # Compute sample stats. For eDNA taxa the sample-level records live under a
-    # different taxId (the sediment metagenome), so the meaningful count is the
-    # number of dated core layers the taxon appears in — carried on the record.
+    # Compute sample stats.
     if is_edna:
         sample_count = response.get("sampleCount") or 0
         countries_str = ", ".join(response.get("countries") or []) or "—"
@@ -843,8 +839,6 @@ def create_data_portal_record(tax_id):
             )
         )
 
-    # For an eDNA taxon there are no per-taxon sample coordinates; mark the one
-    # lake site so the map still situates the record.
     if is_edna and not map_markers:
         map_markers.append(
             dl.CircleMarker(
@@ -952,8 +946,6 @@ def create_data_portal_record(tax_id):
             )
         )
 
-    # Environmental-DNA taxa get a single "Abundance over time" tab (their raw
-    # reads and abundance live at the layer level, not as per-taxon assemblies).
     if is_edna:
         tabs = [
             dbc.Tab(

@@ -1,26 +1,14 @@
 """
-Environmental-DNA explorer for the Iceland (Tjörnin) lake-sediment data.
-
-A scientist-facing exploration page. Where the stratigraphy page is a fixed
-"poster" of the top taxa, this page is a *driveable* view of the whole
-community: a heatmap of every detected genus (rows) against the dated core
+A heatmap of every detected genus (rows) against the dated core
 layers (columns), coloured by each genus's share of DNA in that layer, with
 filters to narrow the question and click-through to detail.
 
-Filters (all on real fields — nothing fabricated):
+Filters
   - Taxonomic group   (phylogeny.kingdom)
-  - Age window        (median calibrated year CE of the layers)
+  - Age window
   - Minimum peak share (drop taxa that never rise above a threshold — noise)
   - Number of taxa    (top-N by total reads, to keep the grid legible)
   - Row order + colour scaling (linear shows dominance; log reveals rare taxa)
-
-Click any cell to pin two detail panels: that genus through time, and the whole
-community of that one dated layer.
-
-Data source: the existing backend, GET /data_portal?dataType=environmental_dna.
-No backend or index changes are needed. Read share (`prop`) is a relative-
-abundance proxy, not a count; layer age (`median_CE`) is provisional pending
-confirmation with Carl. Both caveats are surfaced in the UI.
 """
 
 import os
@@ -34,7 +22,6 @@ import plotly.graph_objects as go
 BACKEND_URL = os.getenv("BACKEND_URL", "http://0.0.0.0:8080/api")
 ACCENT = "#4E6B66"
 
-# Sequential green scale matching the AEGIS accent (light -> deep moss).
 GREEN_SCALE = [
     [0.0, "#f3f6f4"], [0.15, "#d5e2dc"], [0.35, "#a9c4ba"],
     [0.55, "#7aa398"], [0.75, "#517d72"], [1.0, "#243c35"],
@@ -48,7 +35,6 @@ dash.register_page(__name__, path="/environmental-dna",
 # Data access
 # --------------------------------------------------------------------------
 def _fetch_edna():
-    """All environmental-DNA genera with their per-layer abundance series."""
     try:
         r = requests.get(
             f"{BACKEND_URL}/data_portal",
@@ -62,7 +48,7 @@ def _fetch_edna():
 
 
 def _clean(taxa):
-    """Keep only taxa with a usable abundance series; normalise the fields we use."""
+    #Keep only taxa with a usable abundance series
     out = []
     for t in taxa:
         ab = [p for p in (t.get("abundance") or []) if p.get("age") is not None]
@@ -149,8 +135,6 @@ def _filter_sort(taxa, kingdoms, age_range, thresh, topn, sort):
     for t in taxa:
         if t["kingdom"] not in kingdoms:
             continue
-        # dcc.Store round-trips through JSON, which turns the abundance dict's
-        # integer ages into strings — coerce back to int before comparing.
         series = {int(a): p for a, p in t["abundance"].items() if lo <= int(a) <= hi}
         if not series:
             continue
@@ -167,13 +151,12 @@ def _filter_sort(taxa, kingdoms, age_range, thresh, topn, sort):
         rows.sort(key=lambda r: r["peak_age"])
     else:
         rows.sort(key=lambda r: r["readTotal"], reverse=True)
-    # Keep the strongest topn (by reads) but preserve the chosen display order.
     keep = set(sorted(range(len(rows)), key=lambda i: rows[i]["readTotal"],
                       reverse=True)[:topn])
     return [r for i, r in enumerate(rows) if i in keep]
 
 
-def _heatmap(rows, age_range, scale):
+def _heatmap(rows, scale):
     if not rows:
         return None
     ages = sorted({a for r in rows for a in r["series"]})
@@ -345,7 +328,7 @@ def layout(**kwargs):
 )
 def _update_heatmap(kingdoms, age_range, thresh, topn, sort, scale, taxa):
     rows = _filter_sort(taxa or [], kingdoms or [], age_range, thresh, topn, sort)
-    fig = _heatmap(rows, age_range, scale)
+    fig = _heatmap(rows, scale)
     if fig is None:
         fig = go.Figure()
         fig.update_layout(

@@ -3,8 +3,8 @@ import dash
 from dash import callback, Output, Input, html, dcc
 import dash_bootstrap_components as dbc
 import dash_leaflet as dl
-from .utils import basemap_props  # used in module-level layout below
 import requests
+from .utils import return_badge_status, basemap_props
 
 PAGE_SIZE = 10
 import os
@@ -192,17 +192,6 @@ _RANK_PILL_STYLE = {
 
 
 def return_tax_id_link(scientific_name: str, tax_id: str, data_type: str = None):
-    """Create a link to the taxon detail page.
-
-    Underlined so the affordance reads as clickable even within a table
-    of styled scientific names (italic + teal already differentiates them
-    from plain data, but doesn't on its own signal 'link').
-
-    Environmental-DNA taxa are identified only to genus, so the name is a
-    single-word genus name, not a species binomial. A small muted "genus"
-    pill marks that rank so a bare name like "Acer" reads as a deliberate
-    genus-level ID rather than an incomplete species name.
-    """
     link = html.A(
         scientific_name,
         href=f"/data-portal/{tax_id}",
@@ -219,7 +208,7 @@ def return_tax_id_link(scientific_name: str, tax_id: str, data_type: str = None)
     return link
 
 
-from .utils import return_badge_status, basemap_props
+
 
 
 @callback(
@@ -251,8 +240,7 @@ def create_update_data_table(
     genome_values, edna_values, input_value, active_page,
     kingdom_values, order_values, family_values, country_values, map_bounds,
 ):
-    """Update the data table based on filters and search input."""
-    # Labels shared by both Data Status boxes.
+
     STATUS_LABELS = {
         "bioSamplesStatus": "Submitted to BioSamples",
         "rawDataStatus": "Raw Data submitted to ENA",
@@ -266,7 +254,6 @@ def create_update_data_table(
     selected = list(genome_values or []) + list(edna_values or [])
     for value in selected:
         params[value] = "Done"
-    # Scope the table to whichever track(s) the boxes have a selection in.
     tracks = []
     if genome_values:
         tracks.append("genome_assembly")
@@ -310,8 +297,6 @@ def create_update_data_table(
         timeout=30,
     ).json()
 
-    # Per-track status counts for the two Data Status boxes. Each box's counts
-    # come from a dataType-scoped query, so the two tracks never mix.
     def _status_options(data_type, keys):
         try:
             agg = requests.get(
@@ -421,7 +406,7 @@ def create_update_data_table(
         },
     )
 
-    # Taxonomy / country checklist options from aggregations
+    # checklist options
     aggregations = response.get("aggregations", {})
     kingdom_options = [
         {"label": f"{b['key']} ({b['doc_count']})", "value": b["key"]}
@@ -448,9 +433,7 @@ def create_update_data_table(
         total = len(results)
     max_pages = max(1, math.ceil(total / PAGE_SIZE))
 
-    # Collect all taxIds from the full filtered result for the map
-    # (response.total may be > PAGE_SIZE, but we have the current page's taxIds
-    # plus we pass the filter params so the map can query independently)
+
     active = {}
     if genome_values and not edna_values:
         active["dataType"] = "genome_assembly"
@@ -467,11 +450,6 @@ def create_update_data_table(
     if family_values:
         active["family"] = family_values[0] if isinstance(family_values, list) else family_values
     if selected:
-        # Maps a species-level data_portal status filter to the sample-level
-        # `trackingSystem` value used to filter map markers. annotationStatus is
-        # intentionally absent: the pipeline no longer promotes samples to
-        # "Annotation Complete", so mapping it would filter every marker out.
-        # (The species-level annotationStatus=Done filter on the table still works.)
         status_to_tracking = {
             "bioSamplesStatus": "Submitted to BioSamples",
             "rawDataStatus": "Raw Data - Submitted",
@@ -521,8 +499,6 @@ def update_map_clusters(zoom, bounds, active_filters):
                 if active_filters.get(key):
                     params[key] = active_filters[key]
 
-            # Taxonomy filters (kingdom, order, family) live on data_portal, not samples.
-            # If any are set, fetch matching taxIds from data_portal and pass to geo_aggregation.
             has_taxonomy = any(active_filters.get(k) for k in ("kingdom", "tax_order", "family"))
             if has_taxonomy:
                 dp_params = {"size": 10000, "start": 0}
@@ -550,16 +526,19 @@ def update_map_clusters(zoom, bounds, active_filters):
     except Exception:
         return []
 
+    EDNA_COLOR = "#7E57C2"
+    GENOME_COLOR = "#4E6B66"
     markers = []
     for c in response.get("clusters", []):
+        color = EDNA_COLOR if c.get("dataType") == "environmental_dna" else GENOME_COLOR
         markers.append(
             dl.CircleMarker(
                 center=[c["lat"], c["lon"]],
                 radius=max(3, min(7, 2 + math.sqrt(c["count"]))),
                 children=dl.Tooltip(f"{c['count']} samples"),
                 id={"type": "map-cluster", "key": c["key"]},
-                color="#4E6B66",
-                fillColor="#4E6B66",
+                color=color,
+                fillColor=color,
                 fillOpacity=0.7,
                 weight=1,
             )

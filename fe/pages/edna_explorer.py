@@ -19,7 +19,7 @@ from dash import html, dcc, callback, Input, Output, State, no_update
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 
-BACKEND_URL = os.getenv("BACKEND_URL", "http://0.0.0.0:8080/api")
+BACKEND_URL = os.getenv("BACKEND_URL", "https://portal.aegisearth.bio/api")
 ACCENT = "#4E6B66"
 
 GREEN_SCALE = [

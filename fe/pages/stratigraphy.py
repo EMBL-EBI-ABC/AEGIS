@@ -12,7 +12,7 @@ import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-BACKEND_URL = os.getenv("BACKEND_URL", "http://0.0.0.0:8080/api")
+BACKEND_URL = os.getenv("BACKEND_URL", "https://portal.aegisearth.bio/api")
 ACCENT = "#4E6B66"
 
 dash.register_page(__name__, path="/environmental-dna/stratigraphy", title="Stratigraphy - AEGIS", order=2)

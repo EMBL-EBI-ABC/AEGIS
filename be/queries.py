@@ -1,4 +1,5 @@
 # be/queries.py
+import os
 import urllib.parse
 from collections import defaultdict
 
@@ -12,8 +13,11 @@ from models import (
 
 # Point at stable aliases rather than a dated index. Reindexing now == repoint
 # the alias on the ES side; no code change/redeploy needed here.
-DATA_PORTAL_INDEX = "data_portal"
-SAMPLES_INDEX = "samples"
+# Overridable by env var so a local/dev backend can point at the isolated
+# prototype indices (e.g. DATA_PORTAL_INDEX=aegis_test_data_portal) without
+# touching the production defaults.
+DATA_PORTAL_INDEX = os.getenv("DATA_PORTAL_INDEX", "data_portal")
+SAMPLES_INDEX = os.getenv("SAMPLES_INDEX", "samples")
 
 
 class QueryError(RuntimeError):
@@ -149,6 +153,8 @@ async def samples_geo_aggregation_query(*, es_client, params, samples_index: str
         filters.append({"term": {"country": params.country}})
     if params.trackingSystem:
         filters.append({"term": {"trackingSystem": params.trackingSystem}})
+    if params.dataType:
+        filters.append({"term": {"dataType": params.dataType}})
     if params.q:
         must.append({"multi_match": {"query": params.q, "fields": ["*"]}})
 
@@ -165,20 +171,23 @@ async def samples_geo_aggregation_query(*, es_client, params, samples_index: str
         "size": 0,
         "query": query,
         "aggs": {"grid": {"geotile_grid": {"field": "location", "precision": precision},
-                          "aggs": {"centroid": {"geo_centroid": {"field": "location"}}}}},
+                          "aggs": {"centroid": {"geo_centroid": {"field": "location"}},
+                                   "dt": {"terms": {"field": "dataType", "size": 5}}}}},
     }
 
     try:
         response = await es_client.search(index=samples_index, body=search_body)
-        clusters = [
-            GeoCluster(
+        clusters = []
+        for b in response["aggregations"]["grid"]["buckets"]:
+            dt_buckets = b.get("dt", {}).get("buckets", [])
+            data_type = dt_buckets[0]["key"] if dt_buckets else None
+            clusters.append(GeoCluster(
                 lat=b["centroid"]["location"]["lat"],
                 lon=b["centroid"]["location"]["lon"],
                 count=b["doc_count"],
                 key=b["key"],
-            )
-            for b in response["aggregations"]["grid"]["buckets"]
-        ]
+                dataType=data_type,
+            ))
         return GeoAggregationResponse(clusters=clusters)
     except Exception as e:
         raise QueryError(f"Geo aggregation error: {str(e)}") from e

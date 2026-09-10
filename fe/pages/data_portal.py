@@ -4,6 +4,7 @@ from dash import callback, Output, Input, html, dcc
 import dash_bootstrap_components as dbc
 import dash_leaflet as dl
 import requests
+from .utils import return_badge_status, basemap_props
 
 PAGE_SIZE = 10
 import os
@@ -13,6 +14,13 @@ dash.register_page(
     __name__,
     title="Data Portal - AEGIS",
 )
+
+def _track_filter(genome_values, edna_values):
+    if genome_values and not edna_values:
+        return "genome_assembly"
+    if edna_values and not genome_values:
+        return "environmental_dna"
+    return None
 
 
 def _filter_card(title, checklist):
@@ -92,7 +100,15 @@ layout = dbc.Container(
                 dbc.Col(
                     dbc.Stack(
                         [
-                            _filter_card("Data Status", dbc.Checklist(id="checklist_input")),
+                            dbc.Button(
+                                "Reset filters",
+                                id="reset-filters",
+                                color="secondary",
+                                size="sm",
+                                className="w-100",
+                            ),
+                            _filter_card("Data Status - Genome Assemblies", dbc.Checklist(id="genome_status")),
+                            _filter_card("Data Status - Environmental DNA", dbc.Checklist(id="edna_status")),
                             _filter_card("Kingdom", dbc.Checklist(id="kingdom_filter")),
                             _filter_card("Order", dbc.Checklist(id="order_filter")),
                             _filter_card("Family", dbc.Checklist(id="family_filter")),
@@ -127,10 +143,7 @@ layout = dbc.Container(
                                 html.Div(
                                     dl.Map(
                                         [
-                                            dl.TileLayer(
-                                                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-                                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-                                            ),
+                                            dl.TileLayer(**basemap_props()),
                                             dl.LayerGroup(id="map-markers"),
                                         ],
                                         id="sample-map",
@@ -175,14 +188,18 @@ layout = dbc.Container(
 )
 
 
-def return_tax_id_link(scientific_name: str, tax_id: str) -> html.A:
-    """Create a link to the species detail page.
+_RANK_PILL_STYLE = {
+    "marginLeft": "0.4rem", "fontSize": "0.62rem", "fontWeight": "600",
+    "textTransform": "uppercase", "letterSpacing": "0.03em",
+    "color": "var(--aegis-accent-primary)", "background": "rgba(78,107,102,0.10)",
+    "border": "1px solid rgba(78,107,102,0.25)", "borderRadius": "10px",
+    "padding": "0.05rem 0.4rem", "verticalAlign": "middle", "whiteSpace": "nowrap",
+    "fontStyle": "normal", "textDecoration": "none",
+}
 
-    Underlined so the affordance reads as clickable even within a table
-    of styled scientific names (italic + teal already differentiates them
-    from plain data, but doesn't on its own signal 'link').
-    """
-    return html.A(
+
+def return_tax_id_link(scientific_name: str, tax_id: str, data_type: str = None):
+    link = html.A(
         scientific_name,
         href=f"/data-portal/{tax_id}",
         style={
@@ -193,21 +210,26 @@ def return_tax_id_link(scientific_name: str, tax_id: str) -> html.A:
             "textDecorationThickness": "1px",
         },
     )
+    if data_type == "environmental_dna":
+        return html.Span([link, html.Span("genus", style=_RANK_PILL_STYLE)])
+    return link
 
 
-from .utils import return_badge_status  # noqa: E402
+
 
 
 @callback(
     Output("data_table", "children"),
-    Output("checklist_input", "options"),
+    Output("genome_status", "options"),
+    Output("edna_status", "options"),
     Output("pagination", "max_value"),
     Output("kingdom_filter", "options"),
     Output("order_filter", "options"),
     Output("family_filter", "options"),
     Output("country_filter", "options"),
     Output("active-filters", "data"),
-    Input("checklist_input", "value"),
+    Input("genome_status", "value"),
+    Input("edna_status", "value"),
     Input("input", "value"),
     Input("pagination", "active_page"),
     Input("kingdom_filter", "value"),
@@ -222,23 +244,28 @@ from .utils import return_badge_status  # noqa: E402
     ],
 )
 def create_update_data_table(
-    filter_values, input_value, active_page,
+    genome_values, edna_values, input_value, active_page,
     kingdom_values, order_values, family_values, country_values, map_bounds,
 ):
-    """Update the data table based on filters and search input."""
-    # Build filters
-    statuses = {
+
+    STATUS_LABELS = {
         "bioSamplesStatus": "Submitted to BioSamples",
         "rawDataStatus": "Raw Data submitted to ENA",
         "assembliesStatus": "Assemblies submitted to ENA",
         "annotationStatus": "Annotation Complete",
     }
+    GENOME_STATUSES = ["bioSamplesStatus", "rawDataStatus", "assembliesStatus", "annotationStatus"]
+    EDNA_STATUSES = ["bioSamplesStatus", "rawDataStatus"]
+
     params = {}
-    try:
-        for value in filter_values:
-            params[value] = "Done"
-    except TypeError:
-        pass
+    selected = list(genome_values or []) + list(edna_values or [])
+    for value in selected:
+        params[value] = "Done"
+
+    track = _track_filter(genome_values, edna_values)
+    if track:
+        params["dataType"] = track
+
     if input_value:
         params["q"] = input_value
 
@@ -274,6 +301,32 @@ def create_update_data_table(
         params=params,
         timeout=30,
     ).json()
+
+    def _status_options(data_type, keys):
+        try:
+            agg = requests.get(
+                f"{BACKEND_URL}/data_portal",
+                params={"dataType": data_type, "size": 1},
+                timeout=30,
+            ).json().get("aggregations", {})
+        except Exception:
+            agg = {}
+        opts = []
+        for key in keys:
+            done = 0
+            for bucket in agg.get(key, {}).get("buckets", []):
+                if bucket.get("key") == "Done":
+                    done = bucket.get("doc_count", 0)
+            opts.append({"label": f"{STATUS_LABELS[key]} ({done})", "value": key})
+        return opts
+
+    genome_options = _status_options("genome_assembly", GENOME_STATUSES)
+    edna_options = _status_options("environmental_dna", EDNA_STATUSES)
+
+    if edna_values:
+        genome_options = [{**o, "disabled": True} for o in genome_options]
+    if genome_values:
+        edna_options = [{**o, "disabled": True} for o in edna_options]
 
     # Table
     table_header = [
@@ -314,14 +367,19 @@ def create_update_data_table(
             ],
             className="text-center py-5",
         )
-        return empty_state, [], 1, [], [], [], [], {}
+        return empty_state, genome_options, edna_options, 1, [], [], [], [], {}
 
     table_body = [
         html.Tbody(
             [
                 html.Tr(
                     [
-                        html.Td(return_tax_id_link(row["scientificName"], row["taxId"])),
+                        html.Td(
+                            return_tax_id_link(row["scientificName"], row["taxId"], row.get("dataType")),
+                            style={"borderLeft": "3px solid var(--aegis-accent-primary)"}
+                            if row.get("dataType") == "environmental_dna"
+                            else {"borderLeft": "3px solid transparent"},
+                        ),
                         html.Td(
                             row.get("commonName") or "—",
                             style={"color": "var(--aegis-text-secondary)"},
@@ -353,21 +411,7 @@ def create_update_data_table(
         },
     )
 
-    # Checklist options from aggregations
-    options = []
-    for status_key, status_name in statuses.items():
-        for bucket in (
-            response.get("aggregations", {}).get(status_key, {}).get("buckets", [])
-        ):
-            if bucket.get("key") == "Done":
-                options.append(
-                    {
-                        "label": f"{status_name} ({bucket.get('doc_count', 0)})",
-                        "value": status_key,
-                    }
-                )
-
-    # Taxonomy / country checklist options from aggregations
+    # checklist options
     aggregations = response.get("aggregations", {})
     kingdom_options = [
         {"label": f"{b['key']} ({b['doc_count']})", "value": b["key"]}
@@ -394,10 +438,11 @@ def create_update_data_table(
         total = len(results)
     max_pages = max(1, math.ceil(total / PAGE_SIZE))
 
-    # Collect all taxIds from the full filtered result for the map
-    # (response.total may be > PAGE_SIZE, but we have the current page's taxIds
-    # plus we pass the filter params so the map can query independently)
+
     active = {}
+    track = _track_filter(genome_values, edna_values)
+    if track:
+        active["dataType"] = track
     if input_value:
         active["q"] = input_value
     if country_values:
@@ -408,24 +453,19 @@ def create_update_data_table(
         active["tax_order"] = order_values[0] if isinstance(order_values, list) else order_values
     if family_values:
         active["family"] = family_values[0] if isinstance(family_values, list) else family_values
-    if filter_values:
-        # Maps a species-level data_portal status filter to the sample-level
-        # `trackingSystem` value used to filter map markers. annotationStatus is
-        # intentionally absent: the pipeline no longer promotes samples to
-        # "Annotation Complete", so mapping it would filter every marker out.
-        # (The species-level annotationStatus=Done filter on the table still works.)
+    if selected:
         status_to_tracking = {
             "bioSamplesStatus": "Submitted to BioSamples",
             "rawDataStatus": "Raw Data - Submitted",
             "assembliesStatus": "Assemblies - Submitted",
         }
-        for fv in filter_values:
+        for fv in selected:
             if fv in status_to_tracking:
                 active["trackingSystem"] = status_to_tracking[fv]
                 break
 
     return (
-        table_container, options, max_pages,
+        table_container, genome_options, edna_options, max_pages,
         kingdom_options, order_options, family_options, country_options,
         active,
     )
@@ -433,48 +473,53 @@ def create_update_data_table(
 
 @callback(
     Output("map-markers", "children"),
-    Input("sample-map", "viewport"),
+    Input("sample-map", "zoom"),
+    Input("sample-map", "bounds"),
     Input("active-filters", "data"),
 )
-def update_map_clusters(viewport, active_filters):
-    """Fetch geo clusters filtered by active search/filters."""
-    zoom = 2
-    params = {"zoom": zoom}
+def update_map_clusters(zoom, bounds, active_filters):
+    z = int(zoom) if zoom is not None else 2
+    params = {"zoom": z}
 
-    if viewport and viewport.get("bounds"):
-        bounds = viewport["bounds"]
-        zoom = viewport.get("zoom", 2)
-        params = {
-            "zoom": zoom,
+    if bounds and len(bounds) == 2:
+        params.update({
             "top_left_lat": bounds[1][0],
             "top_left_lon": bounds[0][1],
             "bottom_right_lat": bounds[0][0],
             "bottom_right_lon": bounds[1][1],
-        }
+        })
 
     # Pass active filters to geo_aggregation
     if active_filters:
-        for key in ("q", "country", "trackingSystem"):
-            if active_filters.get(key):
-                params[key] = active_filters[key]
+        data_type = active_filters.get("dataType")
+        if data_type:
+            params["dataType"] = data_type
 
-        # Taxonomy filters (kingdom, order, family) live on data_portal, not samples.
-        # If any are set, fetch matching taxIds from data_portal and pass to geo_aggregation.
-        has_taxonomy = any(active_filters.get(k) for k in ("kingdom", "tax_order", "family"))
-        if has_taxonomy:
-            dp_params = {"size": 10000, "start": 0}
-            for k in ("kingdom", "tax_order", "family"):
-                if active_filters.get(k):
-                    dp_params[k] = active_filters[k]
-            try:
-                dp_resp = requests.get(f"{BACKEND_URL}/data_portal", params=dp_params, timeout=15).json()
-                tax_ids = [str(r["taxId"]) for r in dp_resp.get("results", [])]
-                if tax_ids:
-                    params["tax_ids"] = ",".join(tax_ids)
-                else:
-                    return []  # No matching species, no markers
-            except Exception:
-                pass
+        if data_type == "environmental_dna":
+            if active_filters.get("country"):
+                params["country"] = active_filters["country"]
+        else:
+            for key in ("q", "country", "trackingSystem"):
+                if active_filters.get(key):
+                    params[key] = active_filters[key]
+
+            has_taxonomy = any(active_filters.get(k) for k in ("kingdom", "tax_order", "family"))
+            if has_taxonomy:
+                dp_params = {"size": 10000, "start": 0}
+                if data_type:
+                    dp_params["dataType"] = data_type
+                for k in ("kingdom", "tax_order", "family"):
+                    if active_filters.get(k):
+                        dp_params[k] = active_filters[k]
+                try:
+                    dp_resp = requests.get(f"{BACKEND_URL}/data_portal", params=dp_params, timeout=15).json()
+                    tax_ids = [str(r["taxId"]) for r in dp_resp.get("results", [])]
+                    if tax_ids:
+                        params["tax_ids"] = ",".join(tax_ids)
+                    else:
+                        return []  # No matching species, no markers
+                except Exception:
+                    pass
 
     try:
         response = requests.get(
@@ -485,17 +530,21 @@ def update_map_clusters(viewport, active_filters):
     except Exception:
         return []
 
+    EDNA_COLOR = "#7E57C2"
+    GENOME_COLOR = "#4E6B66"
     markers = []
     for c in response.get("clusters", []):
+        color = EDNA_COLOR if c.get("dataType") == "environmental_dna" else GENOME_COLOR
         markers.append(
             dl.CircleMarker(
                 center=[c["lat"], c["lon"]],
-                radius=max(8, min(30, c["count"] / 2)),
+                radius=max(3, min(7, 2 + math.sqrt(c["count"]))),
                 children=dl.Tooltip(f"{c['count']} samples"),
                 id={"type": "map-cluster", "key": c["key"]},
-                color="#4E6B66",
-                fillColor="#4E6B66",
+                color=color,
+                fillColor=color,
                 fillOpacity=0.7,
+                weight=1,
             )
         )
     return markers
@@ -553,3 +602,19 @@ def on_cluster_click(n_clicks):
     new_viewport = {"center": [center_lat, center_lon], "zoom": z + 2}
 
     return bounds_data, new_viewport
+
+
+@callback(
+    Output("genome_status", "value"),
+    Output("edna_status", "value"),
+    Output("kingdom_filter", "value"),
+    Output("order_filter", "value"),
+    Output("family_filter", "value"),
+    Output("country_filter", "value"),
+    Output("input", "value"),
+    Output("sample-map", "viewport", allow_duplicate=True),
+    Input("reset-filters", "n_clicks"),
+    prevent_initial_call=True,
+)
+def reset_all_filters(n_clicks):
+    return [], [], [], [], [], [], "", {"center": [30, 0], "zoom": 2, "transition": "setView"}

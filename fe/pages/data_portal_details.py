@@ -4,6 +4,7 @@ from typing import Callable
 import dash
 import dash_leaflet as dl
 import requests
+import plotly.graph_objects as go
 import json
 from dash import html, Output, Input, callback, dcc, MATCH
 import dash_bootstrap_components as dbc
@@ -12,7 +13,36 @@ PAGE_SIZE = 10
 import os
 BACKEND_URL = os.getenv("BACKEND_URL", "https://portal.aegisearth.bio/api")
 
-from .utils import return_badge_status
+from .utils import return_badge_status, basemap_props
+
+TJORNIN_LATLON = [64.145, -21.942]
+
+
+def _abundance_figure(abundance, name):
+    ab = sorted(abundance, key=lambda p: p.get("age", 0))
+    xs = [p.get("age") for p in ab]
+    ys = [p.get("prop", 0) for p in ab]
+    reads = [p.get("reads", 0) for p in ab]
+    fig = go.Figure(
+        go.Scatter(
+            x=xs, y=ys, mode="lines", fill="tozeroy",
+            line={"color": "#4E6B66", "width": 2},
+            fillcolor="rgba(78,107,102,0.18)",
+            customdata=reads,
+            hovertemplate="≈%{x} CE<br>%{y:.2f}% of layer DNA<br>%{customdata:,} reads<extra></extra>",
+        )
+    )
+    fig.update_layout(
+        margin={"l": 55, "r": 20, "t": 40, "b": 45}, height=340,
+        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+        title={"text": f"{name}: share of DNA through the core", "font": {"size": 14}},
+        xaxis={"title": "Year (CE) — older ← → recent", "gridcolor": "rgba(128,128,128,0.15)", "zeroline": False},
+        yaxis={"title": "% of DNA in layer", "gridcolor": "rgba(128,128,128,0.15)", "zeroline": False, "rangemode": "tozero"},
+        font={"color": "#6b7772", "size": 12},
+        hoverlabel={"bgcolor": "#19211d", "font": {"color": "#f0f3ef"}},
+    )
+    return fig
+
 
 dash.register_page(__name__, path_template="/data-portal/<tax_id>", order=1)
 
@@ -55,10 +85,7 @@ def layout(tax_id=None, **kwargs):
                                         dbc.Col(
                                             dl.Map(
                                                 [
-                                                    dl.TileLayer(
-                                                        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-                                                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-                                                    ),
+                                                    dl.TileLayer(**basemap_props()),
                                                     dl.LayerGroup(id="species-map-markers"),
                                                 ],
                                                 id="species-map",
@@ -680,6 +707,7 @@ def update_chevron(is_open):
     Output("species-map-markers", "children"),
     Output("taxonomy-row", "children"),
     Output("species-map", "viewport"),
+    Output("tabs_header", "active_tab"),
     Input("card", "key"),
     running=[
         (Output("tabs_card", "class_name"), "invisible", "visible"),
@@ -688,13 +716,14 @@ def update_chevron(is_open):
 def create_data_portal_record(tax_id):
     """Fetch and display species record details."""
     if not tax_id:
-        return [], [], json.dumps({"samples": [], "rawData": [], "assemblies": [], "tax_id": None}), [], html.Div(), dash.no_update
+        return [], [], json.dumps({"samples": [], "rawData": [], "assemblies": [], "tax_id": None}), [], html.Div(), dash.no_update, "metadata_tab"
     response = requests.get(
         f"{BACKEND_URL}/data_portal/{tax_id}"
     ).json()
     if not response.get("results"):
-        return [], [], json.dumps({"samples": [], "rawData": [], "assemblies": [], "tax_id": tax_id}), [], html.Div(), dash.no_update
+        return [], [], json.dumps({"samples": [], "rawData": [], "assemblies": [], "tax_id": tax_id}), [], html.Div(), dash.no_update, "metadata_tab"
     response = response["results"][0]
+    is_edna = response.get("dataType") == "environmental_dna"
 
     # Fetch samples from dedicated endpoint
     samples_response = requests.get(
@@ -723,18 +752,22 @@ def create_data_portal_record(tax_id):
         ),
     ]
 
-    # Compute sample stats
-    sample_count = len(samples_list)
-    countries = sorted(set(
-        s.get("country") for s in samples_list if s.get("country")
-    ))
-    countries_str = ", ".join(countries) if countries else "—"
+    # Compute sample stats.
+    if is_edna:
+        sample_count = response.get("sampleCount") or 0
+        countries_str = ", ".join(response.get("countries") or []) or "—"
+    else:
+        sample_count = len(samples_list)
+        countries = sorted(set(
+            s.get("country") for s in samples_list if s.get("country")
+        ))
+        countries_str = ", ".join(countries) if countries else "—"
 
     # Info grid
     info_items = [
         ("Tax ID", response["taxId"]),
         ("Status", return_badge_status(response["currentStatus"])),
-        ("Sample Count", str(sample_count)),
+        (("Layers present" if is_edna else "Sample Count"), str(sample_count)),
         ("Countries", countries_str),
     ]
 
@@ -803,6 +836,15 @@ def create_data_portal_record(tax_id):
                 color="#4E6B66",
                 fillColor="#4E6B66",
                 fillOpacity=0.7,
+            )
+        )
+
+    if is_edna and not map_markers:
+        map_markers.append(
+            dl.CircleMarker(
+                center=TJORNIN_LATLON, radius=12,
+                children=dl.Tooltip("Tjörnin, Reykjavík — lake sediment core"),
+                color="#4E6B66", fillColor="#4E6B66", fillOpacity=0.7,
             )
         )
 
@@ -904,12 +946,25 @@ def create_data_portal_record(tax_id):
             )
         )
 
+    if is_edna:
+        tabs = [
+            dbc.Tab(
+                label="Abundance over time",
+                tab_id="abundance_tab",
+                label_style={"color": "var(--aegis-text-secondary)"},
+                active_label_style={"color": "var(--aegis-accent-primary)"},
+            )
+        ]
+
     agg_data = {
         "samples": samples_list,
         "rawData": response.get("rawData", []),
         "assemblies": response.get("assemblies", []),
         "annotations": response.get("annotations") or [],
         "tax_id": tax_id,
+        "abundance": response.get("abundance") or [],
+        "scientificName": response.get("scientificName", ""),
+        "dataType": response.get("dataType"),
     }
     # Compute map viewport to fit all marker positions
     if location_groups:
@@ -923,8 +978,11 @@ def create_data_portal_record(tax_id):
             map_viewport = {"center": [center_lat, center_lon], "zoom": 6}
     else:
         map_viewport = dash.no_update
+    if is_edna:
+        map_viewport = {"center": TJORNIN_LATLON, "zoom": 8}
 
-    return children, tabs, json.dumps(agg_data), map_markers, taxonomy_path, map_viewport
+    active_tab_out = "abundance_tab" if is_edna else "metadata_tab"
+    return children, tabs, json.dumps(agg_data), map_markers, taxonomy_path, map_viewport, active_tab_out
 
 
 @callback(
@@ -956,6 +1014,24 @@ def create_tabs(active_tab, agg_data, metadata_page, raw_data_page, assemblies_p
 
         hierarchy = build_sample_hierarchy(samples, tax_id)
         return hierarchy, 1, hidden_pagination, 1, hidden_pagination, 1, hidden_pagination
+
+    elif active_tab == "abundance_tab":
+        ab = agg_data.get("abundance", [])
+        name = agg_data.get("scientificName", "")
+        if not ab:
+            body = html.P("No abundance data for this taxon.",
+                          style={"color": "var(--aegis-text-muted)"})
+        else:
+            body = html.Div([
+                dcc.Graph(figure=_abundance_figure(ab, name), config={"displayModeBar": False}),
+                html.P(
+                    "Each point is one dated core layer. Read share is a relative-abundance "
+                    "proxy, not a direct count; ages are median calibrated years (CE, to be "
+                    "confirmed with Carl).",
+                    style={"color": "var(--aegis-text-muted)", "fontSize": "0.8rem", "marginTop": "0.5rem"},
+                ),
+            ])
+        return body, 1, hidden_pagination, 1, hidden_pagination, 1, hidden_pagination
 
     elif active_tab == "raw_data_tab":
         raw_data = agg_data.get("rawData", [])

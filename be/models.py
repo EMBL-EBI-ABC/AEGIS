@@ -165,6 +165,13 @@ data_portal = DataSource(
         FieldDefinition(name="sampleCount", type=int | None),
         FieldDefinition(name="locations", type=list[dict[str, float]] | None),
         FieldDefinition(name="countries", type=list[str] | None, filterable=True),
+        FieldDefinition(name="dataType", type=str | None, filterable=True),
+
+        # Environmental-DNA (Iceland)
+        FieldDefinition(name="readTotal", type=int | None),
+        FieldDefinition(name="ageOldest", type=int | None),
+        FieldDefinition(name="ageYoungest", type=int | None),
+        FieldDefinition(name="abundance", type=list[dict] | None),
     ],
     default_sort_field="currentStatusOrder",
     default_sort_order="desc",
@@ -272,6 +279,7 @@ class GeoAggregationParams(BaseModel):
     q: str | None = Field(None, description="Full text search query")
     country: str | None = Field(None, description="Filter by country")
     trackingSystem: str | None = Field(None, description="Filter by tracking status")
+    dataType: str | None = Field(None, description="Filter by data track (genome_assembly | environmental_dna)")
 
     def has_bounds(self) -> bool:
         return all(
@@ -285,6 +293,7 @@ class GeoCluster(BaseModel):
     lon: float
     count: int
     key: str
+    dataType: str | None = None
 
 
 class GeoAggregationResponse(BaseModel):

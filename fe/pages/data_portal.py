@@ -15,6 +15,13 @@ dash.register_page(
     title="Data Portal - AEGIS",
 )
 
+def _track_filter(genome_values, edna_values):
+    if genome_values and not edna_values:
+        return "genome_assembly"
+    if edna_values and not genome_values:
+        return "environmental_dna"
+    return None
+
 
 def _filter_card(title, checklist):
     """Create a filter card with a title and scrollable checklist."""
@@ -254,13 +261,11 @@ def create_update_data_table(
     selected = list(genome_values or []) + list(edna_values or [])
     for value in selected:
         params[value] = "Done"
-    tracks = []
-    if genome_values:
-        tracks.append("genome_assembly")
-    if edna_values:
-        tracks.append("environmental_dna")
-    if tracks:
-        params["dataType"] = tracks if len(tracks) > 1 else tracks[0]
+
+    track = _track_filter(genome_values, edna_values)
+    if track:
+        params["dataType"] = track
+
     if input_value:
         params["q"] = input_value
 
@@ -435,10 +440,9 @@ def create_update_data_table(
 
 
     active = {}
-    if genome_values and not edna_values:
-        active["dataType"] = "genome_assembly"
-    elif edna_values and not genome_values:
-        active["dataType"] = "environmental_dna"
+    track = _track_filter(genome_values, edna_values)
+    if track:
+        active["dataType"] = track
     if input_value:
         active["q"] = input_value
     if country_values:

@@ -159,6 +159,8 @@ data_portal = DataSource(
         FieldDefinition(name="rawDataStatus", type=str, filterable=True),
         FieldDefinition(name="assembliesStatus", type=str, filterable=True),
         FieldDefinition(name="annotationStatus", type=str | None, filterable=True),
+        FieldDefinition(name="resolvedStatus", type=str | None, filterable=True),
+        FieldDefinition(name="unassignedStatus", type=str | None, filterable=True),
         FieldDefinition(name="rawData", type=list[dict[str, str | None]]),
         FieldDefinition(name="assemblies", type=list[dict[str, str | None]]),
         FieldDefinition(name="annotations", type=list[dict] | None),

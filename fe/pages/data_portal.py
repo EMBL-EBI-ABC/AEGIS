@@ -317,6 +317,10 @@ def create_update_data_table(
             for bucket in agg.get(key, {}).get("buckets", []):
                 if bucket.get("key") == "Done":
                     done = bucket.get("doc_count", 0)
+            # don't display label if no data
+            if done == 0:
+                continue
+                
             opts.append({"label": f"{STATUS_LABELS[key]} ({done})", "value": key})
         return opts
 

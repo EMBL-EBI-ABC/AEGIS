@@ -271,6 +271,10 @@ def layout(**kwargs):
             f"({len(taxa)} taxa across {n_layers} dated layers), ~1,800 years of change. "
             "Filter to your question; click any cell to pin the genus through time and "
             "the whole community of that layer. ",
+            html.A("Browse the 62 biosamples →", href="/environmental-dna/samples",
+                   style={"color": ACCENT, "textDecoration": "underline",
+                          "textUnderlineOffset": "3px"}),
+            html.Span("  ·  ", style={"color": "var(--aegis-text-muted)"}),
             html.A("See the stratigraphic poster view →", href="/environmental-dna/stratigraphy",
                    style={"color": ACCENT, "textDecoration": "underline",
                           "textUnderlineOffset": "3px"}),

@@ -73,12 +73,48 @@ app.index_string = f"""<!DOCTYPE html>
 
 _NAV_ITEMS = [
     ("Data Portal", "pages.data_portal"),
-    ("Environmental DNA", "pages.edna_explorer"),
+    ("__EDNA__", None),
     ("API", "pages.api"),
     ("MCP", "pages.mcp"),
     ("Bulk Download", "pages.bulk_download"),
     ("About", "pages.about"),
 ]
+
+# Sub-pages grouped under the "Environmental DNA" navbar dropdown.
+_EDNA_DROPDOWN = [
+    ("Community explorer", "pages.edna_explorer"),
+    ("Biosamples", "pages.edna_samples"),
+    ("Stratigraphy", "pages.stratigraphy"),
+]
+
+
+def _nav_children():
+    children = []
+    for label, page_key in _NAV_ITEMS:
+        if label == "__EDNA__":
+            children.append(
+                dbc.DropdownMenu(
+                    label="Environmental DNA",
+                    nav=True,
+                    in_navbar=True,
+                    children=[
+                        dbc.DropdownMenuItem(
+                            sub_label,
+                            href=f"{dash.page_registry[sub_key]['path']}",
+                        )
+                        for sub_label, sub_key in _EDNA_DROPDOWN
+                    ],
+                )
+            )
+        else:
+            children.append(
+                dbc.NavLink(
+                    label,
+                    href=f"{dash.page_registry[page_key]['path']}",
+                    active="exact",
+                )
+            )
+    return children
 
 navbar = dbc.Navbar(
     dbc.Container(
@@ -96,14 +132,7 @@ navbar = dbc.Navbar(
             dbc.NavbarToggler(id="navbar-toggler", n_clicks=0),
             dbc.Collapse(
                 dbc.Nav(
-                    [
-                        dbc.NavLink(
-                            label,
-                            href=f"{dash.page_registry[page_key]['path']}",
-                            active="exact",
-                        )
-                        for label, page_key in _NAV_ITEMS
-                    ],
+                    _nav_children(),
                     navbar=True,
                     className="ms-auto",
                 ),

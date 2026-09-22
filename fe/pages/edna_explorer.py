@@ -186,7 +186,7 @@ def _heatmap(rows, scale):
         z=z, x=[str(a) for a in ages], y=names, customdata=custom,
         colorscale=GREEN_SCALE, colorbar=cbar,
         hoverongaps=False, xgap=0.5, ygap=0.5,
-        hovertemplate="<b>%{y}</b><br>≈%{x} CE<br>%{customdata:.2f}% of layer DNA<extra></extra>",
+        hovertemplate="<b>%{y}</b><br>≈%{x} CE<br>%{customdata:.2f}% of layer DNA (incl. unassigned)<extra></extra>",
     ))
     tick_every = max(1, len(ages) // 12)
     fig.update_xaxes(title_text="Dated core layers — older ← → recent  (year CE)",
@@ -210,7 +210,7 @@ def _genus_curve(row):
         x=ages, y=ys, mode="lines+markers", fill="tozeroy",
         line={"color": ACCENT, "width": 2}, marker={"size": 5, "color": ACCENT},
         fillcolor="rgba(78,107,102,0.18)",
-        hovertemplate="≈%{x} CE<br>%{y:.2f}%<extra></extra>",
+        hovertemplate="≈%{x} CE<br>%{y:.2f}% of layer DNA (incl. unassigned)<extra></extra>",
     ))
     fig.update_xaxes(title_text="Year (CE)", showgrid=False)
     fig.update_yaxes(title_text="share of layer DNA (%)", showgrid=True,
@@ -233,7 +233,7 @@ def _layer_community(rows, age):
     fig = go.Figure(go.Bar(
         x=[p for _, p in items], y=[n for n, _ in items], orientation="h",
         marker={"color": ACCENT},
-        hovertemplate="%{y}<br>%{x:.2f}%<extra></extra>",
+        hovertemplate="%{y}<br>%{x:.2f}% of layer DNA (incl. unassigned)<extra></extra>",
     ))
     fig.update_xaxes(title_text="share of layer DNA (%)", showgrid=True,
                      gridcolor="rgba(0,0,0,0.06)")
@@ -271,6 +271,10 @@ def layout(**kwargs):
             f"({len(taxa)} taxa across {n_layers} dated layers), ~1,800 years of change. "
             "Filter to your question; click any cell to pin the genus through time and "
             "the whole community of that layer. ",
+            html.A("Browse the 62 biosamples →", href="/environmental-dna/samples",
+                   style={"color": ACCENT, "textDecoration": "underline",
+                          "textUnderlineOffset": "3px"}),
+            html.Span("  ·  ", style={"color": "var(--aegis-text-muted)"}),
             html.A("See the stratigraphic poster view →", href="/environmental-dna/stratigraphy",
                    style={"color": ACCENT, "textDecoration": "underline",
                           "textUnderlineOffset": "3px"}),

@@ -53,7 +53,7 @@ def _diagram(taxa):
                 line={"color": ACCENT, "width": 1.5},
                 fillcolor="rgba(78,107,102,0.22)",
                 name=t.get("scientificName", ""),
-                hovertemplate="≈%{x} CE<br>%{y:.2f}%<extra>" + t.get("scientificName", "") + "</extra>",
+                hovertemplate="≈%{x} CE<br>%{y:.2f}% of layer DNA (incl. unassigned)<extra>" + t.get("scientificName", "") + "</extra>",
             ),
             row=i, col=1,
         )

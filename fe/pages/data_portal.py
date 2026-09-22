@@ -23,7 +23,7 @@ def _track_filter(genome_values, edna_values):
     return None
 
 
-def _filter_card(title, checklist):
+def _filter_card(title, checklist, caption=None):
     """Create a filter card with a title and scrollable checklist."""
     return dbc.Card(
         dbc.CardBody(
@@ -39,6 +39,16 @@ def _filter_card(title, checklist):
                         "marginBottom": "0.75rem",
                     },
                 ),
+                html.Div(
+                    caption,
+                    className="text-muted",
+                    style={
+                        "fontSize": "0.68rem",
+                        "marginBottom": "0.5rem",
+                        "textTransform": "none",
+                        "letterSpacing": "normal",
+                    },
+                ) if caption else html.Span(),
                 html.Div(
                     checklist,
                     style={
@@ -108,7 +118,7 @@ layout = dbc.Container(
                                 className="w-100",
                             ),
                             _filter_card("Data Status - Genome Assemblies", dbc.Checklist(id="genome_status")),
-                            _filter_card("Data Status - Environmental DNA", dbc.Checklist(id="edna_status")),
+                            _filter_card("Environmental DNA - Taxonomy", dbc.Checklist(id="edna_status"), caption="Iceland lake-sediment dataset · submitted to BioSamples & raw reads on ENA"),
                             _filter_card("Kingdom", dbc.Checklist(id="kingdom_filter")),
                             _filter_card("Order", dbc.Checklist(id="order_filter")),
                             _filter_card("Family", dbc.Checklist(id="family_filter")),
@@ -253,9 +263,11 @@ def create_update_data_table(
         "rawDataStatus": "Raw Data submitted to ENA",
         "assembliesStatus": "Assemblies submitted to ENA",
         "annotationStatus": "Annotation Complete",
+        "resolvedStatus": "Taxonomy resolved",
+        "unassignedStatus": "Unassigned",
     }
     GENOME_STATUSES = ["bioSamplesStatus", "rawDataStatus", "assembliesStatus", "annotationStatus"]
-    EDNA_STATUSES = ["bioSamplesStatus", "rawDataStatus"]
+    EDNA_STATUSES = ["resolvedStatus", "unassignedStatus"]
 
     params = {}
     selected = list(genome_values or []) + list(edna_values or [])

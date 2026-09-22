@@ -29,7 +29,7 @@ def _abundance_figure(abundance, name):
             line={"color": "#4E6B66", "width": 2},
             fillcolor="rgba(78,107,102,0.18)",
             customdata=reads,
-            hovertemplate="≈%{x} CE<br>%{y:.2f}% of layer DNA<br>%{customdata:,} reads<extra></extra>",
+            hovertemplate="≈%{x} CE<br>%{y:.2f}% of layer DNA (incl. unassigned)<br>%{customdata:,} reads<extra></extra>",
         )
     )
     fig.update_layout(

@@ -15,7 +15,7 @@ import os
 
 import dash
 import requests
-from dash import html, dcc, callback, Input, Output, State, no_update
+from dash import html, dcc, callback, Input, Output, State, no_update, ctx
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 
@@ -94,18 +94,39 @@ def _controls(taxa):
 
         html.Label("Age window (year CE)", style=label),
         dcc.RangeSlider(id="edna-age", min=int(amin), max=int(amax),
-                        value=[int(amin), int(amax)], step=10, marks=marks,
+                        value=[int(amin), int(amax)], step=10, marks=marks, updatemode="drag",
                         tooltip={"placement": "bottom", "always_visible": False}),
 
         html.Label("Minimum peak share (%)", style=label),
-        dcc.Slider(id="edna-thresh", min=0, max=10, step=0.5, value=0,
+        dcc.Slider(id="edna-thresh", min=0, max=10, step=0.5, value=0, updatemode="drag",
                    marks={0: "0", 5: "5", 10: "10"},
                    tooltip={"placement": "bottom", "always_visible": False}),
 
         html.Label("Number of taxa shown", style=label),
-        dcc.Slider(id="edna-topn", min=10, max=120, step=10, value=40,
+        dcc.Slider(id="edna-topn", min=10, max=120, step=10, value=40, updatemode="drag",
                    marks={10: "10", 60: "60", 120: "120"},
                    tooltip={"placement": "bottom", "always_visible": False}),
+
+        html.Div([
+            html.Button("Apply filters", id="edna-apply", n_clicks=0,
+                        style={"background": "var(--aegis-accent-primary)", "color": "#fff",
+                               "border": "none", "borderRadius": "var(--radius-md)",
+                               "padding": "0.5rem 1.1rem", "fontSize": "0.85rem",
+                               "fontWeight": "600", "cursor": "pointer"}),
+            html.Button("Reset", id="edna-reset", n_clicks=0,
+                        style={"background": "transparent", "color": "var(--aegis-text-muted)",
+                               "border": "none", "fontSize": "0.82rem", "cursor": "pointer",
+                               "textDecoration": "underline"}),
+        ], style={"display": "flex", "alignItems": "center", "gap": "0.9rem",
+                  "marginTop": "1.25rem"}),
+        html.Div("Filters changed — click Apply to update", id="edna-pending",
+                 style={"display": "none", "color": "#9a6b3f", "fontSize": "0.78rem",
+                        "fontStyle": "italic", "marginTop": "0.45rem"}),
+        html.Div(style={"borderTop": "1px solid var(--aegis-border-subtle)",
+                        "marginTop": "1.1rem"}),
+        html.Div("Row order & colour update instantly",
+                 style={"color": "var(--aegis-text-muted)", "fontSize": "0.72rem",
+                        "marginTop": "0.6rem"}),
 
         html.Label("Order rows by", style=label),
         dcc.Dropdown(id="edna-sort", clearable=False, value="readTotal",
@@ -307,8 +328,14 @@ def layout(**kwargs):
                   style={"color": "var(--aegis-text-muted)", "fontSize": "0.82rem",
                          "textAlign": "center", "marginTop": "0.5rem"})
 
+    _kingdoms0 = sorted({t["kingdom"] for t in taxa})
+    _ages0 = sorted({int(a) for t in taxa for a in t["abundance"]})
+    _amin0, _amax0 = (_ages0[0], _ages0[-1]) if _ages0 else (0, 2000)
+    _applied0 = {"kingdom": _kingdoms0, "age": [_amin0, _amax0], "thresh": 0, "topn": 40}
+
     return dbc.Container([
         dcc.Store(id="edna-store", data=taxa),
+        dcc.Store(id="edna-applied", data=_applied0),
         dbc.Row(dbc.Col(header)),
         dbc.Row([
             dbc.Col(_controls(taxa), md=3),
@@ -322,16 +349,16 @@ def layout(**kwargs):
 # --------------------------------------------------------------------------
 @callback(
     Output("edna-heatmap", "figure"),
-    Input("edna-kingdom", "value"),
-    Input("edna-age", "value"),
-    Input("edna-thresh", "value"),
-    Input("edna-topn", "value"),
+    Input("edna-applied", "data"),
     Input("edna-sort", "value"),
     Input("edna-scale", "value"),
     State("edna-store", "data"),
 )
-def _update_heatmap(kingdoms, age_range, thresh, topn, sort, scale, taxa):
-    rows = _filter_sort(taxa or [], kingdoms or [], age_range, thresh, topn, sort)
+def _update_heatmap(applied, sort, scale, taxa):
+    applied = applied or {}
+    rows = _filter_sort(taxa or [], applied.get("kingdom") or [],
+                        applied.get("age") or [0, 3000],
+                        applied.get("thresh") or 0, applied.get("topn") or 40, sort)
     fig = _heatmap(rows, scale)
     if fig is None:
         fig = go.Figure()
@@ -348,14 +375,16 @@ def _update_heatmap(kingdoms, age_range, thresh, topn, sort, scale, taxa):
     Output("edna-curve", "figure"),
     Output("edna-layer", "figure"),
     Input("edna-heatmap", "clickData"),
-    State("edna-kingdom", "value"),
-    State("edna-age", "value"),
-    State("edna-thresh", "value"),
-    State("edna-topn", "value"),
+    State("edna-applied", "data"),
     State("edna-sort", "value"),
     State("edna-store", "data"),
 )
-def _update_detail(click, kingdoms, age_range, thresh, topn, sort, taxa):
+def _update_detail(click, applied, sort, taxa):
+    applied = applied or {}
+    kingdoms = applied.get("kingdom") or []
+    age_range = applied.get("age") or [0, 3000]
+    thresh = applied.get("thresh") or 0
+    topn = applied.get("topn") or 40
     def _placeholder(msg):
         f = go.Figure()
         f.update_layout(height=280, paper_bgcolor="rgba(0,0,0,0)",
@@ -375,3 +404,51 @@ def _update_detail(click, kingdoms, age_range, thresh, topn, sort, taxa):
     row = next((r for r in rows if r["name"] == name), None)
     curve = _genus_curve(row) if row else _placeholder("Genus not in current view")
     return curve, _layer_community(rows, age)
+
+
+@callback(
+    Output("edna-applied", "data"),
+    Output("edna-kingdom", "value"),
+    Output("edna-age", "value"),
+    Output("edna-thresh", "value"),
+    Output("edna-topn", "value"),
+    Input("edna-apply", "n_clicks"),
+    Input("edna-reset", "n_clicks"),
+    State("edna-kingdom", "value"),
+    State("edna-age", "value"),
+    State("edna-thresh", "value"),
+    State("edna-topn", "value"),
+    State("edna-store", "data"),
+    prevent_initial_call=True,
+)
+def _apply_or_reset(_na, _nr, kingdoms, age_range, thresh, topn, taxa):
+    if ctx.triggered_id == "edna-reset":
+        taxa = taxa or []
+        k0 = sorted({t["kingdom"] for t in taxa})
+        ages = sorted({int(a) for t in taxa for a in (t.get("abundance") or {})})
+        a0 = [ages[0], ages[-1]] if ages else [0, 2000]
+        applied = {"kingdom": k0, "age": a0, "thresh": 0, "topn": 40}
+        return applied, k0, a0, 0, 40
+    applied = {"kingdom": kingdoms or [], "age": age_range,
+               "thresh": thresh, "topn": topn}
+    return applied, no_update, no_update, no_update, no_update
+
+
+@callback(
+    Output("edna-pending", "style"),
+    Input("edna-kingdom", "value"),
+    Input("edna-age", "value"),
+    Input("edna-thresh", "value"),
+    Input("edna-topn", "value"),
+    Input("edna-applied", "data"),
+)
+def _pending(kingdoms, age_range, thresh, topn, applied):
+    style = {"color": "#9a6b3f", "fontSize": "0.78rem", "fontStyle": "italic",
+             "marginTop": "0.45rem"}
+    applied = applied or {}
+    same = (sorted(kingdoms or []) == sorted(applied.get("kingdom") or [])
+            and list(age_range or []) == list(applied.get("age") or [])
+            and thresh == applied.get("thresh")
+            and topn == applied.get("topn"))
+    style["display"] = "none" if same else "block"
+    return style
